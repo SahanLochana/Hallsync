@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import Button from "../components/Button";
+import { LogIn } from 'lucide-react';
 import InputField from "../components/InputField";
 
 const LoginPage: React.FC = () => {
@@ -67,45 +67,19 @@ const LoginPage: React.FC = () => {
                             <InputField
                                 label="University Email"
                                 placeholder="admin@university.edu"
+                                name="email"
                                 type="email"
-                                icon={
-                                    <svg
-                                        width="18"
-                                        height="18"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
-                                        <rect width="20" height="16" x="2" y="4" rx="2" />
-                                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-                                    </svg>
-                                }
+                                icon="Mail"
                             />
                             <InputField
                                 label="Password"
                                 placeholder="********"
+                                name="password"
                                 type="password"
-                                icon={
-                                    <svg
-                                        width="18"
-                                        height="18"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
-                                        <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-                                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                                    </svg>
-                                }
+                                icon="Lock"
                             />
 
-                            <div className="flex justify-end items-center mb-0 ">
+                            <div className="flex justify-end items-center">
                                 <a
                                     href="#"
                                     className="text-xs font-semibold text-blue-600 hover:text-blue-700"
@@ -113,30 +87,10 @@ const LoginPage: React.FC = () => {
                                     Forgot password?
                                 </a>
                             </div>
-
-
-
-                            <Button
-                                type="submit"
-                                icon={
-                                    <svg
-                                        width="18"
-                                        height="18"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
-                                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-                                        <polyline points="10 17 15 12 10 7" />
-                                        <line x1="15" y1="12" x2="3" y2="12" />
-                                    </svg>
-                                }
-                            >
+                            <button type="submit" className="flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 cursor-pointer w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed bg-[#1e3a8a] hover:bg-[#1a2b6d] text-white shadow-md">
                                 Sign In to Dashboard
-                            </Button>
+                                <LogIn size={18} />
+                            </button>
                         </form>
                     </div>
                 </div>
@@ -149,8 +103,6 @@ const LoginPage: React.FC = () => {
                         © 2025 HallSync. All rights reserved.
                     </p>
                     <div className="flex gap-6">
-                        <a href="#" className="text-xs text-gray-500 hover:text-blue-600 transition-colors">Privacy Policy</a>
-                        <a href="#" className="text-xs text-gray-500 hover:text-blue-600 transition-colors">Terms of Service</a>
                         <a href="#" className="text-xs text-gray-500 hover:text-blue-600 transition-colors">Support</a>
                     </div>
                 </div>
