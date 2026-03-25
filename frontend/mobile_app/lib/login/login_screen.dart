@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_app/screens/home_screen.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -89,7 +90,9 @@ class LoginScreen extends StatelessWidget {
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE5E7EB),
+                          ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
@@ -118,7 +121,9 @@ class LoginScreen extends StatelessWidget {
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE5E7EB),
+                          ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
@@ -170,7 +175,12 @@ class LoginScreen extends StatelessWidget {
                       height: 54,
                       child: ElevatedButton(
                         onPressed: () {
-                          // login action
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => HomeScreen(),
+                            ),
+                          );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: primaryBlue,
@@ -196,10 +206,7 @@ class LoginScreen extends StatelessWidget {
                     const Text(
                       "Welcome back! Please sign in to continue.",
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: textLight,
-                        fontSize: 13,
-                      ),
+                      style: TextStyle(color: textLight, fontSize: 13),
                     ),
                   ],
                 ),
