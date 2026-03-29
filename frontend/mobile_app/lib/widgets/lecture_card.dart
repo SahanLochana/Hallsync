@@ -3,7 +3,7 @@ import '../constants/app_colors.dart';
 import '../models/lecture_model.dart';
 
 class LectureCard extends StatelessWidget {
-  final LectureModel lecture;
+  final Lecture lecture;
 
   const LectureCard({super.key, required this.lecture});
 
@@ -62,7 +62,7 @@ class LectureCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        lecture.time,
+                        lecture.formattedTime,
                         style: const TextStyle(
                           fontSize: 12,
                           color: Colors.white70,
@@ -85,7 +85,7 @@ class LectureCard extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          lecture.location,
+                          lecture.venue,
                           style: const TextStyle(
                             fontSize: 11,
                             color: Colors.white,

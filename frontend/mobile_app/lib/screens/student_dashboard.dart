@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
-import '../models/announcement_model.dart';
 import '../models/lecture_model.dart';
+import '../models/announcement_model.dart';
 import '../widgets/announcement_card.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/lecture_card.dart';
@@ -17,21 +17,36 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
-  final List<LectureModel> _lectures = const [
-    LectureModel(
+  final List<Lecture> _lectures = [
+    Lecture(
       title: 'Advanced Mathematics',
-      time: '08:00 AM - 10:00 AM',
-      location: 'Mini Auditorium',
+      subject: 'Mathematics',
+      venue: 'Mini Auditorium',
+      date: DateTime.now(),
+      startTime: const TimeOfDay(hour: 8, minute: 0),
+      endTime: const TimeOfDay(hour: 10, minute: 0),
+      description: '',
+      tags: [],
     ),
-    LectureModel(
+    Lecture(
       title: 'IT Auditing',
-      time: '08:00 AM - 10:00 AM',
-      location: 'New Lecture Hall',
+      subject: 'Information Technology',
+      venue: 'New Lecture Hall',
+      date: DateTime.now(),
+      startTime: const TimeOfDay(hour: 8, minute: 0),
+      endTime: const TimeOfDay(hour: 10, minute: 0),
+      description: '',
+      tags: [],
     ),
-    LectureModel(
+    Lecture(
       title: 'Structured Programming',
-      time: '08:00 AM - 10:00 AM',
-      location: 'Computing Lab',
+      subject: 'Computer Science',
+      venue: 'Computing Lab',
+      date: DateTime.now(),
+      startTime: const TimeOfDay(hour: 8, minute: 0),
+      endTime: const TimeOfDay(hour: 10, minute: 0),
+      description: '',
+      tags: [],
     ),
   ];
 
@@ -73,7 +88,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       onActionTap: () {},
                     ),
                     const SizedBox(height: 12),
-                    ..._lectures.map((l) => LectureCard(lecture: l)),
+                    if (_lectures.isEmpty)
+                      _buildEmptyLectures()
+                    else
+                      ..._lectures.map((l) => LectureCard(lecture: l)),
                     const SizedBox(height: 28),
                     SectionHeader(title: 'Announcements', onActionTap: () {}),
                     const SizedBox(height: 12),
@@ -147,6 +165,24 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildEmptyLectures() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 32),
+        child: Column(
+          children: const [
+            Icon(Icons.menu_book_outlined, size: 48, color: Color(0xFFBDBDBD)),
+            SizedBox(height: 12),
+            Text(
+              'No lectures today',
+              style: TextStyle(color: Color(0xFF9E9E9E), fontSize: 15),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
