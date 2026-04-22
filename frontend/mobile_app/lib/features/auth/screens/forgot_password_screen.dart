@@ -1,19 +1,15 @@
 import 'package:flutter/material.dart';
-import 'forgot_password_screen.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class ForgotPasswordScreen extends StatefulWidget {
+  const ForgotPasswordScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-
-  bool _obscurePassword = true;
 
   static const Color primaryBlue = Color(0xFF1E5AA8);
   static const Color backgroundColor = Color(0xFFF4F7FB);
@@ -24,21 +20,8 @@ class _LoginScreenState extends State<LoginScreen> {
   InputDecoration _inputDecoration(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
-      hintText: "Enter your ${label.toLowerCase()}",
+      hintText: "Enter your $label",
       prefixIcon: Icon(icon, color: textLight),
-      suffixIcon: label == "Password"
-          ? IconButton(
-        icon: Icon(
-          _obscurePassword ? Icons.visibility_off : Icons.visibility,
-          color: textLight,
-        ),
-        onPressed: () {
-          setState(() {
-            _obscurePassword = !_obscurePassword;
-          });
-        },
-      )
-          : null,
       filled: true,
       fillColor: const Color(0xFFF9FAFB),
       border: OutlineInputBorder(
@@ -53,18 +36,16 @@ class _LoginScreenState extends State<LoginScreen> {
         borderRadius: BorderRadius.circular(14),
         borderSide: const BorderSide(color: primaryBlue, width: 1.5),
       ),
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 16,
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     );
   }
 
-  void _handleLogin() {
+  void _handleResetPassword() {
     if (_formKey.currentState!.validate()) {
-      // TODO: Add Firebase login here later
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Logging in...')),
+        const SnackBar(
+          content: Text('Password reset link/process will be handled here'),
+        ),
       );
     }
   }
@@ -105,23 +86,27 @@ class _LoginScreenState extends State<LoginScreen> {
                           borderRadius: BorderRadius.circular(22),
                         ),
                         child: const Icon(
-                          Icons.school_rounded,
+                          Icons.lock_reset,
                           color: Colors.white,
                           size: 42,
                         ),
                       ),
+
                       const SizedBox(height: 20),
+
                       const Text(
-                        "HallSync",
+                        "Forgot Password",
                         style: TextStyle(
-                          fontSize: 30,
+                          fontSize: 28,
                           fontWeight: FontWeight.bold,
                           color: textDark,
                         ),
                       ),
+
                       const SizedBox(height: 8),
+
                       const Text(
-                        "Faculty Lecture & Schedule Management",
+                        "Enter your email to reset your password.",
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 15,
@@ -129,7 +114,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           height: 1.4,
                         ),
                       ),
-                      const SizedBox(height: 32),
+
+                      const SizedBox(height: 28),
 
                       TextFormField(
                         controller: _emailController,
@@ -139,66 +125,14 @@ class _LoginScreenState extends State<LoginScreen> {
                           if (value == null || value.isEmpty) {
                             return 'Email required';
                           }
-
-                          if (!RegExp(
-                            r'^[\w\-.]+@([\w-]+\.)+[\w-]{2,4}$',
-                          ).hasMatch(value)) {
+                          if (!RegExp(r'^[\w\-\.]+@([\w\-]+\.)+[\w\-]{2,4}$')
+                              .hasMatch(value)) {
                             return 'Enter valid email';
                           }
-
                           return null;
                         },
-                        decoration: _inputDecoration(
-                          "Email",
-                          Icons.email_outlined,
-                        ),
-                      ),
-
-                      const SizedBox(height: 18),
-
-                      TextFormField(
-                        controller: _passwordController,
-                        obscureText: _obscurePassword,
-                        autovalidateMode: AutovalidateMode.onUserInteraction,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Password required';
-                          }
-
-                          if (value.length < 6) {
-                            return 'Password must be 6+ characters';
-                          }
-
-                          return null;
-                        },
-                        decoration: _inputDecoration(
-                          "Password",
-                          Icons.lock_outline,
-                        ),
-                      ),
-
-                      const SizedBox(height: 14),
-
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                const ForgotPasswordScreen(),
-                              ),
-                            );
-                          },
-                          child: const Text(
-                            "Forgot Password?",
-                            style: TextStyle(
-                              color: primaryBlue,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
+                        decoration:
+                        _inputDecoration("email", Icons.email_outlined),
                       ),
 
                       const SizedBox(height: 24),
@@ -207,7 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         width: double.infinity,
                         height: 54,
                         child: ElevatedButton(
-                          onPressed: _handleLogin,
+                          onPressed: _handleResetPassword,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: primaryBlue,
                             foregroundColor: Colors.white,
@@ -217,24 +151,27 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                           child: const Text(
-                            "Login",
+                            "Reset Password",
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              letterSpacing: 0.3,
                             ),
                           ),
                         ),
                       ),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 14),
 
-                      const Text(
-                        "Welcome back! Please sign in to your account.",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: textLight,
-                          fontSize: 13,
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        child: const Text(
+                          "Back to Login",
+                          style: TextStyle(
+                            color: primaryBlue,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ],
@@ -251,7 +188,6 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void dispose() {
     _emailController.dispose();
-    _passwordController.dispose();
     super.dispose();
   }
 }
