@@ -189,6 +189,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                 builder: (context) =>
                                 const ForgotPasswordScreen(),
                               ),
+                            ).then((_) {
+                              _emailController.clear();
+                              _passwordController.clear();
+
+                              ScaffoldMessenger.of(context) .showSnackBar(
+                                const SnackBar(content: Text("Please login with your new password")),
+                              );
+                            }
                             );
                           },
                           child: const Text(
