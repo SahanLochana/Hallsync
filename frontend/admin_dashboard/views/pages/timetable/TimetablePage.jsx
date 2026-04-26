@@ -91,7 +91,7 @@ export default function TimetablePage() {
   const filteredTimetables = filterTimetables(timetables, year, department);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f8fafc]">
+    <div className="h-screen flex flex-col bg-[#f8fafc]">
 
       {/* ── TOP HEADER ────────────────────────────────────────────────── */}
       <TopHeader

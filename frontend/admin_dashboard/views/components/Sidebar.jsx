@@ -30,7 +30,7 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="bg-white flex flex-col items-center py-6 gap-2 shadow-[8px_0px_25px_0px_rgba(226,232,240,0.75)] shrink-0 w-[72px] min-h-screen sticky top-0">
+    <aside className="bg-white flex flex-col items-center py-6 px-2.5 gap-2 shadow-[8px_0px_25px_0px_rgba(226,232,240,0.75)] shrink-0 h-full">
 
       {/* Nav items */}
       <nav className="flex flex-col items-center gap-1 flex-1 pt-2">
