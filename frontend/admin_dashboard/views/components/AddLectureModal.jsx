@@ -27,6 +27,23 @@ const EMPTY_FORM = {
   location:     "",
 };
 
+// ── Field wrapper ─────────────────────────────────────────────────────────────
+// IMPORTANT: defined at module level (outside AddLectureModal) so React never
+// treats it as a new component type on re-render, which would unmount the input
+// and lose focus after every keystroke.
+function Field({ label, error, children }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-[#334155] font-semibold text-xs uppercase tracking-wide">
+        {label}
+      </label>
+      {children}
+      {error && <span className="text-red-500 text-xs">{error}</span>}
+    </div>
+  );
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────────
 export default function AddLectureModal({
   isOpen,
   defaultDay,
@@ -41,7 +58,6 @@ export default function AddLectureModal({
   useEffect(() => {
     if (isOpen) {
       const start = defaultStartHour ?? 8;
-      // default end = start + 1h (capped at 17)
       const end = Math.min(start + 1, 17);
       setForm({
         ...EMPTY_FORM,
@@ -58,7 +74,6 @@ export default function AddLectureModal({
   function set(field, value) {
     setForm((prev) => {
       const next = { ...prev, [field]: value };
-      // Auto-bump endHour if it's no longer after startHour
       if (field === "startHour" && next.endHour <= value) {
         next.endHour = value + 0.5 <= 17 ? value + 0.5 : 17;
       }
@@ -82,20 +97,9 @@ export default function AddLectureModal({
     onConfirm({ ...form });
   }
 
-  // Input / select shared style
   const inputCls =
     "border rounded-xl px-3 py-2.5 text-sm text-[#0f172a] bg-white " +
     "focus:outline-none focus:ring-2 focus:ring-[#1e3b8a]/30 focus:border-[#1e3b8a] transition";
-
-  const Field = ({ label, error, children }) => (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-[#334155] font-semibold text-xs uppercase tracking-wide">
-        {label}
-      </label>
-      {children}
-      {error && <span className="text-red-500 text-xs">{error}</span>}
-    </div>
-  );
 
   return (
     <>

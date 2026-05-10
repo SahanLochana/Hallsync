@@ -24,7 +24,6 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, Download, Pencil, X } from "lucide-react";
 
 import TopHeader from "@/views/components/TopHeader";
-import Sidebar from "@/views/components/Sidebar";
 import LectureDetailModal from "@/views/components/LectureDetailModal";
 import AddLectureModal from "@/views/components/AddLectureModal";
 
@@ -152,9 +151,6 @@ export default function TimetableViewPage() {
 
       {/* ── BODY (fills remaining height, no scroll) ─────────────────── */}
       <div className="flex flex-1 overflow-hidden">
-
-        {/* Sidebar */}
-        <Sidebar />
 
         {/* Main content — fills height, no external scroll */}
         <main className="flex-1 p-4 flex flex-col gap-4 min-w-0 overflow-hidden">
