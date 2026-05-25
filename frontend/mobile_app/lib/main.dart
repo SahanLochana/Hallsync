@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
-import 'features/auth/screens/login_screen.dart';
+import 'login/login_screen.dart';
 
 void main() {
-  runApp(const HallSyncApp());
+  runApp(const StudentApp());
 }
 
-class HallSyncApp extends StatelessWidget {
-  const HallSyncApp({super.key});
+class StudentApp extends StatelessWidget {
+  const StudentApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
+      title: 'Student Portal',
       debugShowCheckedModeBanner: false,
-      title: "HallSync",
-      home: const LoginScreen(),
+      home: LoginScreen(),
     );
   }
 }
