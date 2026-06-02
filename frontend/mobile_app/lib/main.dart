@@ -1,22 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_app/login/login_screen.dart';
+import 'features/auth/screens/login_screen.dart';
 
 void main() {
-  runApp(const StudentApp());
+  runApp(const HallSyncApp());
 }
 
-class StudentApp extends StatelessWidget {
-  const StudentApp({super.key});
+class HallSyncApp extends StatelessWidget {
+  const HallSyncApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Student Portal',
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1E3A8A)),
-        useMaterial3: true,
-      ),
+      title: "HallSync",
       home: const LoginScreen(),
     );
   }
