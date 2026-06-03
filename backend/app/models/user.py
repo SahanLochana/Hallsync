@@ -15,4 +15,3 @@ class User(MongoBaseModel):
     email: EmailStr
     password_hash: str
     role: UserRole
-    
