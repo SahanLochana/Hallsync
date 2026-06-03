@@ -5,10 +5,12 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mobile_app/screens/campus_map_screen.dart';
 
 Future<void> main() async {
-     WidgetsFlutterBinding.ensureInitialized();
-     await dotenv.load(fileName: ".env");
-     runApp(const StudentApp());
-   }
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  await dotenv.load(fileName: ".env"); 
+
+  runApp(const HallSyncApp());
+}
 
 
 
@@ -18,12 +20,18 @@ class StudentApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Student Portal',
+      debugShowCheckedModeBanner: false,
+      title: "HallSync",
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1E3A8A)),
         useMaterial3: true,
       ),
-      home: const LoginScreen(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const LoginScreen(),
+        '/student-dashboard': (context) => const HomeScreen(),
+        '/lecturer-dashboard': (context) => const LecturerDashboard(),
+      },
     );
   }
 }
