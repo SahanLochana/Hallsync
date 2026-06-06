@@ -1,13 +1,6 @@
 from fastapi import FastAPI
-from api.api import api_router
+from api.routes import router
 
 app = FastAPI()
 
-app.include_router(
-    api_router,
-    prefix="/api"
-)
-
-@app.get("/")
-def home():
-    return {"message": "HallSync API"}
+app.include_router(router)
