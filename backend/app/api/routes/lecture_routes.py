@@ -36,7 +36,7 @@ async def create_lecture(lecture: LectureCreate):
 @router.get("")
 async def get_lectures():
     cursor = lectures_collection.find()
-    lectures = await cursor.to_list()
+    lectures = await cursor.to_list(length=100)
     
     # Convert ObjectId to string for JSON serialization
     for lecture in lectures:
