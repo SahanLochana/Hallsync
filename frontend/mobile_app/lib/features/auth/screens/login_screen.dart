@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'forgot_password_screen.dart';
+import '../../../screens/lecturer/lecturer_dashboard.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -62,9 +63,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _handleLogin() {
     if (_formKey.currentState!.validate()) {
-      // TODO: Add Firebase login here later
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Logging in...')),
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const LecturerDashboard(),
+        ),
       );
     }
   }

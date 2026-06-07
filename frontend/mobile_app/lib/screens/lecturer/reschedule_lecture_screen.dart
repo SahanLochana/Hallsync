@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import '../../models/lecture_model.dart';
 import "../../services/lecture_service.dart";
 
-class CreateLectureScreen extends StatefulWidget {
-  final void Function(Lecture) onCreated;
+class RescheduleLectureScreen extends StatefulWidget {
+  final Lecture lecture;
 
-  const CreateLectureScreen({super.key, required this.onCreated});
+  const RescheduleLectureScreen({super.key, required this.lecture});
 
   @override
-  State<CreateLectureScreen> createState() => _CreateLectureScreenState();
+  State<RescheduleLectureScreen> createState() => _RescheduleLectureScreenState();
 }
 
-class _CreateLectureScreenState extends State<CreateLectureScreen> {
+class _RescheduleLectureScreenState extends State<RescheduleLectureScreen> {
   final _formKey = GlobalKey<FormState>();
 
   String? _selectedModule;
@@ -45,6 +45,25 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
     'Lecture Room 101',
     'Lab A',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Pre-fill from existing lecture
+    _selectedVenue = widget.lecture.venue;
+    _selectedDate = widget.lecture.date;
+    _startTime = widget.lecture.startTime;
+    _endTime = widget.lecture.endTime;
+    
+    // Attempt to extract module and batch
+    if (widget.lecture.title.contains(' for ')) {
+      final parts = widget.lecture.title.split(' for ');
+      if (parts.length == 2) {
+        if (_modules.contains(parts[0])) _selectedModule = parts[0];
+        if (_batches.contains(parts[1])) _selectedBatch = parts[1];
+      }
+    }
+  }
 
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
@@ -94,7 +113,6 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
       _endTime!.hour, _endTime!.minute,
     );
 
-    // Don't check if end time is before start time
     if (!endDateTime.isAfter(startDateTime)) {
       setState(() {
         _isCheckingAvailability = false;
@@ -107,6 +125,7 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
       hallId: _selectedVenue!,
       startTime: startDateTime,
       endTime: endDateTime,
+      excludeLectureId: widget.lecture.id,
     );
 
     if (mounted) {
@@ -145,34 +164,24 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
     setState(() => _isSubmitting = true);
 
     try {
-      final lectureId = await LectureService.createLecture(
+      final success = await LectureService.updateLecture(
+        lectureId: widget.lecture.id,
         title: '$_selectedModule for $_selectedBatch',
         description: '',
         lecturerId: 'lecturer123',
         hallId: _selectedVenue!,
         startTime: startDateTime,
         endTime: endDateTime,
-        capacity: 30, // Default capacity since it's removed from UI
+        capacity: 30,
       );
 
-      if (lectureId != null) {
-        widget.onCreated(
-          Lecture(
-            id: lectureId,
-            title: '$_selectedModule for $_selectedBatch',
-            subject: _selectedModule!,
-            venue: _selectedVenue!,
-            date: _selectedDate!,
-            startTime: _startTime!,
-            endTime: _endTime!,
-            description: '',
-            tags: [],
-          ),
-        );
-        Navigator.pop(context);
-        _showSnack('Lecture Created successfully!');
+      if (success) {
+        if (mounted) {
+          _showSnack('Lecture Rescheduled successfully!');
+          Navigator.pop(context, true); // Return true to indicate success
+        }
       } else {
-        _showSnack('Failed to create lecture. Please try again.');
+        _showSnack('Failed to reschedule lecture. Please try again.');
       }
     } catch (e) {
       _showSnack('Error: ${e.toString()}');
@@ -209,7 +218,7 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'Create New Lecture',
+          'Reschedule Lecture',
           style: TextStyle(
             color: Color(0xFF1E293B),
             fontSize: 18,
@@ -431,7 +440,7 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
                   child: _isSubmitting
                       ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                       : const Text(
-                          'Save Lecture',
+                          'Update Lecture',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,

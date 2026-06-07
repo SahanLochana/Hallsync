@@ -10,3 +10,9 @@ class LectureCreate(BaseModel):
     start_time: datetime
     end_time: datetime
     capacity: int
+
+class AvailabilityCheck(BaseModel):
+    hall_id: str
+    start_time: datetime
+    end_time: datetime
+    exclude_lecture_id: Optional[str] = None

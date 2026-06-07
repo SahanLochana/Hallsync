@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../models/lecture_model.dart';
 import 'create_lecture_screen.dart';
+import 'lecture_detail_screen.dart';
+import 'my_lectures_screen.dart';
+import '../../services/lecture_service.dart';
 
 class LecturerDashboard extends StatefulWidget {
   const LecturerDashboard({super.key});
@@ -10,38 +13,45 @@ class LecturerDashboard extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<LecturerDashboard> {
-  final List<Lecture> _lectures = [
-    Lecture(
-      title: 'Advanced Mathematics',
-      subject: 'Mathematics',
-      venue: 'Mini Auditorium',
-      date: DateTime.now(),
-      startTime: const TimeOfDay(hour: 8, minute: 0),
-      endTime: const TimeOfDay(hour: 10, minute: 0),
-      description: '',
-      tags: [],
-    ),
-    Lecture(
-      title: 'Advanced Mathematics',
-      subject: 'Mathematics',
-      venue: 'Mini Auditorium',
-      date: DateTime.now(),
-      startTime: const TimeOfDay(hour: 8, minute: 0),
-      endTime: const TimeOfDay(hour: 10, minute: 0),
-      description: '',
-      tags: [],
-    ),
-    Lecture(
-      title: 'Advanced Mathematics',
-      subject: 'Mathematics',
-      venue: 'Mini Auditorium',
-      date: DateTime.now(),
-      startTime: const TimeOfDay(hour: 8, minute: 0),
-      endTime: const TimeOfDay(hour: 10, minute: 0),
-      description: '',
-      tags: [],
-    ),
-  ];
+  List<Lecture> _lectures = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchLectures();
+  }
+
+  Future<void> _fetchLectures() async {
+    try {
+      final data = await LectureService.getLectures();
+      setState(() {
+        _lectures = data.map((json) {
+          return Lecture(
+            id: json['_id'] ?? '',
+            title: json['title'] ?? '',
+            subject: 'Unknown', // Backend doesn't store subject yet, hardcoding for now
+            venue: json['hall_id'] ?? '',
+            date: DateTime.parse(json['start_time']),
+            startTime: TimeOfDay.fromDateTime(DateTime.parse(json['start_time'])),
+            endTime: TimeOfDay.fromDateTime(DateTime.parse(json['end_time'])),
+            description: json['description'] ?? '',
+            tags: [], // Tags aren't saved to backend currently
+          );
+        }).toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load lectures: $e')),
+        );
+      }
+    }
+  }
 
   void _onLectureCreated(Lecture lecture) {
     setState(() => _lectures.insert(0, lecture));
@@ -224,7 +234,14 @@ class _HomeScreenState extends State<LecturerDashboard> {
               ),
             ),
             TextButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const MyLecturesScreen(),
+                  ),
+                );
+              },
               style: TextButton.styleFrom(
                 padding: EdgeInsets.zero,
                 minimumSize: Size.zero,
@@ -242,7 +259,14 @@ class _HomeScreenState extends State<LecturerDashboard> {
           ],
         ),
         const SizedBox(height: 12),
-        if (_lectures.isEmpty)
+        if (_isLoading)
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 32),
+              child: CircularProgressIndicator(color: Color(0xFF283593)),
+            ),
+          )
+        else if (_lectures.isEmpty)
           Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 32),
@@ -274,8 +298,20 @@ class _HomeScreenState extends State<LecturerDashboard> {
   }
 
   Widget _buildLectureCard(Lecture lecture) {
-    return Container(
-      padding: const EdgeInsets.all(14),
+    return GestureDetector(
+      onTap: () async {
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => LectureDetailScreen(lecture: lecture),
+          ),
+        );
+        if (result == true) {
+          _fetchLectures();
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: const Color(0xFF283593),
         borderRadius: BorderRadius.circular(16),
@@ -368,6 +404,7 @@ class _HomeScreenState extends State<LecturerDashboard> {
           ),
           const Icon(Icons.chevron_right, color: Colors.white54, size: 22),
         ],
+        ),
       ),
     );
   }

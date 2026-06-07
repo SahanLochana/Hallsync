@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class Lecture {
+  final String id;
   final String title;
   final String subject;
   final String venue;
@@ -11,6 +12,7 @@ class Lecture {
   final List<String> tags;
 
   Lecture({
+    required this.id,
     required this.title,
     required this.subject,
     required this.venue,
