@@ -24,14 +24,14 @@
 /** Initial filter/search state */
 export const initialUserFilterState = {
   search: "",
-  role: "All",
+  role: "Student",
 };
 
 /** Available role filter options */
-export const ROLE_OPTIONS = ["All", "Lecturer", "Student"];
+export const ROLE_OPTIONS = ["Student","Lecturer"];
 
 /** Role options for form selects (no "All") */
-export const ROLE_FORM_OPTIONS = ["Lecturer", "Student"];
+export const ROLE_FORM_OPTIONS = ["Student","Lecturer"];
 
 /** Sample user data — replace with API response */
 export const SAMPLE_USERS = [

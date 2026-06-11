@@ -53,7 +53,7 @@ export function filterUsers(users, search, role) {
       !q ||
       u.name.toLowerCase().includes(q) ||
       u.universityId.toLowerCase().includes(q);
-    const matchRole = role === "All" || u.role === role;
+    const matchRole = u.role === role;
     return matchSearch && matchRole;
   });
 }

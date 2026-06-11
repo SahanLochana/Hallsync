@@ -135,7 +135,7 @@ export default function UsersPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError]         = useState(null);
   const [search, setSearch]       = useState("");
-  const [roleFilter, setRoleFilter] = useState("All");
+  const [roleFilter, setRoleFilter] = useState("Student");
 
   // Modals
   const [showAdd, setShowAdd]         = useState(false);
