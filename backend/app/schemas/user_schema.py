@@ -3,7 +3,7 @@ from typing import Literal
 
 
 class User(BaseModel):
-    uid: str
+    universityId: str
     name: str
     email: str
     department: str
@@ -17,10 +17,10 @@ class UsersResponse(BaseModel):
 
 
 class UserUpdate(BaseModel):
+    universityId: str | None = None
     name: str | None = None
     email: str | None = None
     department: str | None = None
     faculty: str | None = None
     role: Literal["student", "lecturer", "admin"] | None = None
     academicYear: str | None = None
-

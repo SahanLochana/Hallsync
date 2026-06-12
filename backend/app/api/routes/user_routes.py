@@ -18,15 +18,18 @@ async def get_users():
         )
 
 
-@router.get("/{uid}", response_model=User)
-async def get_user(uid: str):
+# NOTE: Using {university_id:path} so that IDs containing "/" (e.g. "SE/2021/001")
+# are captured as a single parameter rather than split into multiple path segments.
+
+@router.get("/{university_id:path}", response_model=User)
+async def get_user(university_id: str):
     user_service = UserService()
     try:
-        user = await user_service.get_user(uid)
+        user = await user_service.get_user(university_id)
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User with uid {uid} not found"
+                detail=f"User with universityId '{university_id}' not found"
             )
         return user
     except HTTPException:
@@ -38,26 +41,25 @@ async def get_user(uid: str):
         )
 
 
-@router.put("/{uid}", response_model=User)
-async def update_user(uid: str, update_data: UserUpdate):
+@router.put("/{university_id:path}", response_model=User)
+async def update_user(university_id: str, update_data: UserUpdate):
     user_service = UserService()
     try:
-        # Exclude unset fields from the update payload
         update_dict = update_data.model_dump(exclude_unset=True)
         if not update_dict:
-            existing_user = await user_service.get_user(uid)
+            existing_user = await user_service.get_user(university_id)
             if not existing_user:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"User with uid {uid} not found"
+                    detail=f"User with universityId '{university_id}' not found"
                 )
             return existing_user
-        
-        updated_user = await user_service.update_user(uid, update_dict)
+
+        updated_user = await user_service.update_user(university_id, update_dict)
         if not updated_user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User with uid {uid} not found"
+                detail=f"User with universityId '{university_id}' not found"
             )
         return updated_user
     except HTTPException:
@@ -69,17 +71,17 @@ async def update_user(uid: str, update_data: UserUpdate):
         )
 
 
-@router.delete("/{uid}", status_code=status.HTTP_200_OK)
-async def delete_user(uid: str):
+@router.delete("/{university_id:path}", status_code=status.HTTP_200_OK)
+async def delete_user(university_id: str):
     user_service = UserService()
     try:
-        success = await user_service.delete_user(uid)
+        success = await user_service.delete_user(university_id)
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User with uid {uid} not found"
+                detail=f"User with universityId '{university_id}' not found"
             )
-        return {"status": "success", "message": f"User with uid {uid} deleted successfully"}
+        return {"status": "success", "message": f"User '{university_id}' deleted successfully"}
     except HTTPException:
         raise
     except Exception as e:
@@ -88,3 +90,22 @@ async def delete_user(uid: str):
             detail=f"Failed to delete user: {str(e)}"
         )
 
+
+@router.post("/", response_model=User, status_code=status.HTTP_201_CREATED)
+async def create_user(user: User):
+    user_service = UserService()
+    try:
+        existing = await user_service.get_user(user.universityId)
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"User with universityId '{user.universityId}' already exists",
+            )
+        return await user_service.create_user(user.model_dump())
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create user: {str(e)}",
+        )

@@ -16,8 +16,6 @@
  *   department:   string  — e.g. "Software Engineering"
  *   faculty:      string  — e.g. "Computing"
  *   academicYear: string  — e.g. "3rd Year" (only for Student)
- *   isActive:     boolean
- *   createdAt:    string  — formatted date string
  * }
  */
 
@@ -43,8 +41,6 @@ export const SAMPLE_USERS = [
     role: "Lecturer",
     department: "Software Engineering",
     faculty: "Computing",
-    isActive: true,
-    createdAt: "2025.09.01",
   },
   {
     id: "u002",
@@ -55,8 +51,6 @@ export const SAMPLE_USERS = [
     department: "Software Engineering",
     faculty: "Computing",
     academicYear: "2nd Year",
-    isActive: true,
-    createdAt: "2026.01.12",
   },
   {
     id: "u003",
@@ -67,8 +61,6 @@ export const SAMPLE_USERS = [
     department: "Software Engineering",
     faculty: "Computing",
     academicYear: "2nd Year",
-    isActive: false,
-    createdAt: "2026.01.12",
   },
   {
     id: "u004",
@@ -79,8 +71,6 @@ export const SAMPLE_USERS = [
     department: "Computer Science",
     faculty: "Computing",
     academicYear: "1st Year",
-    isActive: true,
-    createdAt: "2026.02.03",
   },
   {
     id: "u005",
@@ -90,8 +80,6 @@ export const SAMPLE_USERS = [
     role: "Lecturer",
     department: "Computer Science",
     faculty: "Computing",
-    isActive: true,
-    createdAt: "2025.08.15",
   },
   {
     id: "u006",
@@ -102,8 +90,6 @@ export const SAMPLE_USERS = [
     department: "Information Technology",
     faculty: "Computing",
     academicYear: "1st Year",
-    isActive: false,
-    createdAt: "2026.03.20",
   },
   {
     id: "u007",
@@ -114,8 +100,6 @@ export const SAMPLE_USERS = [
     department: "Software Engineering",
     faculty: "Computing",
     academicYear: "3rd Year",
-    isActive: true,
-    createdAt: "2025.11.05",
   },
 ];
 

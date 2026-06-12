@@ -24,7 +24,7 @@ const EMPTY_FORM = {
   department: "",
   faculty: "",
   academicYear: "",
-  isActive: true,
+
 };
 
 // ── Field wrapper — defined at module level to avoid React re-mount on rerender ─
@@ -189,24 +189,7 @@ export default function AddUserModal({ isOpen, onClose, onConfirm }) {
               </Field>
             )}
 
-            {/* Active Status */}
-            <div className="flex items-center justify-between bg-[#f8fafc] border border-[#e2e8f0] rounded-xl px-4 py-3">
-              <span className="text-[#334155] font-semibold text-sm">Account Active</span>
-              <button
-                id="add-user-active-toggle"
-                type="button"
-                onClick={() => set("isActive", !form.isActive)}
-                className={`relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#1e3b8a]/30 ${
-                  form.isActive ? "bg-[#1e3b8a]" : "bg-[#cbd5e1]"
-                }`}
-              >
-                <span
-                  className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${
-                    form.isActive ? "translate-x-5" : "translate-x-0"
-                  }`}
-                />
-              </button>
-            </div>
+
           </div>
 
           {/* Footer */}

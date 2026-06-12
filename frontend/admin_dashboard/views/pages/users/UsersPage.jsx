@@ -29,7 +29,6 @@ import {
   filterUsers,
   addUser,
   editUser,
-  importUsersFromCsv,
 } from "@/controllers/userController";
 
 // ── Role badge colours ─────────────────────────────────────────────────────────
@@ -37,22 +36,6 @@ const ROLE_BADGE = {
   Lecturer: "bg-purple-100 text-purple-700",
   Student:  "bg-sky-100 text-sky-700",
 };
-
-// ── Status badge ───────────────────────────────────────────────────────────────
-function StatusBadge({ isActive }) {
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
-        isActive
-          ? "bg-emerald-100 text-emerald-700"
-          : "bg-[#f1f5f9] text-[#94a3b8]"
-      }`}
-    >
-      <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-emerald-500" : "bg-[#94a3b8]"}`} />
-      {isActive ? "Active" : "Inactive"}
-    </span>
-  );
-}
 
 // ── Small role badge ───────────────────────────────────────────────────────────
 function RoleBadge({ role }) {
@@ -81,10 +64,6 @@ function UserRow({ user, onView }) {
       <td className="py-4 px-3">
         <RoleBadge role={user.role} />
       </td>
-      <td className="py-4 px-3">
-        <StatusBadge isActive={user.isActive} />
-      </td>
-      <td className="py-4 pl-3 pr-5 text-[#94a3b8] text-xs">{user.createdAt}</td>
       <td className="py-4 pl-3 pr-5 text-right">
         <button
           id={`btn-view-user-${user.id}`}
@@ -161,8 +140,10 @@ export default function UsersPage() {
     setViewTarget(null);
   }
 
-  async function handleImport(parsedRows) {
-    await importUsersFromCsv(parsedRows, users, setUsers);
+  async function handleImport(successUsers) {
+    if (successUsers && successUsers.length > 0) {
+      setUsers((prev) => [...successUsers, ...prev]);
+    }
     setShowImport(false);
   }
 
@@ -182,8 +163,8 @@ export default function UsersPage() {
                          text-[#334155] font-semibold text-sm bg-white
                          hover:bg-[#f8fafc] hover:border-[#1e3b8a]/40 transition-all"
             >
-              <Upload size={15} strokeWidth={2.5} />
-              Import CSV
+               <Upload size={15} strokeWidth={2.5} />
+              Import CSV/Excel
             </button>
             <button
               id="btn-add-user"
@@ -276,12 +257,6 @@ export default function UsersPage() {
                     <th className="py-3 px-3 text-[rgba(0,0,0,0.5)] font-semibold text-xs uppercase tracking-wide">
                       Role
                     </th>
-                    <th className="py-3 px-3 text-[rgba(0,0,0,0.5)] font-semibold text-xs uppercase tracking-wide">
-                      Status
-                    </th>
-                    <th className="py-3 pl-3 pr-5 text-[rgba(0,0,0,0.5)] font-semibold text-xs uppercase tracking-wide whitespace-nowrap">
-                      Created
-                    </th>
                     <th className="py-3 pl-3 pr-5 text-[rgba(0,0,0,0.5)] font-semibold text-xs uppercase tracking-wide text-right">
                       Actions
                     </th>
@@ -292,7 +267,7 @@ export default function UsersPage() {
                 <tbody>
                   {filteredUsers.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-16 text-center text-[#94a3b8] text-sm">
+                      <td colSpan={4} className="py-16 text-center text-[#94a3b8] text-sm">
                         {search || roleFilter !== "All"
                           ? "No users match your search."
                           : "No users found."}
