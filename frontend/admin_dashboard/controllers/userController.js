@@ -27,8 +27,9 @@ export async function fetchUsers(setUsers, setIsLoading, setError) {
   setIsLoading(true);
   setError(null);
   try {
-    // TODO: const data = await userService.getAll();
-    setUsers(SAMPLE_USERS);
+    const response = await fetch("http://localhost:8000/api/users/");
+    const users = await response.json();
+    setUsers(users);
   } catch (err) {
     setError(err?.message || "Failed to load users.");
   } finally {
