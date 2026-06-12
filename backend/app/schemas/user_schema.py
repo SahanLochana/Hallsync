@@ -24,3 +24,30 @@ class UserUpdate(BaseModel):
     faculty: str | None = None
     role: Literal["student", "lecturer", "admin"] | None = None
     academicYear: str | None = None
+
+
+# ── Bulk import schemas ────────────────────────────────────────────────────────
+
+
+class BulkUserRequest(BaseModel):
+    """Request body for POST /api/users/bulk"""
+
+    users: list[User]
+
+
+class BulkFailedEntry(BaseModel):
+    index: int  # 0-based index in the original request list
+    universityId: str
+    reason: str
+
+
+class BulkImportSummary(BaseModel):
+    total: int
+    succeeded: int
+    failed: int
+
+
+class BulkImportResponse(BaseModel):
+    success: list[User]
+    failed: list[BulkFailedEntry]
+    summary: BulkImportSummary

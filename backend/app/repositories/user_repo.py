@@ -49,3 +49,44 @@ class UserRepo:
 
         await self.user_collection.insert_one(db_user)
         return self._format_user(db_user)
+
+    async def bulk_create_users(self, users: list[dict]) -> dict:
+        """
+        Attempt to insert each user individually so we can track per-row success/failure.
+        Returns { success: [...formatted docs], failed: [{index, universityId, reason}] }
+        """
+        success = []
+        failed = []
+
+        for idx, user_data in enumerate(users):
+            db_user = user_data.copy()
+            university_id = db_user.get("universityId", "")
+
+            # Normalise role to Title-case for storage
+            if "role" in db_user and isinstance(db_user["role"], str):
+                db_user["role"] = db_user["role"].capitalize()
+
+            try:
+                # Check for duplicate universityId before inserting
+                existing = await self.user_collection.find_one(
+                    {"universityId": university_id}
+                )
+                if existing:
+                    failed.append({
+                        "index": idx,
+                        "universityId": university_id,
+                        "reason": f"User with universityId '{university_id}' already exists",
+                    })
+                    continue
+
+                await self.user_collection.insert_one(db_user)
+                success.append(self._format_user(db_user))
+
+            except Exception as exc:
+                failed.append({
+                    "index": idx,
+                    "universityId": university_id,
+                    "reason": str(exc),
+                })
+
+        return {"success": success, "failed": failed}

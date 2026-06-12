@@ -19,3 +19,6 @@ class UserService:
 
     async def create_user(self, user_data: dict):
         return await self.user_repo.create_user(user_data)
+
+    async def bulk_create_users(self, users: list[dict]) -> dict:
+        return await self.user_repo.bulk_create_users(users)
