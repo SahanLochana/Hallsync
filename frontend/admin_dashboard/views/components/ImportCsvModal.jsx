@@ -82,7 +82,10 @@ export default function ImportCsvModal({ isOpen, onClose, onImport }) {
   // ── file handling ─────────────────────────────────────────────────────────
 
   async function processFile(file) {
-    if (!file || (!file.name.endsWith(".csv") && !file.name.endsWith(".xlsx"))) {
+    if (
+      !file ||
+      (!file.name.endsWith(".csv") && !file.name.endsWith(".xlsx"))
+    ) {
       alert("Please upload a valid .csv or .xlsx spreadsheet file.");
       return;
     }
@@ -134,7 +137,7 @@ export default function ImportCsvModal({ isOpen, onClose, onImport }) {
       role: row.role.toLowerCase(),
       department: row.department,
       faculty: row.faculty,
-      academicYear: row.role === "Student" ? (row.academicYear || null) : null,
+      academicYear: row.role === "Student" ? row.academicYear || null : null,
     }));
 
     try {
@@ -156,7 +159,9 @@ export default function ImportCsvModal({ isOpen, onClose, onImport }) {
             const wasQueued = rowsToUpload.some(
               (q) => q._rowIndex === r._rowIndex,
             );
-            return wasQueued ? { ...r, status: "failed", errorDetail: reason } : r;
+            return wasQueued
+              ? { ...r, status: "failed", errorDetail: reason }
+              : r;
           }),
         );
         return;
@@ -203,7 +208,9 @@ export default function ImportCsvModal({ isOpen, onClose, onImport }) {
           const wasQueued = rowsToUpload.some(
             (q) => q._rowIndex === r._rowIndex,
           );
-          return wasQueued ? { ...r, status: "failed", errorDetail: reason } : r;
+          return wasQueued
+            ? { ...r, status: "failed", errorDetail: reason }
+            : r;
         }),
       );
     } finally {
@@ -260,7 +267,9 @@ export default function ImportCsvModal({ isOpen, onClose, onImport }) {
                 </button>
               )}
               <Upload size={18} strokeWidth={2.5} />
-              {step === "upload" ? "Import Users from Spreadsheet" : "Preview Import"}
+              {step === "upload"
+                ? "Import Users from Spreadsheet"
+                : "Preview Import"}
             </h2>
             <button
               id="btn-import-csv-close"
@@ -279,14 +288,18 @@ export default function ImportCsvModal({ isOpen, onClose, onImport }) {
             <div className="p-6 flex flex-col gap-5">
               {/* Drag & Drop zone */}
               <div
-                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDragging(true);
+                }}
                 onDragLeave={() => setIsDragging(false)}
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
                 className={`border-2 border-dashed rounded-2xl flex flex-col items-center justify-center gap-3 py-10 cursor-pointer transition-all
-                  ${isDragging
-                    ? "border-[#1e3b8a] bg-[#1e3b8a]/5"
-                    : "border-[#e2e8f0] hover:border-[#1e3b8a]/50 hover:bg-[#f8fafc]"
+                  ${
+                    isDragging
+                      ? "border-[#1e3b8a] bg-[#1e3b8a]/5"
+                      : "border-[#e2e8f0] hover:border-[#1e3b8a]/50 hover:bg-[#f8fafc]"
                   }`}
               >
                 <div
@@ -303,7 +316,9 @@ export default function ImportCsvModal({ isOpen, onClose, onImport }) {
                   <p className="text-[#334155] font-semibold text-sm">
                     Drag &amp; drop your CSV or Excel file here
                   </p>
-                  <p className="text-[#94a3b8] text-xs mt-1">or click to browse</p>
+                  <p className="text-[#94a3b8] text-xs mt-1">
+                    or click to browse
+                  </p>
                 </div>
                 <input
                   ref={fileInputRef}
@@ -322,9 +337,15 @@ export default function ImportCsvModal({ isOpen, onClose, onImport }) {
                   Expected Spreadsheet Format
                 </p>
                 <code className="text-xs text-[#64748b] leading-5 break-all">
-                  universityId,name,email,role,department,faculty,academicYear<br />
-                  SE/2021/002,Sithumi Fernando,sithumi@uni.ac.lk,Student,Software Engineering,Computing,2nd Year<br />
-                  LEC/001,Dr. Ravi,ravi@uni.ac.lk,Lecturer,Software Engineering,Computing,<br />
+                  universityId,name,email,role,department,faculty,academicYear
+                  <br />
+                  SE/2021/002,Sithumi
+                  Fernando,sithumi@uni.ac.lk,Student,Software
+                  Engineering,Computing,2nd Year
+                  <br />
+                  LEC/001,Dr. Ravi,ravi@uni.ac.lk,Lecturer,Software
+                  Engineering,Computing,
+                  <br />
                 </code>
                 <p className="text-[#94a3b8] text-xs">
                   <strong>role</strong> must be Lecturer or Student.{" "}
@@ -349,11 +370,14 @@ export default function ImportCsvModal({ isOpen, onClose, onImport }) {
                     {isImporting && (
                       <span className="flex items-center gap-1.5 text-xs font-semibold text-[#1e3b8a]">
                         <Loader2 size={13} className="animate-spin" />
-                        Uploading {totalToImport} user{totalToImport !== 1 ? "s" : ""}…
+                        Uploading {totalToImport} user
+                        {totalToImport !== 1 ? "s" : ""}…
                       </span>
                     )}
                   </div>
-                  <span className="text-[#94a3b8] text-xs font-semibold">{fileName}</span>
+                  <span className="text-[#94a3b8] text-xs font-semibold">
+                    {fileName}
+                  </span>
                 </div>
 
                 {/* Result metrics — shown after import finishes */}
@@ -369,7 +393,8 @@ export default function ImportCsvModal({ isOpen, onClose, onImport }) {
                     )}
                     {skippedCount > 0 && (
                       <span className="text-red-400/80 flex items-center gap-1">
-                        <AlertTriangle size={13} /> {skippedCount} skipped (invalid)
+                        <AlertTriangle size={13} /> {skippedCount} skipped
+                        (invalid)
                       </span>
                     )}
                   </div>
@@ -383,7 +408,8 @@ export default function ImportCsvModal({ isOpen, onClose, onImport }) {
                     </span>
                     {skippedCount > 0 && (
                       <span className="text-red-400/80 flex items-center gap-1">
-                        <AlertTriangle size={13} /> {skippedCount} will be skipped (invalid)
+                        <AlertTriangle size={13} /> {skippedCount} will be
+                        skipped (invalid)
                       </span>
                     )}
                   </div>
@@ -412,7 +438,7 @@ export default function ImportCsvModal({ isOpen, onClose, onImport }) {
                   <tbody>
                     {importRows.map((row, i) => {
                       let rowCls =
-                        "border-b border-[#e2e8f0] hover:bg-[#f8fafc] transition-colors";
+                        "border-b border-[#e2e8f0] hover:bg-[#f8fafc] text-[#1e3b8a]";
                       if (row.status === "success")
                         rowCls =
                           "border-b border-emerald-100 bg-emerald-50/60 text-emerald-800 font-medium";
@@ -427,17 +453,23 @@ export default function ImportCsvModal({ isOpen, onClose, onImport }) {
                         <tr key={i} className={rowCls}>
                           <td className="px-3 py-2.5 font-medium whitespace-nowrap">
                             {row.universityId || (
-                              <span className="text-red-400 italic">missing</span>
+                              <span className="text-red-400 italic">
+                                missing
+                              </span>
                             )}
                           </td>
                           <td className="px-3 py-2.5">
                             {row.name || (
-                              <span className="text-red-400 italic">missing</span>
+                              <span className="text-red-400 italic">
+                                missing
+                              </span>
                             )}
                           </td>
                           <td className="px-3 py-2.5">
                             {row.role || (
-                              <span className="text-red-400 italic">invalid</span>
+                              <span className="text-red-400 italic">
+                                invalid
+                              </span>
                             )}
                           </td>
                           <td className="px-3 py-2.5 font-semibold">
@@ -492,12 +524,15 @@ export default function ImportCsvModal({ isOpen, onClose, onImport }) {
                 {step === "preview" && (
                   <button
                     id="btn-import-csv-confirm"
-                    onClick={() => totalToImport > 0 && startImport(importableRows)}
+                    onClick={() =>
+                      totalToImport > 0 && startImport(importableRows)
+                    }
                     disabled={totalToImport === 0}
                     className={`px-5 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-1.5 transition-all shadow-[0_4px_12px_rgba(30,59,138,0.25)]
-                      ${totalToImport > 0
-                        ? "bg-[#1e3b8a] text-white hover:bg-[#162d6b] active:scale-[0.98]"
-                        : "bg-[#e2e8f0] text-[#94a3b8] cursor-not-allowed"
+                      ${
+                        totalToImport > 0
+                          ? "bg-[#1e3b8a] text-white hover:bg-[#162d6b] active:scale-[0.98]"
+                          : "bg-[#e2e8f0] text-[#94a3b8] cursor-not-allowed"
                       }`}
                   >
                     <Upload size={15} strokeWidth={2.5} />
