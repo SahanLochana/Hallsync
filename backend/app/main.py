@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from app.api.api import api_router
 from fastapi.middleware.cors import CORSMiddleware
+from app.core.database import Database
 
 app = FastAPI()
 
@@ -17,6 +18,12 @@ app.add_middleware(
 )
 
 app.include_router(api_router, prefix="/api")
+
+
+@app.on_event("startup")
+async def startup():
+    db = Database()
+    await db.create_index()
 
 
 @app.get("/")

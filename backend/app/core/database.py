@@ -10,8 +10,12 @@ class Database:
     # async def get_db(self):
     #     return self.database
 
+    async def create_index(self):
+        user_collection = self.get_collection(settings.USER_COLLECTION)
+        await user_collection.create_index("universityId", unique=True)
+
     def get_collection(self, name: str):
         return self.database[name]
 
-    def close(self):
-        self.client.close()
+    async def close(self):
+        await self.client.close()
