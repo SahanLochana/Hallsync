@@ -112,6 +112,9 @@ export default function ManageHallModal({ isOpen, hall, onClose, onSave, onRemov
   const [isSaving, setIsSaving]               = useState(false);
   const [isRemoving, setIsRemoving]           = useState(false);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+  
+  const [modalError, setModalError] = useState(null);
+  const [successMsg, setSuccessMsg] = useState(null);
 
   // Sync form when hall changes or modal opens
   useEffect(() => {
@@ -124,6 +127,8 @@ export default function ManageHallModal({ isOpen, hall, onClose, onSave, onRemov
         longitude: hall.longitude ?? "",
       });
       setErrors({});
+      setModalError(null);
+      setSuccessMsg(null);
     }
   }, [isOpen, hall]);
 
@@ -132,6 +137,8 @@ export default function ManageHallModal({ isOpen, hall, onClose, onSave, onRemov
   function set(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: undefined }));
+    setModalError(null);
+    setSuccessMsg(null);
   }
 
   async function handleSave() {
@@ -150,18 +157,29 @@ export default function ManageHallModal({ isOpen, hall, onClose, onSave, onRemov
     if (Object.keys(fe).length > 0) { setErrors(fe); return; }
 
     setIsSaving(true);
+    setModalError(null);
+    setSuccessMsg(null);
     try {
       await onSave(hall.hallId, form);
+      setSuccessMsg("Changes saved successfully!");
+      // Optionally clear success message after 3 seconds
+      setTimeout(() => setSuccessMsg(null), 3000);
+    } catch (err) {
+      setModalError(err.message || "Failed to save hall.");
     } finally {
       setIsSaving(false);
     }
   }
 
   async function handleConfirmRemove() {
-    setShowRemoveConfirm(false);
     setIsRemoving(true);
+    setModalError(null);
     try {
       await onRemove(hall.hallId);
+      setShowRemoveConfirm(false);
+    } catch (err) {
+      setModalError(err.message || "Failed to remove hall.");
+      setShowRemoveConfirm(false);
     } finally {
       setIsRemoving(false);
     }
@@ -206,6 +224,19 @@ export default function ManageHallModal({ isOpen, hall, onClose, onSave, onRemov
 
           {/* ── Body ── */}
           <div className="p-6 flex flex-col gap-4 overflow-y-auto max-h-[70vh]">
+            
+            {modalError && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-red-600 text-sm flex items-center gap-2">
+                <AlertTriangle size={16} className="shrink-0" />
+                <span>{modalError}</span>
+              </div>
+            )}
+            {successMsg && (
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-emerald-700 text-sm flex items-center gap-2">
+                <CheckCircle2 size={16} className="shrink-0" />
+                <span>{successMsg}</span>
+              </div>
+            )}
 
             {/* ── Hall Information ── */}
             <SectionHeading>Hall Information</SectionHeading>
@@ -220,6 +251,7 @@ export default function ManageHallModal({ isOpen, hall, onClose, onSave, onRemov
                 className={`${inputCls} ${errors.name ? "border-red-400" : ""}`}
                 value={form.name ?? ""}
                 onChange={(e) => set("name", e.target.value)}
+                disabled={isSaving}
               />
             </Field>
 
@@ -232,6 +264,7 @@ export default function ManageHallModal({ isOpen, hall, onClose, onSave, onRemov
                 className={`${inputCls} ${errors.capacity ? "border-red-400" : ""}`}
                 value={form.capacity ?? ""}
                 onChange={(e) => set("capacity", e.target.value)}
+                disabled={isSaving}
               />
             </Field>
 
@@ -242,6 +275,7 @@ export default function ManageHallModal({ isOpen, hall, onClose, onSave, onRemov
                 className={inputCls}
                 value={form.availability ? "true" : "false"}
                 onChange={(e) => set("availability", e.target.value === "true")}
+                disabled={isSaving}
               >
                 <option value="true">Available</option>
                 <option value="false">Unavailable</option>
@@ -264,6 +298,7 @@ export default function ManageHallModal({ isOpen, hall, onClose, onSave, onRemov
                 placeholder="e.g. 6.9271"
                 value={form.latitude ?? ""}
                 onChange={(e) => set("latitude", e.target.value)}
+                disabled={isSaving}
               />
             </Field>
 
@@ -277,6 +312,7 @@ export default function ManageHallModal({ isOpen, hall, onClose, onSave, onRemov
                 placeholder="e.g. 79.8612"
                 value={form.longitude ?? ""}
                 onChange={(e) => set("longitude", e.target.value)}
+                disabled={isSaving}
               />
             </Field>
 
@@ -293,7 +329,7 @@ export default function ManageHallModal({ isOpen, hall, onClose, onSave, onRemov
               <button
                 id="btn-manage-hall-remove"
                 onClick={() => setShowRemoveConfirm(true)}
-                disabled={isRemoving}
+                disabled={isSaving || isRemoving}
                 className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-600
                            text-white font-semibold text-xs hover:bg-red-700 active:scale-[0.98]
                            transition-all disabled:opacity-60"
@@ -309,7 +345,8 @@ export default function ManageHallModal({ isOpen, hall, onClose, onSave, onRemov
             <button
               id="btn-manage-hall-cancel"
               onClick={onClose}
-              className="px-5 py-2.5 rounded-xl border border-[#e2e8f0] text-[#334155] font-semibold text-sm hover:bg-white transition-colors"
+              disabled={isSaving}
+              className="px-5 py-2.5 rounded-xl border border-[#e2e8f0] text-[#334155] font-semibold text-sm hover:bg-white transition-colors disabled:opacity-60"
             >
               Cancel
             </button>
@@ -322,7 +359,11 @@ export default function ManageHallModal({ isOpen, hall, onClose, onSave, onRemov
                          transition-all shadow-[0_4px_12px_rgba(30,59,138,0.25)]
                          disabled:opacity-60"
             >
-              <Save size={14} strokeWidth={2.5} />
+              {isSaving ? (
+                <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+              ) : (
+                <Save size={14} strokeWidth={2.5} />
+              )}
               {isSaving ? "Saving…" : "Save Changes"}
             </button>
           </div>
@@ -375,17 +416,23 @@ export default function ManageHallModal({ isOpen, hall, onClose, onSave, onRemov
               <button
                 id="btn-remove-hall-cancel"
                 onClick={() => setShowRemoveConfirm(false)}
-                className="px-5 py-2.5 rounded-xl border border-[#e2e8f0] text-[#334155] font-semibold text-sm hover:bg-[#f8fafc] transition-colors"
+                disabled={isRemoving}
+                className="px-5 py-2.5 rounded-xl border border-[#e2e8f0] text-[#334155] font-semibold text-sm hover:bg-[#f8fafc] transition-colors disabled:opacity-60"
               >
                 Cancel
               </button>
               <button
                 id="btn-remove-hall-confirm"
                 onClick={handleConfirmRemove}
-                className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold text-sm flex items-center gap-1.5 transition-colors"
+                disabled={isRemoving}
+                className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold text-sm flex items-center gap-1.5 transition-colors disabled:opacity-60"
               >
-                <Trash2 size={13} strokeWidth={2.5} />
-                Remove Hall
+                {isRemoving ? (
+                  <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <Trash2 size={13} strokeWidth={2.5} />
+                )}
+                {isRemoving ? "Removing..." : "Remove Hall"}
               </button>
             </div>
           </div>

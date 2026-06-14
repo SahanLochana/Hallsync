@@ -12,7 +12,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { X, DoorOpen } from "lucide-react";
+import { X, DoorOpen, AlertTriangle } from "lucide-react";
 import { validateHallForm, validateLocationForm } from "@/controllers/hallController";
 
 const EMPTY_FORM = {
@@ -53,12 +53,16 @@ function SectionHeading({ children }) {
 export default function AddHallModal({ isOpen, onClose, onConfirm }) {
   const [form, setForm]     = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [modalError, setModalError] = useState(null);
 
   // Reset on open
   useEffect(() => {
     if (isOpen) {
       setForm(EMPTY_FORM);
       setErrors({});
+      setIsSubmitting(false);
+      setModalError(null);
     }
   }, [isOpen]);
 
@@ -67,9 +71,10 @@ export default function AddHallModal({ isOpen, onClose, onConfirm }) {
   function set(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: undefined }));
+    setModalError(null);
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     const formErrors  = validateHallForm(form);
     const locErrors   = validateLocationForm(form);
     const allErrors   = { ...formErrors, ...locErrors };
@@ -77,7 +82,16 @@ export default function AddHallModal({ isOpen, onClose, onConfirm }) {
       setErrors(allErrors);
       return;
     }
-    onConfirm({ ...form });
+    
+    setIsSubmitting(true);
+    setModalError(null);
+    try {
+      await onConfirm({ ...form });
+    } catch (err) {
+      setModalError(err.message || "Failed to add hall.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   const inputCls =
@@ -116,6 +130,13 @@ export default function AddHallModal({ isOpen, onClose, onConfirm }) {
           {/* Body */}
           <div className="p-6 flex flex-col gap-4 overflow-y-auto max-h-[70vh]">
 
+            {modalError && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-red-600 text-sm flex items-center gap-2">
+                <AlertTriangle size={16} className="shrink-0" />
+                <span>{modalError}</span>
+              </div>
+            )}
+
             {/* ── Hall Information ── */}
             <SectionHeading>Hall Information</SectionHeading>
 
@@ -127,6 +148,7 @@ export default function AddHallModal({ isOpen, onClose, onConfirm }) {
                 placeholder="e.g. LH001"
                 value={form.hallId}
                 onChange={(e) => set("hallId", e.target.value)}
+                disabled={isSubmitting}
               />
             </Field>
 
@@ -138,6 +160,7 @@ export default function AddHallModal({ isOpen, onClose, onConfirm }) {
                 placeholder="e.g. New Lecture Hall"
                 value={form.name}
                 onChange={(e) => set("name", e.target.value)}
+                disabled={isSubmitting}
               />
             </Field>
 
@@ -151,6 +174,7 @@ export default function AddHallModal({ isOpen, onClose, onConfirm }) {
                 placeholder="e.g. 200"
                 value={form.capacity}
                 onChange={(e) => set("capacity", e.target.value)}
+                disabled={isSubmitting}
               />
             </Field>
 
@@ -161,6 +185,7 @@ export default function AddHallModal({ isOpen, onClose, onConfirm }) {
                 className={`${inputCls} ${errors.availability ? "border-red-400" : "border-[#e2e8f0]"}`}
                 value={form.availability ? "true" : "false"}
                 onChange={(e) => set("availability", e.target.value === "true")}
+                disabled={isSubmitting}
               >
                 <option value="true">Available</option>
                 <option value="false">Unavailable</option>
@@ -180,6 +205,7 @@ export default function AddHallModal({ isOpen, onClose, onConfirm }) {
                 placeholder="e.g. 6.9271"
                 value={form.latitude}
                 onChange={(e) => set("latitude", e.target.value)}
+                disabled={isSubmitting}
               />
             </Field>
 
@@ -193,6 +219,7 @@ export default function AddHallModal({ isOpen, onClose, onConfirm }) {
                 placeholder="e.g. 79.8612"
                 value={form.longitude}
                 onChange={(e) => set("longitude", e.target.value)}
+                disabled={isSubmitting}
               />
             </Field>
           </div>
@@ -202,19 +229,25 @@ export default function AddHallModal({ isOpen, onClose, onConfirm }) {
             <button
               id="btn-add-hall-cancel"
               onClick={onClose}
-              className="px-5 py-2.5 rounded-xl border border-[#e2e8f0] text-[#334155] font-semibold text-sm hover:bg-[#f8fafc] transition-colors"
+              disabled={isSubmitting}
+              className="px-5 py-2.5 rounded-xl border border-[#e2e8f0] text-[#334155] font-semibold text-sm hover:bg-[#f8fafc] transition-colors disabled:opacity-60"
             >
               Cancel
             </button>
             <button
               id="btn-add-hall-confirm"
               onClick={handleSubmit}
+              disabled={isSubmitting}
               className="px-5 py-2.5 rounded-xl bg-[#1e3b8a] text-white font-semibold text-sm
                          flex items-center gap-1.5 hover:bg-[#162d6b] active:scale-[0.98]
-                         transition-all shadow-[0_4px_12px_rgba(30,59,138,0.25)]"
+                         transition-all shadow-[0_4px_12px_rgba(30,59,138,0.25)] disabled:opacity-60"
             >
-              <DoorOpen size={15} strokeWidth={2.5} />
-              Add Hall
+              {isSubmitting ? (
+                 <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+              ) : (
+                 <DoorOpen size={15} strokeWidth={2.5} />
+              )}
+              {isSubmitting ? "Adding..." : "Add Hall"}
             </button>
           </div>
         </div>
@@ -222,3 +255,4 @@ export default function AddHallModal({ isOpen, onClose, onConfirm }) {
     </>
   );
 }
+

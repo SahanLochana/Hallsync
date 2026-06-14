@@ -197,7 +197,8 @@ export default function HallsPage() {
       await addHall(halls, form, setHalls);
       setShowAdd(false);
     } catch (err) {
-      setActionError(err.message || "Failed to add hall.");
+      // Don't set action error here, let the modal handle it
+      throw err;
     }
   }
 
@@ -208,8 +209,7 @@ export default function HallsPage() {
       // Sync manageTarget with fresh data so modal shows updated values
       setManageTarget(updated);
     } catch (err) {
-      setActionError(err.message || "Failed to update hall.");
-      throw err; // re-throw so modal can reset isSaving
+      throw err; // re-throw so modal can handle it and reset isSaving
     }
   }
 
@@ -219,7 +219,6 @@ export default function HallsPage() {
       await removeHall(halls, hallId, setHalls);
       setManageTarget(null);
     } catch (err) {
-      setActionError(err.message || "Failed to remove hall.");
       throw err;
     }
   }
