@@ -53,8 +53,3 @@ class HallRepo:
     async def delete_hall(self, hall_id: str) -> bool:
         result = await self.hall_collection.delete_one({"hallId": hall_id})
         return result.deleted_count > 0
-
-    # ── Index ──────────────────────────────────────────────────────────────────
-
-    async def create_index(self):
-        await self.hall_collection.create_index("hallId", unique=True)
