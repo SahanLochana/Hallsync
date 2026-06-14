@@ -6,6 +6,7 @@ import uuid
 
 router = APIRouter()
 
+
 @router.post("", response_model=ReportResponse, status_code=status.HTTP_201_CREATED)
 async def create_report(report: ReportCreate):
     report_dict = report.model_dump()
