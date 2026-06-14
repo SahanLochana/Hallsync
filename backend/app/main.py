@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from app.api.api import api_router
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import Database
+from app.repositories.hall_repo import HallRepo
 
 app = FastAPI()
 
@@ -24,6 +25,8 @@ app.include_router(api_router, prefix="/api")
 async def startup():
     db = Database()
     await db.create_index()
+    hall_repo = HallRepo()
+    await hall_repo.create_index()
 
 
 @app.get("/")

@@ -5,6 +5,7 @@ class Settings(BaseSettings):
     MONGODB_URL: str
     DATABASE_NAME: str
     USER_COLLECTION: str
+    HALL_COLLECTION: str
 
     class Config:
         env_file = ".env"
