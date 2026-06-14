@@ -4,6 +4,7 @@ import 'create_lecture_screen.dart';
 import 'lecture_detail_screen.dart';
 import 'my_lectures_screen.dart';
 import '../../services/lecture_service.dart';
+import '../send_report_screen.dart' as send_report_screen;
 
 class LecturerDashboard extends StatefulWidget {
   const LecturerDashboard({super.key});
@@ -169,7 +170,18 @@ class _HomeScreenState extends State<LecturerDashboard> {
               'Manage\nSchedule',
             ),
             const SizedBox(width: 16),
-            _buildActionButton(Icons.campaign_outlined, 'Send\nAlert'),
+            _buildActionButton(
+              Icons.campaign_outlined, 
+              'Send\nAlert',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const send_report_screen.SendReportScreen(),
+                  ),
+                );
+              },
+            ),
           ],
         ),
       ],

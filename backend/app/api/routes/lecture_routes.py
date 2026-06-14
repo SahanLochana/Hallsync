@@ -2,6 +2,7 @@
 # pyrefly: ignore [missing-import]
 from fastapi import APIRouter, HTTPException
 from datetime import datetime
+# pyrefly: ignore [missing-import]
 from bson import ObjectId
 from core.database import lectures_collection
 from models.lecture import LectureCreate, AvailabilityCheck

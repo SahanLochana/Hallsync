@@ -6,6 +6,7 @@ import '../widgets/announcement_card.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/lecture_card.dart';
 import '../widgets/section_header.dart';
+import 'send_report_screen.dart' as send_report_screen;
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -109,6 +110,16 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const send_report_screen.SendReportScreen()),
+          );
+        },
+        backgroundColor: AppColors.primaryBlue,
+        child: const Icon(Icons.report_problem_outlined, color: Colors.white),
       ),
     );
   }
