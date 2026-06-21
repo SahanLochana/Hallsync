@@ -18,11 +18,7 @@ import { Plus, ChevronDown } from "lucide-react";
 import TopHeader from "@/views/components/TopHeader";
 import Sidebar from "@/views/components/Sidebar";
 
-import {
-  initialFilterState,
-  YEAR_OPTIONS,
-  DEPARTMENT_OPTIONS,
-} from "@/models/timetableModel";
+import { initialFilterState, YEAR_OPTIONS, DEPARTMENT_OPTIONS } from "@/models/timetableModel";
 import {
   fetchTimetables,
   filterTimetables,
@@ -67,15 +63,9 @@ function TimetableRow({ timetable, onClick }) {
       <td className="py-4 pl-4 pr-2 font-semibold text-[#0f172a] text-sm group-hover:text-[#1e3b8a] transition-colors">
         {timetable.name}
       </td>
-      <td className="py-4 px-2 text-[rgba(0,0,0,0.7)] text-sm">
-        {timetable.department}
-      </td>
-      <td className="py-4 px-2 text-[rgba(0,0,0,0.7)] text-sm">
-        {timetable.year}
-      </td>
-      <td className="py-4 pl-2 pr-4 text-[rgba(0,0,0,0.7)] text-sm">
-        {timetable.lastModified}
-      </td>
+      <td className="py-4 px-2 text-[rgba(0,0,0,0.7)] text-sm">{timetable.department}</td>
+      <td className="py-4 px-2 text-[rgba(0,0,0,0.7)] text-sm">{timetable.year}</td>
+      <td className="py-4 pl-2 pr-4 text-[rgba(0,0,0,0.7)] text-sm">{timetable.lastModified}</td>
     </tr>
   );
 }
@@ -85,11 +75,11 @@ export default function TimetablePage() {
   const router = useRouter();
 
   // ── State (shape from model) ────────────────────────────────────────────
-  const [timetables, setTimetables] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [year, setYear] = useState(initialFilterState.year);
-  const [department, setDepartment] = useState(initialFilterState.department);
+  const [timetables, setTimetables]   = useState([]);
+  const [isLoading, setIsLoading]     = useState(false);
+  const [error, setError]             = useState(null);
+  const [year, setYear]               = useState(initialFilterState.year);
+  const [department, setDepartment]   = useState(initialFilterState.department);
 
   // ── Load timetables on mount (calls controller → model) ────────────────
   useEffect(() => {
@@ -102,15 +92,14 @@ export default function TimetablePage() {
 
   return (
     <div className="h-screen flex flex-col bg-[#f8fafc]">
+
       {/* ── TOP HEADER ────────────────────────────────────────────────── */}
       <TopHeader
-        title="Timetable Management"
         actions={
           <button
             id="btn-create-timetable"
-            onClick={
-              () =>
-                handleCreateTimetable(() => router.push("/timetable/create"))
+            onClick={() =>
+              handleCreateTimetable(() => router.push("/timetable/create"))
               // TODO: handleCreateTimetable — navigate to timetable create page
             }
             className="bg-[#1e3b8a] text-white font-semibold text-sm
@@ -126,11 +115,13 @@ export default function TimetablePage() {
 
       {/* ── BODY — SIDEBAR + CONTENT ───────────────────────────────────── */}
       <div className="flex flex-1">
+
         {/* Sidebar (shared component) */}
         <Sidebar />
 
         {/* Main content area */}
         <main className="flex-1 p-5 flex flex-col gap-5">
+
           {/* ── FILTER BAR ─────────────────────────────────────────────── */}
           <div className="bg-white rounded-xl shadow-[0_8px_25px_rgba(226,232,240,0.75),8px_0_25px_rgba(226,232,240,0.75)] px-5 py-2.5 flex items-center gap-4">
             <FilterDropdown
@@ -149,6 +140,7 @@ export default function TimetablePage() {
 
           {/* ── TIMETABLE TABLE ─────────────────────────────────────────── */}
           <div className="bg-white flex-1 rounded-xl shadow-[0_8px_25px_rgba(226,232,240,0.75),8px_0_25px_rgba(226,232,240,0.75)] overflow-hidden">
+
             {/* Error state */}
             {error && (
               <div className="p-4 text-red-600 text-sm bg-red-50 border-b border-red-100">
@@ -185,10 +177,7 @@ export default function TimetablePage() {
                 <tbody>
                   {filteredTimetables.length === 0 ? (
                     <tr>
-                      <td
-                        colSpan={4}
-                        className="py-12 text-center text-[#94a3b8] text-sm"
-                      >
+                      <td colSpan={4} className="py-12 text-center text-[#94a3b8] text-sm">
                         No timetables found.
                       </td>
                     </tr>
@@ -197,11 +186,8 @@ export default function TimetablePage() {
                       <TimetableRow
                         key={t.id}
                         timetable={t}
-                        onClick={
-                          (id) =>
-                            handleOpenTimetable(id, (tid) =>
-                              router.push(`/timetable/${tid}`),
-                            )
+                        onClick={(id) =>
+                          handleOpenTimetable(id, (tid) => router.push(`/timetable/${tid}`))
                           // TODO: handleOpenTimetable — navigate to timetable detail/edit page
                         }
                       />

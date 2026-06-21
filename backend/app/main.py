@@ -1,32 +1,17 @@
 from fastapi import FastAPI
-from app.api.api import api_router
 from fastapi.middleware.cors import CORSMiddleware
-from app.core.database import Database
-from app.repositories.hall_repo import HallRepo
+from app.api.routes import auth
 
-app = FastAPI()
+app = FastAPI(title="University Portal Backend")
 
-origins = [
-    "http://localhost:3000",
-]
-
+# Let your Flutter Emulator connect without restriction
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(api_router, prefix="/api")
-
-
-@app.on_event("startup")
-async def startup():
-    db = Database()
-    await db.create_index()
-
-
-@app.get("/")
-def home():
-    return {"message": "HallSync API"}
+# Include the login routes
+app.include_router(auth.router, prefix="/api/v1")
