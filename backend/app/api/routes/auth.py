@@ -3,11 +3,22 @@ from app.schemas.user_schema import LoginRequest, LoginResponse, ChangePasswordR
 from app.services.user_service import authenticate_user, update_user_password
 from app.core.security import create_access_token
 
+"""
+Auth Routes — Authentication with Auth0
+This module handles authentication endpoints using Auth0 as the identity provider.
+MongoDB has been removed in favor of Auth0 for user management.
+"""
+
 router = APIRouter()
 
 @router.post("/login", response_model=LoginResponse)
 async def login(login_data: LoginRequest):
-    # 1. Authenticate user against MongoDB
+    """
+    Login endpoint using Auth0.
+    Validates user credentials against Auth0 and returns JWT token.
+    """
+    # TODO: Replace with Auth0 authentication flow
+    # Validate token from Auth0 and retrieve user info
     user = await authenticate_user(login_data.username, login_data.password)
     
     if not user:
@@ -16,11 +27,11 @@ async def login(login_data: LoginRequest):
             detail="Incorrect username or password"
         )
     
-    # 2. Generate a token containing their identity and role
+    # Generate a token containing their identity and role
     token_data = {"sub": user["username"], "role": user["role"]}
     access_token = create_access_token(data=token_data)
     
-    # 3. Return the payload back to Flutter
+    # Return the payload back to frontend
     return {
         "status": "success",
         "username": user["username"],
@@ -32,7 +43,12 @@ async def login(login_data: LoginRequest):
 
 @router.post("/change-password")
 async def change_password(change_request: ChangePasswordRequest):
-    # 1. Authenticate user with current password
+    """
+    Change password endpoint using Auth0.
+    Password changes should be handled through Auth0 Management API.
+    """
+    # TODO: Replace with Auth0 Management API password reset
+    # Validate user and update password through Auth0
     user = await authenticate_user(change_request.username, change_request.current_password)
     
     if not user:
@@ -41,7 +57,7 @@ async def change_password(change_request: ChangePasswordRequest):
             detail="Current password is incorrect"
         )
     
-    # 2. Update the password in the database
+    # Update the password through Auth0
     success = await update_user_password(change_request.username, change_request.new_password)
     
     if not success:

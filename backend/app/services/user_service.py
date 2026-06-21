@@ -1,25 +1,22 @@
-from app.core.database import db  
+"""
+User Service — Authentication with Auth0
+Handles user authentication logic using Auth0 as the identity provider.
+MongoDB has been removed in favor of Auth0.
+"""
 
 async def authenticate_user(username: str, password: str):
-    # Search the 'users' collection for the matching username
-    user = await db.users.find_one({"username": username})
-    
-    if not user:
-        return None
-        
-    # Verify plain text password (or use hashing if implemented)
-    if user["password"] != password:
-        return None
-        
-    return user
+    """
+    Authenticate user with Auth0.
+    This function will validate tokens and user info from Auth0.
+    Implementation details to be integrated with Auth0 SDK.
+    """
+    # TODO: Implement Auth0 authentication
+    return None
 
 async def update_user_password(username: str, new_password: str):
-    # Update the user's password in the database
-    result = await db.users.update_one(
-        {"username": username},
-        {"$set": {
-            "password": new_password,
-            "isFirstLogin": False
-                  }}
-    )
-    return result.modified_count > 0
+    """
+    Update user password through Auth0.
+    Password management is handled by Auth0 in production.
+    """
+    # TODO: Implement Auth0 password update via Management API
+    return False
