@@ -1,8 +1,12 @@
+import os
+from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
 import certifi 
 
 
-MONGO_URL = "mongodb+srv://Ashvi:ashvi123@cluster0.loxjrj4.mongodb.net/?appName=Cluster0"
+load_dotenv()
+MONGO_URL = os.getenv("MONGO_URL")
+
 
 client = AsyncIOMotorClient(MONGO_URL, tlsCAFile=certifi.where())
 

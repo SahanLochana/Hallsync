@@ -465,7 +465,7 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
         ],
       ),
       child: DropdownButtonFormField<String>(
-        value: value,
+        initialValue: value,
         onChanged: onChanged,
         items: items
             .map(

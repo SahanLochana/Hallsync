@@ -7,6 +7,7 @@ import '../widgets/bottom_nav_bar.dart';
 import '../widgets/lecture_card.dart';
 import '../widgets/section_header.dart';
 
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
