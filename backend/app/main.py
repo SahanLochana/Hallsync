@@ -2,7 +2,6 @@ from fastapi import FastAPI
 from app.api.api import api_router
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import Database
-from app.repositories.hall_repo import HallRepo
 
 app = FastAPI()
 
