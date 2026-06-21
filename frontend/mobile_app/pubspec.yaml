@@ -10,6 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   http: ^1.2.2
+  syncfusion_flutter_calendar: ^33.2.13+1
 
 dev_dependencies:
   flutter_test:

@@ -27,7 +27,7 @@ class _HomeScreenState extends State<LecturerDashboard> {
     try {
       final data = await LectureService.getLectures();
       setState(() {
-        _lectures = data.map((json) {
+        _lectures = data.map<Lecture>((json) {
           return Lecture(
             id: json['_id'] ?? '',
             title: json['title'] ?? '',
@@ -37,6 +37,7 @@ class _HomeScreenState extends State<LecturerDashboard> {
             startTime: TimeOfDay.fromDateTime(DateTime.parse(json['start_time'])),
             endTime: TimeOfDay.fromDateTime(DateTime.parse(json['end_time'])),
             description: json['description'] ?? '',
+            lecturerId: json['lecturer_id'] ?? 'admin',
             tags: [], // Tags aren't saved to backend currently
           );
         }).toList();
@@ -168,6 +169,14 @@ class _HomeScreenState extends State<LecturerDashboard> {
             _buildActionButton(
               Icons.calendar_today_outlined,
               'Manage\nSchedule',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const MyLecturesScreen(),
+                  ),
+                );
+              },
             ),
             const SizedBox(width: 16),
             _buildActionButton(

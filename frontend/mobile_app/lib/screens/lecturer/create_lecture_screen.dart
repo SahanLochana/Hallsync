@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 import '../../models/lecture_model.dart';
 import "../../services/lecture_service.dart";
+import '../../constants/modules_data.dart';
 
 class CreateLectureScreen extends StatefulWidget {
   final void Function(Lecture) onCreated;
+  final DateTime? initialDate;
+  final TimeOfDay? initialStartTime;
 
-  const CreateLectureScreen({super.key, required this.onCreated});
+  const CreateLectureScreen({
+    super.key, 
+    required this.onCreated,
+    this.initialDate,
+    this.initialStartTime,
+  });
 
   @override
   State<CreateLectureScreen> createState() => _CreateLectureScreenState();
@@ -14,6 +22,8 @@ class CreateLectureScreen extends StatefulWidget {
 class _CreateLectureScreenState extends State<CreateLectureScreen> {
   final _formKey = GlobalKey<FormState>();
 
+  String? _selectedDepartment;
+  String? _selectedSemester;
   String? _selectedModule;
   String? _selectedBatch;
   String? _selectedVenue;
@@ -24,26 +34,33 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
   bool _isSubmitting = false;
   bool _isCheckingAvailability = false;
   bool _isAvailable = true; 
+  bool _canOverwrite = false;
 
-  final List<String> _modules = [
-    'Mathematics',
-    'Physics',
-    'Chemistry',
-    'Computer Science',
-  ];
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialDate != null) {
+      _selectedDate = widget.initialDate;
+    }
+    if (widget.initialStartTime != null) {
+      _startTime = widget.initialStartTime;
+    }
+  }
+
 
   final List<String> _batches = [
-    '2024-A',
-    '2024-B',
-    '2025-A',
-    '2025-B',
+    '2020/2021',
+    '2021/2022',
+    '2022/2023',
+    '2023/2024',
+    '2024/2025',
   ];
 
   final List<String> _venues = [
     'Mini Auditorium',
-    'Main Hall',
-    'Lecture Room 101',
-    'Lab A',
+    'Old Auditorium',
+    'Z91',
+    'CIS Lab',
   ];
 
   Future<void> _pickDate() async {
@@ -103,7 +120,7 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
       return;
     }
 
-    final isAvailable = await LectureService.checkAvailability(
+    final result = await LectureService.checkAvailability(
       hallId: _selectedVenue!,
       startTime: startDateTime,
       endTime: endDateTime,
@@ -111,7 +128,8 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
 
     if (mounted) {
       setState(() {
-        _isAvailable = isAvailable;
+        _isAvailable = result['available'];
+        _canOverwrite = result['can_overwrite'];
         _isCheckingAvailability = false;
       });
     }
@@ -123,7 +141,7 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
       return;
     }
 
-    if (!_isAvailable) {
+    if (!_isAvailable && !_canOverwrite) {
       _showSnack('Cannot save: Lecture hall is unavailable for this time.');
       return;
     }
@@ -141,6 +159,30 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
       _showSnack('End time must be after start time');
       return;
     }
+    
+    bool doOverwrite = false;
+    if (!_isAvailable && _canOverwrite) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Overwrite Default Timetable?'),
+          content: const Text('This time slot is booked by an admin default timetable. Do you want to overwrite it?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text('Overwrite', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+      doOverwrite = true;
+    }
 
     setState(() => _isSubmitting = true);
 
@@ -153,6 +195,7 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
         startTime: startDateTime,
         endTime: endDateTime,
         capacity: 30, // Default capacity since it's removed from UI
+        overwrite: doOverwrite,
       );
 
       if (lectureId != null) {
@@ -166,6 +209,7 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
             startTime: _startTime!,
             endTime: _endTime!,
             description: '',
+            lecturerId: 'lecturer123',
             tags: [],
           ),
         );
@@ -226,19 +270,52 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildLabel('Module'),
+                    _buildLabel('Department'),
                     _buildDropdown(
-                      hint: 'Select Module',
-                      value: _selectedModule,
-                      items: _modules,
+                      hint: 'Select Department',
+                      value: _selectedDepartment,
+                      items: ModulesData.data.keys.toList(),
                       onChanged: (v) {
                         setState(() {
-                          _selectedModule = v;
+                          _selectedDepartment = v;
+                          _selectedSemester = null;
+                          _selectedModule = null;
                           _checkConflict();
                         });
                       },
                     ),
                     const SizedBox(height: 20),
+                    if (_selectedDepartment != null) ...[
+                      _buildLabel('Semester'),
+                      _buildDropdown(
+                        hint: 'Select Semester',
+                        value: _selectedSemester,
+                        items: ModulesData.data[_selectedDepartment!]!.keys.toList(),
+                        onChanged: (v) {
+                          setState(() {
+                            _selectedSemester = v;
+                            _selectedModule = null;
+                            _checkConflict();
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                    if (_selectedSemester != null) ...[
+                      _buildLabel('Module'),
+                      _buildDropdown(
+                        hint: 'Select Module',
+                        value: _selectedModule,
+                        items: ModulesData.data[_selectedDepartment!]![_selectedSemester!]!,
+                        onChanged: (v) {
+                          setState(() {
+                            _selectedModule = v;
+                            _checkConflict();
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                    ],
                     _buildLabel('Batch'),
                     _buildDropdown(
                       hint: 'Select Batch',
@@ -378,7 +455,7 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
                       },
                     ),
                     const SizedBox(height: 20),
-                    if (!_isAvailable)
+                    if (!_isAvailable && !_canOverwrite)
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
@@ -396,6 +473,32 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
                                 "Conflict detected: The selected lecture hall ('$_selectedVenue') is already booked for this time slot.",
                                 style: const TextStyle(
                                   color: Color(0xFFDC2626),
+                                  fontSize: 13,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else if (!_isAvailable && _canOverwrite)
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFFBEB),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFFDE68A)),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.info_outline, color: Color(0xFFD97706), size: 20),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Text(
+                                "Conflict with Default Timetable. You can overwrite this slot.",
+                                style: TextStyle(
+                                  color: Color(0xFFB45309),
                                   fontSize: 13,
                                   height: 1.4,
                                 ),

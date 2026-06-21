@@ -9,6 +9,7 @@ class Lecture {
   final TimeOfDay startTime;
   final TimeOfDay endTime;
   final String description;
+  final String lecturerId;
   final List<String> tags;
 
   Lecture({
@@ -20,6 +21,7 @@ class Lecture {
     required this.startTime,
     required this.endTime,
     required this.description,
+    required this.lecturerId,
     required this.tags,
   });
 

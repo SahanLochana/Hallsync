@@ -3,6 +3,8 @@ import '../../models/lecture_model.dart';
 import '../../services/lecture_service.dart';
 import 'lecture_detail_screen.dart';
 
+import 'timetable_screen.dart';
+
 class MyLecturesScreen extends StatefulWidget {
   const MyLecturesScreen({super.key});
 
@@ -38,6 +40,7 @@ class _MyLecturesScreenState extends State<MyLecturesScreen> {
               endTime: TimeOfDay.fromDateTime(
                   DateTime.tryParse(json['end_time'] ?? '') ?? DateTime.now()),
               description: json['description'] ?? '',
+              lecturerId: json['lecturer_id'] ?? 'admin',
               tags: [],
             );
           }).toList();
@@ -65,7 +68,7 @@ class _MyLecturesScreenState extends State<MyLecturesScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'My Lectures',
+          'Manage Schedule',
           style: TextStyle(
             color: Color(0xFF111827),
             fontSize: 18,
@@ -75,7 +78,14 @@ class _MyLecturesScreenState extends State<MyLecturesScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.calendar_today_outlined, color: Color(0xFF1E3A8A)),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => TimetableScreen(lectures: _lectures),
+                ),
+              );
+            },
           ),
         ],
       ),

@@ -14,6 +14,7 @@ class LectureService {
     required DateTime startTime,
     required DateTime endTime,
     required int capacity,
+    bool overwrite = false,
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/lectures'),
@@ -28,6 +29,7 @@ class LectureService {
         'start_time': startTime.toIso8601String(),
         'end_time': endTime.toIso8601String(),
         'capacity': capacity,
+        'overwrite': overwrite,
       }),
     );
 
@@ -48,7 +50,7 @@ class LectureService {
     }
   }
 
-  static Future<bool> checkAvailability({
+  static Future<Map<String, dynamic>> checkAvailability({
     required String hallId,
     required DateTime startTime,
     required DateTime endTime,
@@ -73,11 +75,14 @@ class LectureService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return data['available'] == true;
+        return {
+          'available': data['available'] == true,
+          'can_overwrite': data['can_overwrite'] == true,
+        };
       }
-      return false;
+      return {'available': false, 'can_overwrite': false};
     } catch (e) {
-      return false; // Fail safe
+      return {'available': false, 'can_overwrite': false}; // Fail safe
     }
   }
 
