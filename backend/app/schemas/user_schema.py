@@ -1,21 +1,53 @@
+from pydantic import BaseModel
 from typing import Literal
-from pydantic import BaseModel, EmailStr
 
-#what flutter sends to fastAPI
-class LoginRequest(BaseModel):
-    username: str
-    password: str
 
-#what fastAPI sends to flutter upon success
-class LoginResponse(BaseModel):
-    status: str
-    username: str
-    email: EmailStr
-    role: Literal["student",  "lecturer", "admin"]
-    token: str
-    isFirstLogin: bool
+class User(BaseModel):
+    universityId: str
+    name: str
+    email: str
+    department: str
+    faculty: str
+    role: Literal["student", "lecturer", "admin"]
+    academicYear: str | None = None
 
-class ChangePasswordRequest(BaseModel):
-    username: str
-    current_password: str
-    new_password: str
+
+class UsersResponse(BaseModel):
+    response: list[User]
+
+
+class UserUpdate(BaseModel):
+    universityId: str | None = None
+    name: str | None = None
+    email: str | None = None
+    department: str | None = None
+    faculty: str | None = None
+    role: Literal["student", "lecturer", "admin"] | None = None
+    academicYear: str | None = None
+
+
+# ── Bulk import schemas ────────────────────────────────────────────────────────
+
+
+class BulkUserRequest(BaseModel):
+    """Request body for POST /api/users/bulk"""
+
+    users: list[User]
+
+
+class BulkFailedEntry(BaseModel):
+    index: int  # 0-based index in the original request list
+    universityId: str
+    reason: str
+
+
+class BulkImportSummary(BaseModel):
+    total: int
+    succeeded: int
+    failed: int
+
+
+class BulkImportResponse(BaseModel):
+    success: list[User]
+    failed: list[BulkFailedEntry]
+    summary: BulkImportSummary
