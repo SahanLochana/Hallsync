@@ -1,31 +1,32 @@
 from fastapi import FastAPI
+from app.api.api import api_router
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.routes import auth
-from app.core.database import client
+from app.core.database import Database
+from app.repositories.hall_repo import HallRepo
 
-app = FastAPI(title="University Portal Backend")
+app = FastAPI()
 
-# Let your Flutter Emulator connect without restriction
+origins = [
+    "http://localhost:3000",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Test MongoDB Connection instantly on startup
-@app.on_event("startup")
-async def startup_db_client():
-    try:
-        await client.admin.command('ping')
-        
-        print(" SUCCESS: FastAPI connected to MongoDB Cluster!")
-        
-    except Exception as e:
-        
-        print(f"DATABASE CONNECTION ERROR: {e}")
-        
+app.include_router(api_router, prefix="/api")
 
-# Include the login routes
-app.include_router(auth.router, prefix="/api/v1")
+
+@app.on_event("startup")
+async def startup():
+    db = Database()
+    await db.create_index()
+
+
+@app.get("/")
+def home():
+    return {"message": "HallSync API"}

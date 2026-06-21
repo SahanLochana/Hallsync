@@ -7,13 +7,11 @@ import 'screens/campus_map_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  
-  await dotenv.load(fileName: ".env"); 
+
+  await dotenv.load(fileName: ".env");
 
   runApp(const HallSyncApp());
 }
-
 
 class HallSyncApp extends StatelessWidget {
   const HallSyncApp({super.key});

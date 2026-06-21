@@ -1,17 +1,24 @@
-import os
-from dotenv import load_dotenv
-from motor.motor_asyncio import AsyncIOMotorClient
-import certifi 
+from pymongo import AsyncMongoClient
+from app.core.config import settings
 
 
-load_dotenv()
-MONGO_URL = os.getenv("MONGO_URL")
+class Database:
+    def __init__(self):
+        self.client = AsyncMongoClient(settings.MONGODB_URL)
+        self.database = self.client[settings.DATABASE_NAME]
 
+    # async def get_db(self):
+    #     return self.database
 
-client = AsyncIOMotorClient(MONGO_URL, tlsCAFile=certifi.where())
+    async def create_index(self):
+        user_collection = self.database.get_collection(settings.USER_COLLECTION)
+        await user_collection.create_index("universityId", unique=True)
 
+        hall_collection = self.database.get_collection(settings.HALL_COLLECTION)
+        await hall_collection.create_index("hallId", unique=True)
 
-db = client.university_db 
+    def get_collection(self, name: str):
+        return self.database[name]
 
-
-user_collection = db.users
+    async def close(self):
+        await self.client.close()
