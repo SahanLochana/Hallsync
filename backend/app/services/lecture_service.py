@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-async def create_lecture(db, lecture_data):
+def create_lecture(db, lecture_data):
     lecture = {
         "title": lecture_data.title,
         "description": lecture_data.description,
@@ -11,7 +11,7 @@ async def create_lecture(db, lecture_data):
         "created_at": datetime.utcnow()
     }
 
-    result = await db.lectures.insert_one(lecture)
+    result = db.lectures.insert_one(lecture)
 
     lecture["_id"] = str(result.inserted_id)
     return lecture
