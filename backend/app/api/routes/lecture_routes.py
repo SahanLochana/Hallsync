@@ -10,7 +10,7 @@ router = APIRouter(prefix="/lectures", tags=["Lectures"])
 
 
 @router.post("")
-def create_lecture(lecture: LectureCreate):
+async def create_lecture(lecture: LectureCreate):
 
     # Validate dates
     if lecture.end_time <= lecture.start_time:
@@ -24,7 +24,7 @@ def create_lecture(lecture: LectureCreate):
     lecture_data["created_at"] = datetime.utcnow()
     lecture_data["updated_at"] = datetime.utcnow()
 
-    result = lectures_collection.insert_one(
+    result = await lectures_collection.insert_one(
         lecture_data
     )
 
@@ -34,9 +34,9 @@ def create_lecture(lecture: LectureCreate):
     }
 
 @router.get("")
-def get_lectures():
+async def get_lectures():
     cursor = lectures_collection.find()
-    lectures = list(cursor)
+    lectures = await cursor.to_list()
     
     # Convert ObjectId to string for JSON serialization
     for lecture in lectures:
@@ -45,7 +45,7 @@ def get_lectures():
     return lectures
 
 @router.post("/check-availability")
-def check_availability(check: AvailabilityCheck):
+async def check_availability(check: AvailabilityCheck):
     # Find any lecture in the same hall that overlaps with the given time period
     overlap_query = {
         "hall_id": check.hall_id,
@@ -65,7 +65,7 @@ def check_availability(check: AvailabilityCheck):
         except Exception:
             pass
             
-    count = lectures_collection.count_documents(overlap_query)
+    count = await lectures_collection.count_documents(overlap_query)
     is_available = count == 0
     
     return {
@@ -74,7 +74,7 @@ def check_availability(check: AvailabilityCheck):
     }
 
 @router.put("/{lecture_id}")
-def update_lecture(lecture_id: str, lecture: LectureCreate):
+async def update_lecture(lecture_id: str, lecture: LectureCreate):
     if lecture.end_time <= lecture.start_time:
         raise HTTPException(status_code=400, detail="End time must be after start time")
         
@@ -86,7 +86,7 @@ def update_lecture(lecture_id: str, lecture: LectureCreate):
     lecture_data = lecture.model_dump()
     lecture_data["updated_at"] = datetime.utcnow()
     
-    result = lectures_collection.update_one(
+    result = await lectures_collection.update_one(
         {"_id": obj_id},
         {"$set": lecture_data}
     )
@@ -97,13 +97,13 @@ def update_lecture(lecture_id: str, lecture: LectureCreate):
     return {"message": "Lecture updated successfully"}
 
 @router.delete("/{lecture_id}")
-def delete_lecture(lecture_id: str):
+async def delete_lecture(lecture_id: str):
     try:
         obj_id = ObjectId(lecture_id)
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid lecture ID format")
         
-    result = lectures_collection.delete_one({"_id": obj_id})
+    result = await lectures_collection.delete_one({"_id": obj_id})
     
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Lecture not found")
