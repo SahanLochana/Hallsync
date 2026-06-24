@@ -71,3 +71,17 @@ class BulkImportResponse(BaseModel):
     success: list[User]
     failed: list[BulkFailedEntry]
     summary: BulkImportSummary
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+class VerifyOTPRequest(BaseModel):
+    email: str
+    otp: str
+
+class ResetPasswordRequest(BaseModel):
+    email: str
+    token: str
+    new_password: str
+

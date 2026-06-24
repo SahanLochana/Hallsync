@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    MONGODB_URL:str = "asdfasdf"
+    MONGODB_URL:str = ""
     DATABASE_NAME:str = "asdfadsf"
     USER_COLLECTION:str = "asdfasdf"
     HALL_COLLECTION:str = "asdfasdf"

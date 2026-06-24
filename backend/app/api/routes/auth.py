@@ -1,13 +1,9 @@
 from fastapi import APIRouter, HTTPException, status
-from app.schemas.user_schema import LoginRequest, LoginResponse, ChangePasswordRequest
+from app.schemas.user_schema import LoginRequest, LoginResponse, ChangePasswordRequest, ForgotPasswordRequest, VerifyOTPRequest, ResetPasswordRequest
 from app.services.user_service import UserService
 from app.core.security import create_access_token
 
-"""
-Auth Routes — Authentication with Auth0
-This module handles authentication endpoints using Auth0 as the identity provider.
-MongoDB has been removed in favor of Auth0 for user management.
-"""
+
 
 router = APIRouter()
 user_service = UserService()
@@ -68,3 +64,39 @@ async def change_password(change_request: ChangePasswordRequest):
         )
     
     return {"status": "success", "message": "Password updated successfully"}
+
+@router.post("/forgot-password")
+async def forgot_password(request: ForgotPasswordRequest):
+    success = await user_service.generate_and_save_otp(request.email)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Email not found in our system"
+        )
+    return {"success": True, "message": "OTP sent successfully"}
+
+@router.post("/verify-otp")
+async def verify_otp(request: VerifyOTPRequest):
+    is_valid = await user_service.verify_otp(request.email, request.otp)
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired OTP"
+        )
+   
+    return {"success": True, "token": request.otp, "message": "OTP verified"}
+
+@router.post("/reset-password")
+async def reset_password(request: ResetPasswordRequest):
+
+    success = await user_service.reset_password_with_otp(
+        request.email, 
+        request.token, 
+        request.new_password
+    )
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Failed to reset password. OTP might be expired."
+        )
+    return {"success": True, "message": "Password reset successful"}
