@@ -6,7 +6,7 @@ from app.core.database import Database
 app = FastAPI(redirect_slashes=False)
 
 origins = [
-    "http://localhost:3000",
+    "http://localhost:3000", "http://localhost:3001",
 ]
 
 app.add_middleware(
