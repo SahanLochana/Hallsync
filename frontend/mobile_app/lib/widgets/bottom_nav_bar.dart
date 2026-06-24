@@ -13,9 +13,8 @@ class BottomNavBar extends StatelessWidget {
 
   static const List<Map<String, dynamic>> _items = [
     {'icon': Icons.home_rounded, 'label': 'Home'},
-    {'icon': Icons.calendar_today_rounded, 'label': 'Timetable'},
-    {'icon': Icons.grid_view_rounded, 'label': 'Hall'},
-    {'icon': Icons.person_outline_rounded, 'label': 'Profile'},
+    {'icon': Icons.notifications_rounded, 'label': 'Notifications'},
+    {'icon': Icons.settings_rounded, 'label': 'Settings'},
   ];
 
   @override
