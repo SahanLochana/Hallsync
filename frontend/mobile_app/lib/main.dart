@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_app/features/auth/screens/change_password_screen.dart';
 import 'package:mobile_app/features/auth/screens/login_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mobile_app/screens/campus_map_screen.dart';
