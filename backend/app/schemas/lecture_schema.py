@@ -7,6 +7,8 @@ class LectureCreate(BaseModel):
     description: Optional[str] = None
     lecturer_id: str
     hall_id: str
+    department: Optional[str] = None
+    batch: Optional[str] = None
     start_time: datetime
     end_time: datetime
     capacity: int

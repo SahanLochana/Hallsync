@@ -3,6 +3,7 @@ import '../../models/lecture_model.dart';
 import "../../services/lecture_service.dart";
 import "../../services/hall_service.dart";
 import '../../constants/modules_data.dart';
+import '../../services/auth_service.dart';
 
 class CreateLectureScreen extends StatefulWidget {
   final void Function(Lecture) onCreated;
@@ -62,11 +63,10 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
 
 
   final List<String> _batches = [
-    '2020/2021',
-    '2021/2022',
-    '2022/2023',
-    '2023/2024',
-    '2024/2025',
+    '1st Year',
+    '2nd Year',
+    '3rd Year',
+    '4th Year',
   ];
 
   List<String> _venues = [];
@@ -195,11 +195,14 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
     setState(() => _isSubmitting = true);
 
     try {
+      final lecturerEmail = await AuthService.getEmail() ?? 'unknown_lecturer';
       final lectureId = await LectureService.createLecture(
         title: '$_selectedModule for $_selectedBatch',
         description: '',
-        lecturerId: 'lecturer123',
+        lecturerId: lecturerEmail,
         hallId: _selectedVenue!,
+        department: _selectedDepartment,
+        batch: _selectedBatch,
         startTime: startDateTime,
         endTime: endDateTime,
         capacity: 30, // Default capacity since it's removed from UI
@@ -217,7 +220,7 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
             startTime: _startTime!,
             endTime: _endTime!,
             description: '',
-            lecturerId: 'lecturer123',
+            lecturerId: lecturerEmail,
             tags: [],
           ),
         );

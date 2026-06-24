@@ -5,7 +5,7 @@ import 'lecture_detail_screen.dart';
 import 'my_lectures_screen.dart';
 import '../../services/lecture_service.dart';
 import '../send_report_screen.dart' as send_report_screen;
-
+import '../../services/auth_service.dart';
 class LecturerDashboard extends StatefulWidget {
   const LecturerDashboard({super.key});
 
@@ -16,16 +16,28 @@ class LecturerDashboard extends StatefulWidget {
 class _HomeScreenState extends State<LecturerDashboard> {
   List<Lecture> _lectures = [];
   bool _isLoading = true;
+  String _userName = '';
 
   @override
   void initState() {
     super.initState();
+    _loadUserDetails();
+  }
+
+  Future<void> _loadUserDetails() async {
+    final name = await AuthService.getUsername();
+    if (mounted) {
+      setState(() {
+        _userName = name ?? 'Lecturer';
+      });
+    }
     _fetchLectures();
   }
 
   Future<void> _fetchLectures() async {
     try {
-      final data = await LectureService.getLectures();
+      final lecturerEmail = await AuthService.getEmail();
+      final data = await LectureService.getLectures(lecturerId: lecturerEmail);
       setState(() {
         _lectures = data.map<Lecture>((json) {
           return Lecture(
@@ -96,48 +108,86 @@ class _HomeScreenState extends State<LecturerDashboard> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: const [
-                Text(
-                  'Hi, Mr. Herath ',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1A237E),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      'Hi, $_userName',
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1A237E),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                ),
-                Text('👋', style: TextStyle(fontSize: 22)),
-              ],
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'Monday, 23 October',
-              style: TextStyle(fontSize: 14, color: Color(0xFF5C6BC0)),
-            ),
-          ],
-        ),
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.06),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
+                  const SizedBox(width: 4),
+                  const Text('👋', style: TextStyle(fontSize: 22)),
+                ],
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Monday, 23 October',
+                style: TextStyle(fontSize: 14, color: Color(0xFF5C6BC0)),
               ),
             ],
           ),
-          child: const Icon(
-            Icons.notifications_outlined,
-            color: Color(0xFF1A237E),
-            size: 20,
-          ),
+        ),
+        Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.notifications_outlined,
+                color: Color(0xFF1A237E),
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            GestureDetector(
+              onTap: () async {
+                await AuthService.logout();
+                if (!mounted) return;
+                Navigator.of(context).pushReplacementNamed('/');
+              },
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.logout,
+                  color: Color(0xFF1A237E),
+                  size: 20,
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );

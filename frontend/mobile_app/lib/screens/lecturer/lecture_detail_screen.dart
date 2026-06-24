@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/lecture_model.dart';
 import '../../services/lecture_service.dart';
+import '../../services/auth_service.dart';
 import 'reschedule_lecture_screen.dart';
 
 class LectureDetailScreen extends StatelessWidget {
@@ -82,8 +83,22 @@ class LectureDetailScreen extends StatelessWidget {
                 color: Colors.white,
                 border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
               ),
-              child: lecture.lecturerId == 'lecturer123'
-                  ? Column(
+              child: FutureBuilder<String?>(
+                future: AuthService.getEmail(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: CircularProgressIndicator(),
+                      ),
+                    );
+                  }
+                  
+                  final isOwner = lecture.lecturerId == snapshot.data;
+                  
+                  if (isOwner) {
+                    return Column(
                       children: [
                         SizedBox(
                           width: double.infinity,
@@ -136,8 +151,9 @@ class LectureDetailScreen extends StatelessWidget {
                           ),
                         ),
                       ],
-                    )
-                  : Container(
+                    );
+                  } else {
+                    return Container(
                       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF1F5F9),
@@ -159,7 +175,10 @@ class LectureDetailScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                    ),
+                    );
+                  }
+                },
+              ),
             ),
           ],
         ),

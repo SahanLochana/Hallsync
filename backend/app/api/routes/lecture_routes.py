@@ -1,5 +1,6 @@
 # pyrefly: ignore [missing-import]
 from fastapi import APIRouter, HTTPException
+from typing import Optional
 from datetime import datetime
 # pyrefly: ignore [missing-import]
 from bson import ObjectId
@@ -34,8 +35,20 @@ async def create_lecture(lecture: LectureCreate):
     }
 
 @router.get("")
-async def get_lectures():
-    cursor = lectures_collection.find()
+async def get_lectures(
+    lecturer_id: Optional[str] = None,
+    department: Optional[str] = None,
+    batch: Optional[str] = None
+):
+    query = {}
+    if lecturer_id:
+        query["lecturer_id"] = lecturer_id
+    if department:
+        query["department"] = department
+    if batch:
+        query["batch"] = batch
+        
+    cursor = lectures_collection.find(query)
     lectures = await cursor.to_list()
     
     # Convert ObjectId to string for JSON serialization

@@ -11,6 +11,8 @@ class LectureService {
     required String description,
     required String lecturerId,
     required String hallId,
+    String? department,
+    String? batch,
     required DateTime startTime,
     required DateTime endTime,
     required int capacity,
@@ -26,6 +28,8 @@ class LectureService {
         'description': description,
         'lecturer_id': lecturerId,
         'hall_id': hallId,
+        'department': department,
+        'batch': batch,
         'start_time': startTime.toIso8601String(),
         'end_time': endTime.toIso8601String(),
         'capacity': capacity,
@@ -40,8 +44,19 @@ class LectureService {
     return null;
   }
 
-  static Future<List<dynamic>> getLectures() async {
-    final response = await http.get(Uri.parse('$baseUrl/lectures'));
+  static Future<List<dynamic>> getLectures({
+    String? lecturerId,
+    String? department,
+    String? batch,
+  }) async {
+    // Build query params
+    final queryParams = <String, String>{};
+    if (lecturerId != null) queryParams['lecturer_id'] = lecturerId;
+    if (department != null) queryParams['department'] = department;
+    if (batch != null) queryParams['batch'] = batch;
+
+    final uri = Uri.parse('$baseUrl/lectures').replace(queryParameters: queryParams);
+    final response = await http.get(uri);
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);

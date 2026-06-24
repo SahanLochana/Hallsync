@@ -13,6 +13,7 @@ dependencies:
   google_maps_flutter: ^2.17.1
   http: ^1.2.2
   syncfusion_flutter_calendar: ^33.2.13+1
+  shared_preferences: ^2.2.3
 
 dev_dependencies:
   flutter_test:

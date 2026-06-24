@@ -3,6 +3,7 @@ from pymongo.errors import BulkWriteError, DuplicateKeyError
 from app.core.database import Database
 from app.core.config import settings
 from typing import Optional
+from app.core.security import get_password_hash
 
 
 class UserRepo:
@@ -28,6 +29,10 @@ class UserRepo:
         user = await self.user_collection.find_one({"universityId": university_id})
         return self._format_user(user) if user else None
 
+    async def get_user_by_email(self, email: str) -> Optional[dict]:
+        user = await self.user_collection.find_one({"email": email})
+        return self._format_user(user) if user else None
+
     async def update_user(self, university_id: str, update_data: dict) -> Optional[dict]:
         db_update = update_data.copy()
         if "role" in db_update and isinstance(db_update["role"], str):
@@ -48,6 +53,9 @@ class UserRepo:
         db_user = user_data.copy()
         if "role" in db_user and isinstance(db_user["role"], str):
             db_user["role"] = db_user["role"].capitalize()
+            
+        if "password_hash" not in db_user:
+            db_user["password_hash"] = get_password_hash("DefaultPassword123!")
 
         try:
             await self.user_collection.insert_one(db_user)
@@ -71,6 +79,8 @@ class UserRepo:
             db_user = user_data.copy()
             if "role" in db_user and isinstance(db_user["role"], str):
                 db_user["role"] = db_user["role"].capitalize()
+            if "password_hash" not in db_user:
+                db_user["password_hash"] = get_password_hash("DefaultPassword123!")
             db_users.append(db_user)
 
         success = []

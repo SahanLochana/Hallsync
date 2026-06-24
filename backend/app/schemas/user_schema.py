@@ -26,6 +26,28 @@ class UserUpdate(BaseModel):
     academicYear: Optional[str] = None
 
 
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class LoginResponse(BaseModel):
+    status: str
+    username: str
+    email: str
+    department: str
+    batch: str
+    role: str
+    token: str
+    isFirstLogin: bool
+
+
+class ChangePasswordRequest(BaseModel):
+    username: str
+    current_password: str
+    new_password: str
+
+
 # ── Bulk import schemas ────────────────────────────────────────────────────────
 
 class BulkUserRequest(BaseModel):
