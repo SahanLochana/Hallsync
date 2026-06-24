@@ -1,0 +1,8 @@
+fastapi[standard]==0.128.8
+pydantic==2.13.4
+pydantic-settings
+pymongo>=4.9
+python-dotenv
+pyjwt
+passlib
+bcrypt
