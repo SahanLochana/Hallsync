@@ -2,12 +2,12 @@ from pymongo import ReturnDocument
 from app.core.database import Database
 from app.core.config import settings
 from pymongo.errors import DuplicateKeyError
-from typing import Optional
+
 
 class HallRepo:
     def __init__(self):
         self.db = Database()
-        self.hall_collection = self.db.get_collection("halls")
+        self.hall_collection = self.db.get_collection(settings.HALL_COLLECTION)
 
     # ── Internal helpers ───────────────────────────────────────────────────────
 
@@ -21,10 +21,10 @@ class HallRepo:
 
     async def get_halls(self) -> list[dict]:
         cursor = self.hall_collection.find()
-        halls = await cursor.to_list()
+        halls = await cursor.to_list(length=1000)
         return [self._format_hall(h) for h in halls]
 
-    async def get_hall_by_id(self, hall_id: str) -> Optional[dict]:
+    async def get_hall_by_id(self, hall_id: str) -> dict | None:
         hall = await self.hall_collection.find_one({"hallId": hall_id})
         return self._format_hall(hall) if hall else None
 
@@ -42,7 +42,7 @@ class HallRepo:
             )
         return self._format_hall(db_hall)
 
-    async def update_hall(self, hall_id: str, update_data: dict) -> Optional[dict]:
+    async def update_hall(self, hall_id: str, update_data: dict) -> dict | None:
         hall = await self.hall_collection.find_one_and_update(
             {"hallId": hall_id},
             {"$set": update_data},

@@ -1,5 +1,5 @@
 from app.repositories.user_repo import UserRepo
-from app.core.security import verify_password, get_password_hash
+
 
 class UserService:
     def __init__(self):
@@ -22,19 +22,3 @@ class UserService:
 
     async def bulk_create_users(self, users: list[dict]) -> dict:
         return await self.user_repo.bulk_create_users(users)
-
-    async def authenticate_user(self, email: str, password: str):
-        user = await self.user_repo.get_user_by_email(email)
-        if not user:
-            return None
-        if not verify_password(password, user.get("password_hash", "")):
-            return None
-        return user
-
-    async def update_user_password(self, email: str, new_password: str):
-        user = await self.user_repo.get_user_by_email(email)
-        if not user:
-            return False
-        hashed_password = get_password_hash(new_password)
-        updated = await self.user_repo.update_user(user["universityId"], {"password_hash": hashed_password})
-        return bool(updated)

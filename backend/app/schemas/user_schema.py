@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Literal, Optional
+from typing import Literal
 
 
 class User(BaseModel):
@@ -9,7 +9,7 @@ class User(BaseModel):
     department: str
     faculty: str
     role: Literal["student", "lecturer", "admin"]
-    academicYear: Optional[str] = None
+    academicYear: str | None = None
 
 
 class UsersResponse(BaseModel):
@@ -17,46 +17,26 @@ class UsersResponse(BaseModel):
 
 
 class UserUpdate(BaseModel):
-    universityId: Optional[str] = None
-    name: Optional[str] = None
-    email: Optional[str] = None
-    department: Optional[str] = None
-    faculty: Optional[str] = None
-    role: Optional[Literal["student", "lecturer", "admin"]] = None
-    academicYear: Optional[str] = None
-
-
-class LoginRequest(BaseModel):
-    username: str
-    password: str
-
-
-class LoginResponse(BaseModel):
-    status: str
-    username: str
-    email: str
-    department: str
-    batch: str
-    role: str
-    token: str
-    isFirstLogin: bool
-
-
-class ChangePasswordRequest(BaseModel):
-    username: str
-    current_password: str
-    new_password: str
+    universityId: str | None = None
+    name: str | None = None
+    email: str | None = None
+    department: str | None = None
+    faculty: str | None = None
+    role: Literal["student", "lecturer", "admin"] | None = None
+    academicYear: str | None = None
 
 
 # ── Bulk import schemas ────────────────────────────────────────────────────────
 
+
 class BulkUserRequest(BaseModel):
     """Request body for POST /api/users/bulk"""
+
     users: list[User]
 
 
 class BulkFailedEntry(BaseModel):
-    index: int
+    index: int  # 0-based index in the original request list
     universityId: str
     reason: str
 
