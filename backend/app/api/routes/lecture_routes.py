@@ -6,8 +6,12 @@ from datetime import datetime
 from bson import ObjectId
 from app.core.database import lectures_collection
 from app.schemas.lecture_schema import LectureCreate, AvailabilityCheck
+from app.services.notification_service import NotificationService
+from app.repositories.user_repo import UserRepo
 
 router = APIRouter(prefix="/lectures", tags=["Lectures"])
+notification_service = NotificationService()
+user_repo = UserRepo()
 
 
 @router.post("")
@@ -29,9 +33,33 @@ async def create_lecture(lecture: LectureCreate):
         lecture_data
     )
 
+    lecture_id_str = str(result.inserted_id)
+
+    # Trigger Notifications
+    if lecture.department:
+        lecturer_name = lecture.lecturer_id
+        # Try to resolve lecturer name
+        try:
+            # lecturer_id contains the email of the lecturer based on frontend
+            # Wait, get_users returns a list. If we don't have get_user_by_email exposed, we can do:
+            cursor = user_repo.user_collection.find({"email": lecture.lecturer_id})
+            users = await cursor.to_list(length=1)
+            if users and users[0].get("name"):
+                lecturer_name = users[0]["name"]
+        except Exception:
+            pass
+            
+        # Fire and forget or await
+        await notification_service.create_lecture_notifications(
+            lecture_id=lecture_id_str,
+            lecturer_name=lecturer_name,
+            lecture_title=lecture.title,
+            department=lecture.department
+        )
+
     return {
         "message": "Lecture created successfully",
-        "lecture_id": str(result.inserted_id)
+        "lecture_id": lecture_id_str
     }
 
 @router.get("")
@@ -48,6 +76,7 @@ async def get_lectures(
     if batch:
         query["batch"] = batch
         
+    print(f"GET /lectures query: {query}")
     cursor = lectures_collection.find(query)
     lectures = await cursor.to_list()
     

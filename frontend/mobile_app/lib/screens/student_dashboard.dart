@@ -9,6 +9,8 @@ import '../widgets/section_header.dart';
 import 'send_report_screen.dart' as send_report_screen;
 import '../services/auth_service.dart';
 import '../services/lecture_service.dart';
+import 'settings_screen.dart';
+import 'notifications_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -44,7 +46,12 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final department = await AuthService.getDepartment();
       final batch = await AuthService.getBatch();
-      final data = await LectureService.getLectures(department: department, batch: batch);
+      
+      // If the user's profile is incomplete, fallback to showing all lectures for now
+      final queryDept = (department == null || department == 'Unknown') ? null : department;
+      final queryBatch = (batch == null || batch == 'Unknown') ? null : batch;
+      
+      final data = await LectureService.getLectures(department: queryDept, batch: queryBatch);
       if (mounted) {
         setState(() {
           _lectures = data.map<Lecture>((json) {
@@ -76,77 +83,67 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  final List<AnnouncementModel> _announcements = const [
-    AnnouncementModel(
-      sender: 'University Admin',
-      time: '2h ago',
-      message:
-          'The central library will be closed this weekend for annual maintenance. Digital...',
-      accentColor: AppColors.primaryBlue,
-    ),
-    AnnouncementModel(
-      sender: 'Faculty Office',
-      time: '5h ago',
-      message:
-          'End-of-term project submission deadline extended to Friday, Nov 3rd at 23:59.',
-      accentColor: AppColors.orangeAccent,
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bgColor,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 24),
-                    _buildHeader(),
-                    const SizedBox(height: 28),
-                    SectionHeader(
-                      title: "Today's Lectures",
-                      onActionTap: () {},
-                    ),
-                    const SizedBox(height: 12),
-                    if (_isLoading)
-                      const Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator()))
-                    else if (_lectures.isEmpty)
-                      _buildEmptyLectures()
-                    else
-                      ..._lectures.map((l) => LectureCard(lecture: l)),
-                    const SizedBox(height: 28),
-                    SectionHeader(title: 'Announcements', onActionTap: () {}),
-                    const SizedBox(height: 12),
-                    ..._announcements.map(
-                      (a) => AnnouncementCard(announcement: a),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-                ),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: [
+          _buildDashboardContent(),
+          const NotificationsScreen(),
+          const SettingsScreen(),
+        ],
+      ),
+      bottomNavigationBar: BottomNavBar(
+        selectedIndex: _selectedIndex,
+        onItemTapped: (index) => setState(() => _selectedIndex = index),
+      ),
+      floatingActionButton: _selectedIndex == 0
+          ? FloatingActionButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const send_report_screen.SendReportScreen()),
+                );
+              },
+              backgroundColor: AppColors.primaryBlue,
+              child: const Icon(Icons.report_problem_outlined, color: Colors.white),
+            )
+          : null,
+    );
+  }
+
+  Widget _buildDashboardContent() {
+    return SafeArea(
+      child: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 24),
+                  _buildHeader(),
+                  const SizedBox(height: 28),
+                  SectionHeader(
+                    title: "Today's Lectures",
+                    onActionTap: () {},
+                  ),
+                  const SizedBox(height: 12),
+                  if (_isLoading)
+                    const Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator()))
+                  else if (_lectures.isEmpty)
+                    _buildEmptyLectures()
+                  else
+                    ..._lectures.map((l) => LectureCard(lecture: l)),
+                  const SizedBox(height: 20),
+                ],
               ),
             ),
-            BottomNavBar(
-              selectedIndex: _selectedIndex,
-              onItemTapped: (index) => setState(() => _selectedIndex = index),
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const send_report_screen.SendReportScreen()),
-          );
-        },
-        backgroundColor: AppColors.primaryBlue,
-        child: const Icon(Icons.report_problem_outlined, color: Colors.white),
+          ),
+        ],
       ),
     );
   }
@@ -187,58 +184,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-        ),
-        Row(
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: AppColors.cardWhite,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.notifications_outlined,
-                color: AppColors.textDark,
-                size: 22,
-              ),
-            ),
-            const SizedBox(width: 12),
-            GestureDetector(
-              onTap: () async {
-                await AuthService.logout();
-                if (!mounted) return;
-                Navigator.of(context).pushReplacementNamed('/');
-              },
-              child: Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: AppColors.cardWhite,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.logout,
-                  color: AppColors.textDark,
-                  size: 22,
-                ),
-              ),
-            ),
-          ],
         ),
       ],
     );

@@ -6,6 +6,9 @@ import 'my_lectures_screen.dart';
 import '../../services/lecture_service.dart';
 import '../send_report_screen.dart' as send_report_screen;
 import '../../services/auth_service.dart';
+import '../../widgets/bottom_nav_bar.dart';
+import '../settings_screen.dart';
+import '../notifications_screen.dart';
 class LecturerDashboard extends StatefulWidget {
   const LecturerDashboard({super.key});
 
@@ -14,6 +17,7 @@ class LecturerDashboard extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<LecturerDashboard> {
+  int _selectedIndex = 0;
   List<Lecture> _lectures = [];
   bool _isLoading = true;
   String _userName = '';
@@ -84,19 +88,34 @@ class _HomeScreenState extends State<LecturerDashboard> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F0),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(),
-              const SizedBox(height: 28),
-              _buildQuickActions(),
-              const SizedBox(height: 28),
-              _buildTodaysLectures(),
-            ],
-          ),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: [
+          _buildDashboardContent(),
+          const NotificationsScreen(),
+          const SettingsScreen(),
+        ],
+      ),
+      bottomNavigationBar: BottomNavBar(
+        selectedIndex: _selectedIndex,
+        onItemTapped: (index) => setState(() => _selectedIndex = index),
+      ),
+    );
+  }
+
+  Widget _buildDashboardContent() {
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(),
+            const SizedBox(height: 28),
+            _buildQuickActions(),
+            const SizedBox(height: 28),
+            _buildTodaysLectures(),
+          ],
         ),
       ),
     );
@@ -136,58 +155,6 @@ class _HomeScreenState extends State<LecturerDashboard> {
               ),
             ],
           ),
-        ),
-        Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.notifications_outlined,
-                color: Color(0xFF1A237E),
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            GestureDetector(
-              onTap: () async {
-                await AuthService.logout();
-                if (!mounted) return;
-                Navigator.of(context).pushReplacementNamed('/');
-              },
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.logout,
-                  color: Color(0xFF1A237E),
-                  size: 20,
-                ),
-              ),
-            ),
-          ],
         ),
       ],
     );
