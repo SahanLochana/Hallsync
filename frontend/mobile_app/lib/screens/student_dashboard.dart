@@ -46,7 +46,12 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final department = await AuthService.getDepartment();
       final batch = await AuthService.getBatch();
-      final data = await LectureService.getLectures(department: department, batch: batch);
+      
+      // If the user's profile is incomplete, fallback to showing all lectures for now
+      final queryDept = (department == null || department == 'Unknown') ? null : department;
+      final queryBatch = (batch == null || batch == 'Unknown') ? null : batch;
+      
+      final data = await LectureService.getLectures(department: queryDept, batch: queryBatch);
       if (mounted) {
         setState(() {
           _lectures = data.map<Lecture>((json) {

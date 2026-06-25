@@ -21,6 +21,19 @@ import ConfirmModal from "./ConfirmModal";
 import { ROLE_FORM_OPTIONS } from "@/models/userModel";
 import { validateUserForm } from "@/controllers/userController";
 
+const DEPARTMENT_OPTIONS = [
+  "Computing & Information Systems (CIS)",
+  "Software Engineering (SE)",
+  "Data Science (DS)",
+];
+
+const BATCH_OPTIONS = [
+  "1st Year",
+  "2nd Year",
+  "3rd Year",
+  "4th Year",
+];
+
 export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
   const [isEditing, setIsEditing]             = useState(false);
   const [form, setForm]                       = useState({});
@@ -192,13 +205,17 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
                   <label className="text-[#334155] font-semibold text-xs uppercase tracking-wide">
                     Department
                   </label>
-                  <input
+                  <select
                     id="edit-user-department"
                     className={`${inputCls} ${errors.department ? "border-red-400" : ""}`}
-                    placeholder="e.g. Software Engineering"
                     value={form.department || ""}
                     onChange={(e) => set("department", e.target.value)}
-                  />
+                  >
+                    <option value="" disabled>Select Department</option>
+                    {DEPARTMENT_OPTIONS.map((dept) => (
+                      <option key={dept} value={dept}>{dept}</option>
+                    ))}
+                  </select>
                   {errors.department && <span className="text-red-500 text-xs">{errors.department}</span>}
                 </div>
 
@@ -208,13 +225,17 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
                     <label className="text-[#334155] font-semibold text-xs uppercase tracking-wide">
                       Academic Year
                     </label>
-                    <input
+                    <select
                       id="edit-user-academic-year"
                       className={`${inputCls} ${errors.academicYear ? "border-red-400" : ""}`}
-                      placeholder="e.g. 2nd Year"
                       value={form.academicYear || ""}
                       onChange={(e) => set("academicYear", e.target.value)}
-                    />
+                    >
+                      <option value="" disabled>Select Academic Year</option>
+                      {BATCH_OPTIONS.map((batch) => (
+                        <option key={batch} value={batch}>{batch}</option>
+                      ))}
+                    </select>
                     {errors.academicYear && <span className="text-red-500 text-xs">{errors.academicYear}</span>}
                   </div>
                 )}
