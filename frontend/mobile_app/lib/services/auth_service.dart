@@ -3,8 +3,9 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
-  // Use the same base URL approach as in report_service.dart and lecture_service.dart
-  static const String baseUrl = 'http://localhost:8000'; 
+
+  //use 10.0.2.2 rather than localhost for Android emulator. For iOS simulator, you can use localhost.
+  static const String baseUrl = 'http://10.0.2.2:8000'; 
 
   /// Returns true if login is successful, false otherwise.
   static Future<bool> login(String email, String password) async {
@@ -90,25 +91,70 @@ class AuthService {
 
   /// Requests a password reset OTP for the given email
   Future<Map<String, dynamic>> requestPasswordReset(String email) async {
-    // Dummy implementation for now
-    await Future.delayed(const Duration(seconds: 1));
-    return {'success': true, 'message': 'OTP sent to email'};
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/forgot-password'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email}),
+      );
+
+      if (response.statusCode == 200) {
+        return {'success': true, 'message': 'OTP sent to email'};
+      } else {
+        final error = jsonDecode(response.body);
+        return {'success': false, 'message': error['detail'] ?? 'Failed to send OTP'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Network error occurred'};
+    }
   }
 
   /// Verifies the OTP sent to the user's email
   Future<Map<String, dynamic>> verifyOTP(String email, String otp) async {
-    // Dummy implementation for now
-    await Future.delayed(const Duration(seconds: 1));
-    if (otp == '123456') {
-      return {'success': true, 'token': 'dummy_reset_token', 'message': 'OTP verified'};
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/verify-otp'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'otp': otp}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {
+          'success': true, 
+          'message': data['message'],
+          'token': data['token'] 
+        };
+      } else {
+        final error = jsonDecode(response.body);
+        return {'success': false, 'message': error['detail'] ?? 'Invalid OTP'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Network error occurred'};
     }
-    return {'success': true, 'token': 'dummy_reset_token', 'message': 'OTP verified'}; // Always succeed for testing
   }
 
   /// Resets the user's password using the verification token
   Future<Map<String, dynamic>> resetPassword(String email, String token, String newPassword) async {
-    // Dummy implementation for now
-    await Future.delayed(const Duration(seconds: 1));
-    return {'success': true, 'message': 'Password reset successful'};
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/reset-password'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+          'token': token,
+          'new_password': newPassword
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return {'success': true, 'message': 'Password reset successfully'};
+      } else {
+        final error = jsonDecode(response.body);
+        return {'success': false, 'message': error['detail'] ?? 'Failed to reset password'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Network error occurred'};
+    }
   }
 }

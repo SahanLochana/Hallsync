@@ -1,5 +1,7 @@
 from app.repositories.user_repo import UserRepo
 from app.core.security import verify_password, get_password_hash
+import random
+from datetime import datetime, timedelta
 
 class UserService:
     def __init__(self):
@@ -38,3 +40,46 @@ class UserService:
         hashed_password = get_password_hash(new_password)
         updated = await self.user_repo.update_user(user["universityId"], {"password_hash": hashed_password})
         return bool(updated)
+    
+    async def generate_and_save_otp(self, email:str):
+        user = await self.user_repo.get_user_by_email(email)
+        if not user:
+            return False
+        
+        otp = str(random.randint(100000, 999999))
+        expire_time = datetime.utcnow() + timedelta(minutes=10)
+
+        await self.user_repo.update_user(user["universityId"], {
+            "reset_otp": otp, 
+            "reset_otp_expires": expire_time
+        })
+
+        print(f"OTP for {email} is { otp}")
+        return True
+    
+    async def verify_otp(self, email:str, otp:str):
+        user = await self.user_repo.get_user_by_email(email)
+        if not user:
+            return False
+        
+        if user["reset_otp"] == otp and user["reset_otp_expires"] > datetime.utcnow():
+            return True
+        return False
+    
+    async def reset_password_with_otp(self, email: str, otp: str, new_password: str):
+        is_valid = await self.verify_otp(email, otp)
+        if not is_valid:
+            return False
+            
+        user = await self.user_repo.get_user_by_email(email)
+        hashed_password = get_password_hash(new_password)
+        
+        
+        await self.user_repo.update_user(user["universityId"], {
+            "password_hash": hashed_password,
+            "reset_otp": None,
+            "reset_otp_expires": None
+        })
+        return True
+        
+    

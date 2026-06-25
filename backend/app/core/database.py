@@ -1,9 +1,12 @@
 from pymongo import AsyncMongoClient
 from app.core.config import settings
+import certifi
 
 class Database:
     def __init__(self):
-        self.client = AsyncMongoClient("mongodb://localhost:27017")
+        self.client = AsyncMongoClient(settings.MONGODB_URL, tls=True,
+          tlsCAFile=certifi.where()
+        )
         self.database = self.client["lecture_hall_db"]
 
     async def create_index(self):
