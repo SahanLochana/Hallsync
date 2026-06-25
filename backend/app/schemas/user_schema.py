@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Literal
+from typing import Literal, Optional
 
 
 class User(BaseModel):
@@ -9,7 +9,7 @@ class User(BaseModel):
     department: str
     faculty: str
     role: Literal["student", "lecturer", "admin"]
-    academicYear: str | None = None
+    academicYear: Optional[str] = None
 
 
 class UsersResponse(BaseModel):
@@ -17,26 +17,46 @@ class UsersResponse(BaseModel):
 
 
 class UserUpdate(BaseModel):
-    universityId: str | None = None
-    name: str | None = None
-    email: str | None = None
-    department: str | None = None
-    faculty: str | None = None
-    role: Literal["student", "lecturer", "admin"] | None = None
-    academicYear: str | None = None
+    universityId: Optional[str] = None
+    name: Optional[str] = None
+    email: Optional[str] = None
+    department: Optional[str] = None
+    faculty: Optional[str] = None
+    role: Optional[Literal["student", "lecturer", "admin"]] = None
+    academicYear: Optional[str] = None
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class LoginResponse(BaseModel):
+    status: str
+    username: str
+    email: str
+    department: str
+    batch: str
+    role: str
+    token: str
+    isFirstLogin: bool
+
+
+class ChangePasswordRequest(BaseModel):
+    username: str
+    current_password: str
+    new_password: str
 
 
 # ── Bulk import schemas ────────────────────────────────────────────────────────
 
-
 class BulkUserRequest(BaseModel):
     """Request body for POST /api/users/bulk"""
-
     users: list[User]
 
 
 class BulkFailedEntry(BaseModel):
-    index: int  # 0-based index in the original request list
+    index: int
     universityId: str
     reason: str
 
@@ -51,3 +71,17 @@ class BulkImportResponse(BaseModel):
     success: list[User]
     failed: list[BulkFailedEntry]
     summary: BulkImportSummary
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+class VerifyOTPRequest(BaseModel):
+    email: str
+    otp: str
+
+class ResetPasswordRequest(BaseModel):
+    email: str
+    token: str
+    new_password: str
+

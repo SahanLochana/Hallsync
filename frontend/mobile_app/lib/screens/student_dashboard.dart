@@ -6,7 +6,9 @@ import '../widgets/announcement_card.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/lecture_card.dart';
 import '../widgets/section_header.dart';
-
+import 'send_report_screen.dart' as send_report_screen;
+import '../services/auth_service.dart';
+import '../services/lecture_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,38 +20,61 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
-  final List<Lecture> _lectures = [
-    Lecture(
-      title: 'Advanced Mathematics',
-      subject: 'Mathematics',
-      venue: 'Mini Auditorium',
-      date: DateTime.now(),
-      startTime: const TimeOfDay(hour: 8, minute: 0),
-      endTime: const TimeOfDay(hour: 10, minute: 0),
-      description: '',
-      tags: [],
-    ),
-    Lecture(
-      title: 'IT Auditing',
-      subject: 'Information Technology',
-      venue: 'New Lecture Hall',
-      date: DateTime.now(),
-      startTime: const TimeOfDay(hour: 8, minute: 0),
-      endTime: const TimeOfDay(hour: 10, minute: 0),
-      description: '',
-      tags: [],
-    ),
-    Lecture(
-      title: 'Structured Programming',
-      subject: 'Computer Science',
-      venue: 'Computing Lab',
-      date: DateTime.now(),
-      startTime: const TimeOfDay(hour: 8, minute: 0),
-      endTime: const TimeOfDay(hour: 10, minute: 0),
-      description: '',
-      tags: [],
-    ),
-  ];
+  List<Lecture> _lectures = [];
+  bool _isLoading = true;
+  String _userName = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserDetails();
+  }
+
+  Future<void> _loadUserDetails() async {
+    final name = await AuthService.getUsername();
+    if (mounted) {
+      setState(() {
+        _userName = name ?? 'Student';
+      });
+    }
+    _fetchLectures();
+  }
+
+  Future<void> _fetchLectures() async {
+    try {
+      final department = await AuthService.getDepartment();
+      final batch = await AuthService.getBatch();
+      final data = await LectureService.getLectures(department: department, batch: batch);
+      if (mounted) {
+        setState(() {
+          _lectures = data.map<Lecture>((json) {
+            return Lecture(
+              id: json['_id'] ?? '',
+              title: json['title'] ?? '',
+              subject: json['department'] ?? 'Unknown',
+              venue: json['hall_id'] ?? '',
+              date: DateTime.parse(json['start_time']),
+              startTime: TimeOfDay.fromDateTime(DateTime.parse(json['start_time'])),
+              endTime: TimeOfDay.fromDateTime(DateTime.parse(json['end_time'])),
+              description: json['description'] ?? '',
+              lecturerId: json['lecturer_id'] ?? '',
+              tags: [],
+            );
+          }).toList();
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load lectures: $e')),
+        );
+      }
+    }
+  }
 
   final List<AnnouncementModel> _announcements = const [
     AnnouncementModel(
@@ -89,7 +114,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       onActionTap: () {},
                     ),
                     const SizedBox(height: 12),
-                    if (_lectures.isEmpty)
+                    if (_isLoading)
+                      const Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator()))
+                    else if (_lectures.isEmpty)
                       _buildEmptyLectures()
                     else
                       ..._lectures.map((l) => LectureCard(lecture: l)),
@@ -111,6 +138,16 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const send_report_screen.SendReportScreen()),
+          );
+        },
+        backgroundColor: AppColors.primaryBlue,
+        child: const Icon(Icons.report_problem_outlined, color: Colors.white),
+      ),
     );
   }
 
@@ -118,52 +155,90 @@ class _HomeScreenState extends State<HomeScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: const [
-                Text(
-                  'Good Morning, Saru',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primaryBlue,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      'Good Morning, $_userName',
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primaryBlue,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                ),
-                Text('👋', style: TextStyle(fontSize: 22)),
-              ],
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'Monday, 23 October',
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColors.textGrey,
-                fontWeight: FontWeight.w400,
+                  const SizedBox(width: 4),
+                  const Text('👋', style: TextStyle(fontSize: 22)),
+                ],
               ),
-            ),
-          ],
-        ),
-        Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: AppColors.cardWhite,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.06),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
+              const SizedBox(height: 4),
+              const Text(
+                'Monday, 23 October',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textGrey,
+                  fontWeight: FontWeight.w400,
+                ),
               ),
             ],
           ),
-          child: const Icon(
-            Icons.notifications_outlined,
-            color: AppColors.textDark,
-            size: 22,
-          ),
+        ),
+        Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: AppColors.cardWhite,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.notifications_outlined,
+                color: AppColors.textDark,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 12),
+            GestureDetector(
+              onTap: () async {
+                await AuthService.logout();
+                if (!mounted) return;
+                Navigator.of(context).pushReplacementNamed('/');
+              },
+              child: Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: AppColors.cardWhite,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.logout,
+                  color: AppColors.textDark,
+                  size: 22,
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );
