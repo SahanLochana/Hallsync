@@ -1,10 +1,21 @@
 import 'package:flutter/material.dart';
 import '../../models/lecture_model.dart';
+import "../../services/lecture_service.dart";
+import "../../services/hall_service.dart";
+import '../../constants/modules_data.dart';
+import '../../services/auth_service.dart';
 
 class CreateLectureScreen extends StatefulWidget {
   final void Function(Lecture) onCreated;
+  final DateTime? initialDate;
+  final TimeOfDay? initialStartTime;
 
-  const CreateLectureScreen({super.key, required this.onCreated});
+  const CreateLectureScreen({
+    super.key, 
+    required this.onCreated,
+    this.initialDate,
+    this.initialStartTime,
+  });
 
   @override
   State<CreateLectureScreen> createState() => _CreateLectureScreenState();
@@ -13,744 +24,587 @@ class CreateLectureScreen extends StatefulWidget {
 class _CreateLectureScreenState extends State<CreateLectureScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final _titleController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  final _tagController = TextEditingController();
-
-  String? _selectedSubject;
+  String? _selectedDepartment;
+  String? _selectedSemester;
+  String? _selectedModule;
+  String? _selectedBatch;
   String? _selectedVenue;
-  DateTime _selectedDate = DateTime.now();
-  TimeOfDay _startTime = const TimeOfDay(hour: 8, minute: 0);
-  TimeOfDay _endTime = const TimeOfDay(hour: 10, minute: 0);
-  final List<String> _tags = [];
+  DateTime? _selectedDate;
+  TimeOfDay? _startTime;
+  TimeOfDay? _endTime;
+
   bool _isSubmitting = false;
-
-  final List<String> _subjects = [
-    'Mathematics',
-    'Physics',
-    'Chemistry',
-    'Biology',
-    'Computer Science',
-    'Engineering',
-    'Economics',
-    'Literature',
-  ];
-
-  final List<String> _venues = [
-    'Mini Auditorium',
-    'Main Hall',
-    'Lecture Room 101',
-    'Lecture Room 102',
-    'Lab A',
-    'Lab B',
-    'Online / Virtual',
-  ];
+  bool _isCheckingAvailability = false;
+  bool _isAvailable = true; 
+  bool _canOverwrite = false;
+  bool _isLoadingHalls = true;
 
   @override
-  void dispose() {
-    _titleController.dispose();
-    _descriptionController.dispose();
-    _tagController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    if (widget.initialDate != null) {
+      _selectedDate = widget.initialDate;
+    }
+    if (widget.initialStartTime != null) {
+      _startTime = widget.initialStartTime;
+    }
+    _loadHalls();
   }
 
-  // ── Pickers ───────────────────────────────────
+  Future<void> _loadHalls() async {
+    final halls = await HallService.getHalls();
+    if (mounted) {
+      setState(() {
+        _venues = halls.map((h) => h['name'] as String).toList();
+        _isLoadingHalls = false;
+      });
+    }
+  }
+
+
+  final List<String> _batches = [
+    '1st Year',
+    '2nd Year',
+    '3rd Year',
+    '4th Year',
+  ];
+
+  List<String> _venues = [];
 
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: _selectedDate,
+      initialDate: _selectedDate ?? DateTime.now(),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
-      builder: (ctx, child) => Theme(
-        data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.light(
-            primary: Color(0xFF283593),
-            onPrimary: Colors.white,
-            surface: Colors.white,
-            onSurface: Color(0xFF1A1A1A),
-          ),
-        ),
-        child: child!,
-      ),
     );
-    if (picked != null) setState(() => _selectedDate = picked);
+    if (picked != null) {
+      setState(() {
+        _selectedDate = picked;
+        _checkConflict();
+      });
+    }
   }
 
   Future<void> _pickTime({required bool isStart}) async {
     final picked = await showTimePicker(
       context: context,
-      initialTime: isStart ? _startTime : _endTime,
-      builder: (ctx, child) => Theme(
-        data: Theme.of(ctx).copyWith(
-          colorScheme: const ColorScheme.light(
-            primary: Color(0xFF283593),
-            onPrimary: Colors.white,
-            surface: Colors.white,
-            onSurface: Color(0xFF1A1A1A),
-          ),
-        ),
-        child: child!,
-      ),
+      initialTime: isStart 
+          ? (_startTime ?? const TimeOfDay(hour: 8, minute: 0))
+          : (_endTime ?? const TimeOfDay(hour: 10, minute: 0)),
     );
     if (picked != null) {
-      setState(() => isStart ? _startTime = picked : _endTime = picked);
+      setState(() {
+        if (isStart) _startTime = picked;
+        else _endTime = picked;
+        _checkConflict();
+      });
     }
   }
 
-  // ── Tags ──────────────────────────────────────
+  Future<void> _checkConflict() async {
+    if (_selectedDate == null || _startTime == null || _endTime == null || _selectedVenue == null) {
+      setState(() => _isAvailable = true);
+      return;
+    }
 
-  void _addTag(String tag) {
-    final t = tag.trim();
-    if (t.isNotEmpty && !_tags.contains(t)) setState(() => _tags.add(t));
-    _tagController.clear();
+    setState(() => _isCheckingAvailability = true);
+
+    final startDateTime = DateTime(
+      _selectedDate!.year, _selectedDate!.month, _selectedDate!.day,
+      _startTime!.hour, _startTime!.minute,
+    );
+    final endDateTime = DateTime(
+      _selectedDate!.year, _selectedDate!.month, _selectedDate!.day,
+      _endTime!.hour, _endTime!.minute,
+    );
+
+    // Don't check if end time is before start time
+    if (!endDateTime.isAfter(startDateTime)) {
+      setState(() {
+        _isCheckingAvailability = false;
+        _isAvailable = true;
+      });
+      return;
+    }
+
+    final result = await LectureService.checkAvailability(
+      hallId: _selectedVenue!,
+      startTime: startDateTime,
+      endTime: endDateTime,
+    );
+
+    if (mounted) {
+      setState(() {
+        _isAvailable = result['available'];
+        _canOverwrite = result['can_overwrite'];
+        _isCheckingAvailability = false;
+      });
+    }
   }
-
-  void _removeTag(String tag) => setState(() => _tags.remove(tag));
-
-  // ── Submit ────────────────────────────────────
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
-    if (_selectedSubject == null) {
-      _showSnack('Please select a subject');
+    if (_selectedModule == null || _selectedBatch == null || _selectedDate == null || _startTime == null || _endTime == null || _selectedVenue == null) {
+      _showSnack('Please fill all fields');
       return;
     }
-    if (_selectedVenue == null) {
-      _showSnack('Please select a venue');
+
+    if (!_isAvailable && !_canOverwrite) {
+      _showSnack('Cannot save: Lecture hall is unavailable for this time.');
       return;
+    }
+
+    final startDateTime = DateTime(
+      _selectedDate!.year, _selectedDate!.month, _selectedDate!.day,
+      _startTime!.hour, _startTime!.minute,
+    );
+    final endDateTime = DateTime(
+      _selectedDate!.year, _selectedDate!.month, _selectedDate!.day,
+      _endTime!.hour, _endTime!.minute,
+    );
+
+    if (!endDateTime.isAfter(startDateTime)) {
+      _showSnack('End time must be after start time');
+      return;
+    }
+    
+    bool doOverwrite = false;
+    if (!_isAvailable && _canOverwrite) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Overwrite Default Timetable?'),
+          content: const Text('This time slot is booked by an admin default timetable. Do you want to overwrite it?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text('Overwrite', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+      doOverwrite = true;
     }
 
     setState(() => _isSubmitting = true);
-    await Future.delayed(const Duration(milliseconds: 600));
 
-    final lecture = Lecture(
-      title: _titleController.text.trim(),
-      subject: _selectedSubject!,
-      venue: _selectedVenue!,
-      date: _selectedDate,
-      startTime: _startTime,
-      endTime: _endTime,
-      description: _descriptionController.text.trim(),
-      tags: List.from(_tags),
-    );
+    try {
+      final lecturerEmail = await AuthService.getEmail() ?? 'unknown_lecturer';
+      final lectureId = await LectureService.createLecture(
+        title: '$_selectedModule for $_selectedBatch',
+        description: '',
+        lecturerId: lecturerEmail,
+        hallId: _selectedVenue!,
+        department: _selectedDepartment,
+        batch: _selectedBatch,
+        startTime: startDateTime,
+        endTime: endDateTime,
+        capacity: 30, // Default capacity since it's removed from UI
+        overwrite: doOverwrite,
+      );
 
-    widget.onCreated(lecture);
-
-    if (mounted) {
-      setState(() => _isSubmitting = false);
-      _showSuccessAndPop();
+      if (lectureId != null) {
+        widget.onCreated(
+          Lecture(
+            id: lectureId,
+            title: '$_selectedModule for $_selectedBatch',
+            subject: _selectedModule!,
+            venue: _selectedVenue!,
+            date: _selectedDate!,
+            startTime: _startTime!,
+            endTime: _endTime!,
+            description: '',
+            lecturerId: lecturerEmail,
+            tags: [],
+          ),
+        );
+        Navigator.pop(context);
+        _showSnack('Lecture Created successfully!');
+      } else {
+        _showSnack('Failed to create lecture. Please try again.');
+      }
+    } catch (e) {
+      _showSnack('Error: ${e.toString()}');
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
   void _showSnack(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-        backgroundColor: const Color(0xFF283593),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
-
-  void _showSuccessAndPop() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 64,
-                height: 64,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFE8EAF6),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.check_rounded,
-                  color: Color(0xFF283593),
-                  size: 36,
-                ),
-              ),
-              const SizedBox(height: 18),
-              const Text(
-                'Lecture Created!',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1A237E),
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Your lecture has been successfully\nadded to the schedule.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: Color(0xFF757575)),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context); // close dialog
-                    Navigator.pop(context); // go back to home
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF283593),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'Back to Dashboard',
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ── Helpers ───────────────────────────────────
 
   String _formatDate(DateTime d) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return '${d.day} ${months[d.month - 1]} ${d.year}';
+    return '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
   }
 
   String _formatTime(TimeOfDay t) {
     final h = t.hourOfPeriod == 0 ? 12 : t.hourOfPeriod;
     final m = t.minute.toString().padLeft(2, '0');
     final p = t.period == DayPeriod.am ? 'AM' : 'PM';
-    return '$h:$m $p';
+    return '${h.toString().padLeft(2, '0')}:$m $p';
   }
-
-  // ── Build ─────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F0),
-      appBar: _buildAppBar(),
-      body: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _sectionLabel('LECTURE DETAILS'),
-              const SizedBox(height: 12),
-              _buildTextField(
-                controller: _titleController,
-                label: 'Lecture Title',
-                hint: 'e.g. Introduction to Calculus',
-                icon: Icons.title_rounded,
-                validator: (v) => (v == null || v.trim().isEmpty)
-                    ? 'Title is required'
-                    : null,
-              ),
-              const SizedBox(height: 12),
-              _buildDropdown(
-                label: 'Subject',
-                hint: 'Select subject',
-                icon: Icons.subject_rounded,
-                value: _selectedSubject,
-                items: _subjects,
-                onChanged: (v) => setState(() => _selectedSubject = v),
-              ),
-              const SizedBox(height: 12),
-              _buildTextField(
-                controller: _descriptionController,
-                label: 'Description (optional)',
-                hint: 'Brief overview of what will be covered…',
-                icon: Icons.notes_rounded,
-                maxLines: 3,
-              ),
-              const SizedBox(height: 24),
-              _sectionLabel('SCHEDULE'),
-              const SizedBox(height: 12),
-              _buildDateTile(),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(child: _buildTimeTile(isStart: true)),
-                  const SizedBox(width: 12),
-                  Expanded(child: _buildTimeTile(isStart: false)),
-                ],
-              ),
-              const SizedBox(height: 24),
-              _sectionLabel('VENUE'),
-              const SizedBox(height: 12),
-              _buildDropdown(
-                label: 'Venue',
-                hint: 'Select venue',
-                icon: Icons.location_on_outlined,
-                value: _selectedVenue,
-                items: _venues,
-                onChanged: (v) => setState(() => _selectedVenue = v),
-              ),
-              const SizedBox(height: 24),
-              _sectionLabel('TAGS (OPTIONAL)'),
-              const SizedBox(height: 12),
-              _buildTagInput(),
-              if (_tags.isNotEmpty) ...[
-                const SizedBox(height: 10),
-                _buildTagChips(),
-              ],
-              const SizedBox(height: 32),
-              _buildSubmitButton(),
-              const SizedBox(height: 24),
-            ],
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF1E293B), size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Create New Lecture',
+          style: TextStyle(
+            color: Color(0xFF1E293B),
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
           ),
+        ),
+      ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildLabel('Department'),
+                    _buildDropdown(
+                      hint: 'Select Department',
+                      value: _selectedDepartment,
+                      items: ModulesData.data.keys.toList(),
+                      onChanged: (v) {
+                        setState(() {
+                          _selectedDepartment = v;
+                          _selectedSemester = null;
+                          _selectedModule = null;
+                          _checkConflict();
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    if (_selectedDepartment != null) ...[
+                      _buildLabel('Semester'),
+                      _buildDropdown(
+                        hint: 'Select Semester',
+                        value: _selectedSemester,
+                        items: ModulesData.data[_selectedDepartment!]!.keys.toList(),
+                        onChanged: (v) {
+                          setState(() {
+                            _selectedSemester = v;
+                            _selectedModule = null;
+                            _checkConflict();
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                    if (_selectedSemester != null) ...[
+                      _buildLabel('Module'),
+                      _buildDropdown(
+                        hint: 'Select Module',
+                        value: _selectedModule,
+                        items: ModulesData.data[_selectedDepartment!]![_selectedSemester!]!,
+                        onChanged: (v) {
+                          setState(() {
+                            _selectedModule = v;
+                            _checkConflict();
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                    _buildLabel('Batch'),
+                    _buildDropdown(
+                      hint: 'Select Batch',
+                      value: _selectedBatch,
+                      items: _batches,
+                      onChanged: (v) {
+                        setState(() {
+                          _selectedBatch = v;
+                          _checkConflict();
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    _buildLabel('Date'),
+                    GestureDetector(
+                      onTap: _pickDate,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              _selectedDate == null ? 'YYYY-MM-DD' : _formatDate(_selectedDate!),
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: _selectedDate == null ? const Color(0xFF94A3B8) : const Color(0xFF1E293B),
+                              ),
+                            ),
+                            const Icon(Icons.calendar_today_outlined, color: Color(0xFF94A3B8), size: 20),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildLabel('Start Time'),
+                              GestureDetector(
+                                onTap: () => _pickTime(isStart: true),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Text(
+                                    _startTime == null ? '08:00 AM' : _formatTime(_startTime!),
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      color: _startTime == null ? const Color(0xFF94A3B8) : const Color(0xFF1E293B),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildLabel('End Time'),
+                              GestureDetector(
+                                onTap: () => _pickTime(isStart: false),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Text(
+                                    _endTime == null ? '10:00 AM' : _formatTime(_endTime!),
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      color: _endTime == null ? const Color(0xFF94A3B8) : const Color(0xFF1E293B),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _buildLabel('Lecture Hall'),
+                        if (_isCheckingAvailability)
+                          const SizedBox(
+                            width: 12, height: 12,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        else if (_selectedVenue != null && _selectedDate != null && _startTime != null && _endTime != null)
+                          Row(
+                            children: [
+                              Container(
+                                width: 6,
+                                height: 6,
+                                decoration: BoxDecoration(
+                                  color: _isAvailable ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                _isAvailable ? 'Available' : 'Unavailable',
+                                style: TextStyle(
+                                  color: _isAvailable ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          )
+                      ],
+                    ),
+                    _isLoadingHalls
+                        ? const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator()))
+                        : _buildDropdown(
+                            hint: 'Select Hall',
+                            value: _selectedVenue,
+                            items: _venues,
+                            onChanged: (v) {
+                              setState(() {
+                                _selectedVenue = v;
+                                _checkConflict();
+                              });
+                            },
+                          ),
+                    const SizedBox(height: 20),
+                    if (!_isAvailable && !_canOverwrite)
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF2F2),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFFECACA)),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.warning_amber_rounded, color: Color(0xFFEF4444), size: 20),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                "Conflict detected: The selected lecture hall ('$_selectedVenue') is already booked for this time slot.",
+                                style: const TextStyle(
+                                  color: Color(0xFFDC2626),
+                                  fontSize: 13,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else if (!_isAvailable && _canOverwrite)
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFFBEB),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFFDE68A)),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.info_outline, color: Color(0xFFD97706), size: 20),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Text(
+                                "Conflict with Default Timetable. You can overwrite this slot.",
+                                style: TextStyle(
+                                  color: Color(0xFFB45309),
+                                  fontSize: 13,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                border: Border(top: BorderSide(color: Color(0xFFF1F5F9))),
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _isSubmitting ? null : _submit,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1D4ED8),
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: const Color(0xFF93C5FD),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: _isSubmitting
+                      ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : const Text(
+                          'Save Lecture',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  AppBar _buildAppBar() {
-    return AppBar(
-      backgroundColor: const Color(0xFFF5F5F0),
-      elevation: 0,
-      leading: GestureDetector(
-        onTap: () => Navigator.pop(context),
-        child: Container(
-          margin: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.06),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: Color(0xFF1A237E),
-            size: 18,
-          ),
-        ),
-      ),
-      title: const Text(
-        'Create Lecture',
-        style: TextStyle(
-          color: Color(0xFF1A237E),
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      centerTitle: true,
-    );
-  }
-
-  Widget _sectionLabel(String text) {
-    return Text(
-      text,
-      style: const TextStyle(
-        fontSize: 11,
-        fontWeight: FontWeight.w700,
-        color: Color(0xFF5C6BC0),
-        letterSpacing: 1.2,
-      ),
-    );
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    required IconData icon,
-    int maxLines = 1,
-    String? Function(String?)? validator,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: TextFormField(
-        controller: controller,
-        maxLines: maxLines,
-        validator: validator,
-        style: const TextStyle(fontSize: 14, color: Color(0xFF1A1A1A)),
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: hint,
-          labelStyle: const TextStyle(color: Color(0xFF9E9E9E), fontSize: 13),
-          hintStyle: const TextStyle(color: Color(0xFFBDBDBD), fontSize: 13),
-          prefixIcon: Icon(icon, color: const Color(0xFF3949AB), size: 20),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: Color(0xFF3949AB), width: 1.5),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
-          ),
-          filled: true,
-          fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
-          ),
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF475569),
         ),
       ),
     );
   }
 
   Widget _buildDropdown({
-    required String label,
     required String hint,
-    required IconData icon,
     required String? value,
     required List<String> items,
     required void Function(String?) onChanged,
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: DropdownButtonFormField<String>(
         initialValue: value,
         onChanged: onChanged,
         items: items
-            .map(
-              (s) => DropdownMenuItem(
-                value: s,
-                child: Text(s, style: const TextStyle(fontSize: 14)),
-              ),
-            )
+            .map((s) => DropdownMenuItem(
+                  value: s,
+                  child: Text(s, style: const TextStyle(fontSize: 15, color: Color(0xFF1E293B))),
+                ))
             .toList(),
-        style: const TextStyle(fontSize: 14, color: Color(0xFF1A1A1A)),
-        icon: const Icon(
-          Icons.keyboard_arrow_down_rounded,
-          color: Color(0xFF9E9E9E),
-        ),
+        icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF94A3B8)),
         decoration: InputDecoration(
-          labelText: label,
           hintText: hint,
-          labelStyle: const TextStyle(color: Color(0xFF9E9E9E), fontSize: 13),
-          prefixIcon: Icon(icon, color: const Color(0xFF3949AB), size: 20),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: Color(0xFF3949AB), width: 1.5),
-          ),
-          filled: true,
-          fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
-          ),
+          hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 15),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
         dropdownColor: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-      ),
-    );
-  }
-
-  Widget _buildDateTile() {
-    return GestureDetector(
-      onTap: _pickDate,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            const Icon(
-              Icons.calendar_month_outlined,
-              color: Color(0xFF3949AB),
-              size: 20,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Date',
-                    style: TextStyle(fontSize: 11, color: Color(0xFF9E9E9E)),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    _formatDate(_selectedDate),
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF1A1A1A),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(
-              Icons.keyboard_arrow_down_rounded,
-              color: Color(0xFF9E9E9E),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTimeTile({required bool isStart}) {
-    return GestureDetector(
-      onTap: () => _pickTime(isStart: isStart),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Icon(
-              isStart ? Icons.play_circle_outline : Icons.stop_circle_outlined,
-              color: const Color(0xFF3949AB),
-              size: 20,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    isStart ? 'Start Time' : 'End Time',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF9E9E9E),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    _formatTime(isStart ? _startTime : _endTime),
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF1A1A1A),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(
-              Icons.keyboard_arrow_down_rounded,
-              color: Color(0xFF9E9E9E),
-              size: 18,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTagInput() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: TextField(
-        controller: _tagController,
-        style: const TextStyle(fontSize: 14, color: Color(0xFF1A1A1A)),
-        onSubmitted: _addTag,
-        decoration: InputDecoration(
-          labelText: 'Add Tag',
-          hintText: 'e.g. Calculus, Exam Prep — press Enter',
-          labelStyle: const TextStyle(color: Color(0xFF9E9E9E), fontSize: 13),
-          hintStyle: const TextStyle(color: Color(0xFFBDBDBD), fontSize: 13),
-          prefixIcon: const Icon(
-            Icons.tag_rounded,
-            color: Color(0xFF3949AB),
-            size: 20,
-          ),
-          suffixIcon: IconButton(
-            onPressed: () => _addTag(_tagController.text),
-            icon: const Icon(
-              Icons.add_circle_outline_rounded,
-              color: Color(0xFF3949AB),
-              size: 22,
-            ),
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: Color(0xFF3949AB), width: 1.5),
-          ),
-          filled: true,
-          fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTagChips() {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: _tags.map((tag) {
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: const Color(0xFFE8EAF6),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                tag,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF283593),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(width: 6),
-              GestureDetector(
-                onTap: () => _removeTag(tag),
-                child: const Icon(
-                  Icons.close_rounded,
-                  size: 14,
-                  color: Color(0xFF5C6BC0),
-                ),
-              ),
-            ],
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildSubmitButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: _isSubmitting ? null : _submit,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF283593),
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: const Color(0xFF7986CB),
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-          elevation: 4,
-          shadowColor: const Color(0xFF1A237E).withOpacity(0.4),
-        ),
-        child: _isSubmitting
-            ? const SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  color: Colors.white,
-                ),
-              )
-            : const Text(
-                'Create Lecture',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.5,
-                ),
-              ),
+        borderRadius: BorderRadius.circular(16),
       ),
     );
   }

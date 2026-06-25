@@ -24,8 +24,20 @@ const EMPTY_FORM = {
   department: "",
   faculty: "",
   academicYear: "",
-
 };
+
+const DEPARTMENT_OPTIONS = [
+  "Computing & Information Systems (CIS)",
+  "Software Engineering (SE)",
+  "Data Science (DS)",
+];
+
+const BATCH_OPTIONS = [
+  "1st Year",
+  "2nd Year",
+  "3rd Year",
+  "4th Year",
+];
 
 // ── Field wrapper — defined at module level to avoid React re-mount on rerender ─
 function Field({ label, error, children }) {
@@ -167,25 +179,33 @@ export default function AddUserModal({ isOpen, onClose, onConfirm }) {
 
             {/* Department */}
             <Field label="Department" error={errors.department}>
-              <input
+              <select
                 id="add-user-department"
                 className={`${inputCls} ${errors.department ? "border-red-400" : "border-[#e2e8f0]"}`}
-                placeholder="e.g. Software Engineering"
                 value={form.department}
                 onChange={(e) => set("department", e.target.value)}
-              />
+              >
+                <option value="" disabled>Select Department</option>
+                {DEPARTMENT_OPTIONS.map((dept) => (
+                  <option key={dept} value={dept}>{dept}</option>
+                ))}
+              </select>
             </Field>
 
             {/* Academic Year (Student only) */}
             {isStudent && (
               <Field label="Academic Year" error={errors.academicYear}>
-                <input
+                <select
                   id="add-user-academic-year"
                   className={`${inputCls} ${errors.academicYear ? "border-red-400" : "border-[#e2e8f0]"}`}
-                  placeholder="e.g. 2nd Year"
                   value={form.academicYear}
                   onChange={(e) => set("academicYear", e.target.value)}
-                />
+                >
+                  <option value="" disabled>Select Academic Year</option>
+                  {BATCH_OPTIONS.map((batch) => (
+                    <option key={batch} value={batch}>{batch}</option>
+                  ))}
+                </select>
               </Field>
             )}
 
