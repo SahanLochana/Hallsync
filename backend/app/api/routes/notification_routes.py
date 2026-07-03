@@ -3,7 +3,7 @@ from typing import List
 from app.services.notification_service import NotificationService
 from app.schemas.notification_schema import Notification
 
-router = APIRouter(prefix="/notifications", tags=["Notifications"])
+router = APIRouter()
 notification_service = NotificationService()
 
 @router.get("/{user_id}", response_model=List[Notification])

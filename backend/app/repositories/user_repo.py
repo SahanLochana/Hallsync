@@ -9,7 +9,7 @@ from app.core.security import get_password_hash
 class UserRepo:
     def __init__(self):
         self.db = Database()
-        self.user_collection = self.db.get_collection("users")
+        self.user_collection = self.db.get_collection(settings.USER_COLLECTION)
 
     def _format_user(self, doc: dict) -> dict:
         """Strips MongoDB internal fields and normalises role casing."""
@@ -57,6 +57,10 @@ class UserRepo:
         if "password_hash" not in db_user:
             db_user["password_hash"] = get_password_hash("DefaultPassword123!")
 
+        db_user["is_first_login"] = True
+        db_user["reset_otp"] = None
+        db_user["reset_otp_expires"] = None
+
         try:
             await self.user_collection.insert_one(db_user)
         except DuplicateKeyError:
@@ -81,10 +85,16 @@ class UserRepo:
                 db_user["role"] = db_user["role"].capitalize()
             if "password_hash" not in db_user:
                 db_user["password_hash"] = get_password_hash("DefaultPassword123!")
+
+            db_user["is_first_login"] = True
+            db_user["reset_otp"] = None
+            db_user["reset_otp_expires"] = None
             db_users.append(db_user)
 
         success = []
         failed = []
+
+        
 
         try:
             await self.user_collection.insert_many(db_users, ordered=False)

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from app.core.websocket_manager import manager
 
-router = APIRouter(prefix="/ws", tags=["WebSockets"])
+router = APIRouter()
 
 @router.websocket("/notifications/{user_email}")
 async def websocket_endpoint(websocket: WebSocket, user_email: str):

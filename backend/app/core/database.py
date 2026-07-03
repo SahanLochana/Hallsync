@@ -7,10 +7,10 @@ class Database:
         self.client = AsyncMongoClient(settings.MONGODB_URL, tls=True,
           tlsCAFile=certifi.where()
         )
-        self.database = self.client["lecture_hall_db"]
+        self.database = self.client[settings.DATABASE_NAME]
 
     async def create_index(self):
-        user_collection = self.database.get_collection("users")
+        user_collection = self.database.get_collection(settings.USER_COLLECTION)
         await user_collection.create_index("universityId", unique=True)
 
         hall_collection = self.database.get_collection("halls")

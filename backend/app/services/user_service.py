@@ -47,6 +47,7 @@ class UserService:
             return False
         
         otp = str(random.randint(100000, 999999))
+        # pyrefly: ignore [deprecated]
         expire_time = datetime.utcnow() + timedelta(minutes=10)
 
         await self.user_repo.update_user(user["universityId"], {

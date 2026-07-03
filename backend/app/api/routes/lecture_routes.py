@@ -9,7 +9,7 @@ from app.schemas.lecture_schema import LectureCreate, AvailabilityCheck
 from app.services.notification_service import NotificationService
 from app.repositories.user_repo import UserRepo
 
-router = APIRouter(prefix="/lectures", tags=["Lectures"])
+router = APIRouter()
 notification_service = NotificationService()
 user_repo = UserRepo()
 
@@ -103,6 +103,7 @@ async def check_availability(check: AvailabilityCheck):
     
     if check.exclude_lecture_id:
         try:
+            # pyrefly: ignore [bad-assignment]
             overlap_query["_id"] = {"$ne": ObjectId(check.exclude_lecture_id)}
         except Exception:
             pass
