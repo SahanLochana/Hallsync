@@ -6,7 +6,8 @@ from app.core.database import Database
 app = FastAPI(redirect_slashes=False)
 
 origins = [
-    "http://localhost:3000", "http://localhost:3001",
+    "http://localhost:3000",
+    "http://localhost:3001",
 ]
 
 app.add_middleware(
@@ -19,10 +20,12 @@ app.add_middleware(
 
 app.include_router(api_router, prefix="/api")
 
+
 @app.on_event("startup")
 async def startup():
     db = Database()
     await db.create_index()
+
 
 @app.get("/")
 def home():

@@ -3,6 +3,7 @@ from app.core.websocket_manager import manager
 
 router = APIRouter()
 
+
 @router.websocket("/notifications/{user_email}")
 async def websocket_endpoint(websocket: WebSocket, user_email: str):
     await manager.connect(websocket, user_email)

@@ -2,10 +2,11 @@ from pymongo import AsyncMongoClient
 from app.core.config import settings
 import certifi
 
+
 class Database:
     def __init__(self):
-        self.client = AsyncMongoClient(settings.MONGODB_URL, tls=True,
-          tlsCAFile=certifi.where()
+        self.client = AsyncMongoClient(
+            settings.MONGODB_URL, tls=True, tlsCAFile=certifi.where()
         )
         self.database = self.client[settings.DATABASE_NAME]
 
@@ -21,6 +22,7 @@ class Database:
 
     async def close(self):
         await self.client.close()
+
 
 # Global instances for legacy routes
 db = Database()

@@ -13,8 +13,10 @@ api_router = APIRouter()
 api_router.include_router(user_router, prefix="/users", tags=["Users"])
 api_router.include_router(hall_router, prefix="/halls", tags=["Halls"])
 api_router.include_router(timetable_router, prefix="/timetables", tags=["Timetables"])
-api_router.include_router(lecture_router,prefix="/lectures", tags=["Lectures"])
+api_router.include_router(lecture_router, prefix="/lectures", tags=["Lectures"])
 api_router.include_router(report_routes, prefix="/reports", tags=["Reports"])
-api_router.include_router(notification_router,prefix="/notifications", tags=["Notifications"])
-api_router.include_router(websocket_router,prefix="/ws", tags=["WebSockets"])
+api_router.include_router(
+    notification_router, prefix="/notifications", tags=["Notifications"]
+)
+api_router.include_router(websocket_router, prefix="/ws", tags=["WebSockets"])
 api_router.include_router(auth_router, prefix="/auth", tags=["Auth"])

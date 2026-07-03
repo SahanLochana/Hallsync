@@ -15,6 +15,7 @@ router = APIRouter()
 
 # ── Collection endpoints ───────────────────────────────────────────────────────
 
+
 @router.get("/", response_model=UsersResponse)
 async def get_users():
     user_service = UserService()
@@ -50,6 +51,7 @@ async def create_user(user: User):
 
 # ── Bulk import ────────────────────────────────────────────────────────────────
 
+
 @router.post("/bulk", response_model=BulkImportResponse, status_code=status.HTTP_200_OK)
 async def bulk_create_users(body: BulkUserRequest):
     """
@@ -79,6 +81,7 @@ async def bulk_create_users(body: BulkUserRequest):
 
 # ── Single-user endpoints (path param must come last to avoid swallowing /bulk) ──
 # NOTE: {university_id:path} captures slashes so IDs like "SE/2021/001" work.
+
 
 @router.get("/{university_id:path}", response_model=User)
 async def get_user(university_id: str):
@@ -140,7 +143,10 @@ async def delete_user(university_id: str):
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"User with universityId '{university_id}' not found",
             )
-        return {"status": "success", "message": f"User '{university_id}' deleted successfully"}
+        return {
+            "status": "success",
+            "message": f"User '{university_id}' deleted successfully",
+        }
     except HTTPException:
         raise
     except Exception as e:
