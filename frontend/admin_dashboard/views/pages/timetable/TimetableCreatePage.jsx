@@ -75,7 +75,10 @@ export default function TimetableCreatePage() {
   const [addCell, setAddCell]   = useState(null);   // { day, startHour }
 
   // Remove lecture confirm modal
-  const [removeId, setRemoveId] = useState(null);   // lecture.id to remove
+  const [removeId, setRemoveId] = useState(null);   // lecture.lec_id to remove
+
+  // Save name override state
+  const [isNameOverridden, setIsNameOverridden] = useState(false);
 
   // Save error
   const [saveError, setSaveError] = useState(null);
@@ -84,6 +87,46 @@ export default function TimetableCreatePage() {
   function updateMeta(field, value) {
     setMeta((prev) => ({ ...prev, [field]: value }));
     setSaveError(null);
+  }
+
+  function handleNameChange(val) {
+    setMeta((prev) => ({ ...prev, name: val }));
+    setSaveError(null);
+    if (val.trim() !== "") {
+      setIsNameOverridden(true);
+    } else {
+      setIsNameOverridden(false);
+    }
+  }
+
+  function handleDepartmentChange(val) {
+    setSaveError(null);
+    setMeta((prev) => {
+      const nextMeta = { ...prev, department: val };
+      if (!isNameOverridden) {
+        if (val && prev.year) {
+          nextMeta.name = `${val} - ${prev.year}`;
+        } else {
+          nextMeta.name = val || prev.year || "";
+        }
+      }
+      return nextMeta;
+    });
+  }
+
+  function handleYearChange(val) {
+    setSaveError(null);
+    setMeta((prev) => {
+      const nextMeta = { ...prev, year: val };
+      if (!isNameOverridden) {
+        if (prev.department && val) {
+          nextMeta.name = `${prev.department} - ${val}`;
+        } else {
+          nextMeta.name = prev.department || val || "";
+        }
+      }
+      return nextMeta;
+    });
   }
 
   function getLecturesForDay(day) {
@@ -99,8 +142,8 @@ export default function TimetableCreatePage() {
   const gridH = HEADER_H + HALF_HOURS.length * SLOT_H;
 
   // ── Save handler ───────────────────────────────────────────────────────────
-  function onSave() {
-    const result = handleSaveTimetable(meta, lectures, router);
+  async function onSave() {
+    const result = await handleSaveTimetable(meta, lectures, router);
     if (!result.ok) setSaveError(result.error);
   }
 
@@ -148,7 +191,7 @@ export default function TimetableCreatePage() {
                 type="text"
                 placeholder="Timetable name…"
                 value={meta.name}
-                onChange={(e) => updateMeta("name", e.target.value)}
+                onChange={(e) => handleNameChange(e.target.value)}
                 className="flex-1 min-w-[180px] bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a]
                            text-sm font-medium px-3 py-2 rounded-lg focus:outline-none
                            focus:ring-2 focus:ring-[#1e3b8a]/25 focus:border-[#1e3b8a] transition"
@@ -159,7 +202,7 @@ export default function TimetableCreatePage() {
                 value={meta.department}
                 options={DEPARTMENT_OPTIONS}
                 placeholder="Department…"
-                onChange={(v) => updateMeta("department", v)}
+                onChange={handleDepartmentChange}
               />
 
               <MetaSelect
@@ -167,7 +210,7 @@ export default function TimetableCreatePage() {
                 value={meta.year}
                 options={YEAR_OPTIONS}
                 placeholder="Year…"
-                onChange={(v) => updateMeta("year", v)}
+                onChange={handleYearChange}
               />
 
               {/* Draft lecture count badge */}
@@ -250,12 +293,12 @@ export default function TimetableCreatePage() {
                       {/* Draft lecture blocks */}
                       {dayLectures.map((lec) => (
                         <button
-                          key={lec.id}
-                          id={`draft-block-${lec.id}`}
+                          key={lec.lec_id}
+                          id={`draft-block-${lec.lec_id}`}
                           title="Click to remove"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setRemoveId(lec.id);
+                            setRemoveId(lec.lec_id);
                           }}
                           className="absolute left-1 right-1 rounded-lg text-white text-xs font-semibold
                                      flex flex-col items-center justify-center text-center px-2

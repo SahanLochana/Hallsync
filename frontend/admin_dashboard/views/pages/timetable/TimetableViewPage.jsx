@@ -20,14 +20,26 @@
  */
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, Download, Pencil, X } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Pencil,
+  X,
+  Trash,
+} from "lucide-react";
 
 import TopHeader from "@/views/components/TopHeader";
 import LectureDetailModal from "@/views/components/LectureDetailModal";
 import AddLectureModal from "@/views/components/AddLectureModal";
 
-import { DAYS, HOURS, HALF_HOURS, formatHour } from "@/models/timetableViewModel";
+import {
+  DAYS,
+  HOURS,
+  HALF_HOURS,
+  formatHour,
+} from "@/models/timetableViewModel";
 import {
   initLectures,
   handleLectureClick,
@@ -35,6 +47,7 @@ import {
   handleSaveEdit,
   handleConfirmDelete,
   handleAddLecture,
+  handleDeleteTimetable,
   handlePrevWeek,
   handleNextWeek,
   formatWeekLabel,
@@ -44,28 +57,43 @@ import {
 
 // Grid constants
 // Each 30-min slot = 30px tall. Two slots = 1 hour = 60px.
-const SLOT_H  = 30;    // px per 30-min cell
-const HEADER_H = 64;   // px for day-header row
+const SLOT_H = 30; // px per 30-min cell
+const HEADER_H = 64; // px for day-header row
 
 export default function TimetableViewPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const timetableId = searchParams.get("id");
 
   // ── State ──────────────────────────────────────────────────────────────
-  const [lectures, setLectures]       = useState([]);
-  const [weekStart, setWeekStart]     = useState(getCurrentWeekMonday);
-  const [selected, setSelected]       = useState(null);   // clicked lecture
-  const [showDetail, setShowDetail]   = useState(false);
+  const [lectures, setLectures] = useState([]);
+  const [weekStart, setWeekStart] = useState(getCurrentWeekMonday);
+  const [selected, setSelected] = useState(null); // clicked lecture
+  const [showDetail, setShowDetail] = useState(false);
 
   // Edit mode
-  const [isEditMode, setIsEditMode]   = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   // Add lecture modal
-  const [addCell, setAddCell]         = useState(null);   // { day, startHour }
+  const [addCell, setAddCell] = useState(null); // { day, startHour }
+
+  // Timetable metadata and loading/error states
+  const [meta, setMeta] = useState({
+    name: "Loading...",
+    department: "",
+    year: "",
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   // ── Load lectures on mount ─────────────────────────────────────────────
   useEffect(() => {
-    initLectures(setLectures); // TODO: initLectures — loads from localStorage / API
-  }, []);
+    if (timetableId) {
+      initLectures(timetableId, setLectures, setMeta, setIsLoading, setError);
+    } else {
+      setError("No timetable ID specified.");
+    }
+  }, [timetableId]);
 
   // ── Derived ────────────────────────────────────────────────────────────
   const weekLabel = formatWeekLabel(weekStart);
@@ -78,7 +106,7 @@ export default function TimetableViewPage() {
   // Pixel top offset and height for a lecture block.
   function getLectureStyle(lec) {
     const top = (lec.startHour - HOURS[0]) * 2 * SLOT_H + HEADER_H;
-    const h   = (lec.endHour  - lec.startHour) * 2 * SLOT_H;
+    const h = (lec.endHour - lec.startHour) * 2 * SLOT_H;
     return { top: `${top}px`, height: `${h - 4}px` }; // -4px gap
   }
 
@@ -101,10 +129,11 @@ export default function TimetableViewPage() {
 
   return (
     <div className="h-screen overflow-hidden flex flex-col bg-[#f8fafc]">
-
       {/* ── TOP HEADER ──────────────────────────────────────────────────── */}
       <TopHeader
-        title="Information System | 2022/2023"
+        title={
+          meta.name ? `${meta.name} | ${meta.department}` : "Timetable View"
+        }
         actions={
           <div className="flex items-center gap-3">
             {/* Edit Mode Toggle */}
@@ -114,50 +143,75 @@ export default function TimetableViewPage() {
               className={`
                 font-semibold text-sm flex items-center gap-1.5 px-4 h-10 rounded-2xl
                 active:scale-[0.98] transition-all
-                ${isEditMode
-                  ? "bg-amber-500 text-white hover:bg-amber-600 shadow-[0_4px_12px_rgba(245,158,11,0.35)]"
-                  : "border-2 border-[#1e3b8a] text-[#1e3b8a] hover:bg-[#1e3b8a]/5"
+                ${
+                  isEditMode
+                    ? "bg-amber-500 text-white hover:bg-amber-600 shadow-[0_4px_12px_rgba(245,158,11,0.35)]"
+                    : "border-2 border-[#1e3b8a] text-[#1e3b8a] hover:bg-[#1e3b8a]/5"
                 }
               `}
             >
-              {isEditMode
-                ? <><X size={14} strokeWidth={2.5} /> Exit Edit</>
-                : <><Pencil size={14} strokeWidth={2.5} /> Edit Mode</>
-              }
+              {isEditMode ? (
+                <>
+                  <X size={14} strokeWidth={2.5} /> Exit Edit
+                </>
+              ) : (
+                <>
+                  <Pencil size={14} strokeWidth={2.5} /> Edit Mode
+                </>
+              )}
             </button>
 
             {/* Export */}
             <button
               id="btn-export"
-              onClick={() => {/* TODO: handleExport — export timetable as PDF/image */}}
+              onClick={() => {
+                /* TODO: handleExport — export timetable as PDF/image */
+              }}
               className="bg-[#1e3b8a] text-white font-semibold text-sm flex items-center gap-1.5 px-4 h-10 rounded-2xl hover:bg-[#162d6b] active:scale-[0.98] transition-all shadow-[0_4px_12px_rgba(30,59,138,0.2)]"
             >
               <Download size={14} strokeWidth={2.5} />
               Export
             </button>
+
+            {/* Delete Timetable */}
+            {isEditMode && (
+              <button
+                id="btn-delete-timetable"
+                onClick={() => handleDeleteTimetable(timetableId, router)}
+                className="bg-red-600 text-white font-semibold text-sm flex items-center gap-1.5 px-4 h-10 rounded-2xl hover:bg-red-700 active:scale-[0.98] transition-all shadow-[0_4px_12px_rgba(220,38,38,0.2)]"
+              >
+                <Trash size={14} strokeWidth={2.5} />
+                Delete Timetable
+              </button>
+            )}
           </div>
         }
       />
 
-      {/* ── EDIT MODE BANNER ────────────────────────────────────────────── */}
-      {isEditMode && (
+      {/* ── ERROR/EDIT MODE BANNER ────────────────────────────────────────────── */}
+      {error && (
+        <div className="bg-red-50 border-b border-red-200 px-5 py-2 flex items-center gap-2 shrink-0">
+          <span className="text-red-700 text-xs font-semibold">
+            Error: {error}
+          </span>
+        </div>
+      )}
+      {isEditMode && !error && (
         <div className="bg-amber-50 border-b border-amber-200 px-5 py-2 flex items-center gap-2 shrink-0">
           <Pencil size={13} className="text-amber-600" strokeWidth={2.5} />
           <span className="text-amber-700 text-xs font-semibold">
-            Edit Mode — click any lecture to edit or delete, click an empty slot to add a new lecture
+            Edit Mode — click any lecture to edit or delete, click an empty slot
+            to add a new lecture
           </span>
         </div>
       )}
 
       {/* ── BODY (fills remaining height, no scroll) ─────────────────── */}
       <div className="flex flex-1 overflow-hidden">
-
         {/* Main content — fills height, no external scroll */}
         <main className="flex-1 p-4 flex flex-col gap-4 min-w-0 overflow-hidden">
-
           {/* ── Calendar card — flex-1 takes remaining height, grid scrolls inside ── */}
           <div className="bg-white rounded-xl shadow-[0_8px_25px_rgba(226,232,240,0.75)] flex flex-col flex-1 min-h-0 overflow-hidden">
-
             {/* Week navigator */}
             <div className="flex items-center justify-center gap-10 py-2.5 border-b border-[#e2e8f0] shrink-0">
               <button
@@ -180,107 +234,130 @@ export default function TimetableViewPage() {
             </div>
 
             {/* ── GRID — only this area scrolls ───────────────────────── */}
-            <div className="flex flex-1 min-h-0 overflow-auto">
-
-              {/* Time column */}
-              <div className="shrink-0 flex flex-col select-none" style={{ width: "64px" }}>
-                {/* Spacer matching the day-header */}
-                <div style={{ height: `${HEADER_H}px` }} />
-                {HOURS.map((h, i) => (
-                  <div
-                    key={h}
-                    className="relative"
-                    style={{ height: i < HOURS.length - 1 ? `${SLOT_H * 2}px` : "0px" }}
-                  >
-                    <span className="absolute -top-[9px] right-2 text-[#64748b] font-semibold text-[11px] whitespace-nowrap">
-                      {formatHour(h)}
-                    </span>
-                  </div>
-                ))}
+            {isLoading ? (
+              <div className="flex-1 flex items-center justify-center text-[#94a3b8] text-sm">
+                Loading timetable data…
               </div>
-
-              {/* Day columns */}
-              <div className="flex flex-1">
-                {DAYS.map((day, di) => {
-                  const dayDate = getDayDate(weekStart, di);
-                  const dayLectures = getLecturesForDay(day);
-
-                  const isFirst = di === 0;
-                  const isLast  = di === DAYS.length - 1;
-
-                  return (
+            ) : (
+              <div className="flex flex-1 min-h-0 overflow-auto">
+                {/* Time column */}
+                <div
+                  className="shrink-0 flex flex-col select-none"
+                  style={{ width: "64px" }}
+                >
+                  {/* Spacer matching the day-header */}
+                  <div style={{ height: `${HEADER_H}px` }} />
+                  {HOURS.map((h, i) => (
                     <div
-                      key={day}
-                      className="flex-1 relative border-l border-[#94a3b8]/40 min-w-[150px]"
-                      style={{ height: `${gridH}px` }}
+                      key={h}
+                      className="relative"
+                      style={{
+                        height:
+                          i < HOURS.length - 1 ? `${SLOT_H * 2}px` : "0px",
+                      }}
                     >
-                      {/* Day header */}
+                      <span className="absolute -top-[9px] right-2 text-[#64748b] font-semibold text-[11px] whitespace-nowrap">
+                        {formatHour(h)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Day columns */}
+                <div className="flex flex-1">
+                  {DAYS.map((day, di) => {
+                    const dayDate = getDayDate(weekStart, di);
+                    const dayLectures = getLecturesForDay(day);
+
+                    const isFirst = di === 0;
+                    const isLast = di === DAYS.length - 1;
+
+                    return (
                       <div
-                        className={`
+                        key={day}
+                        className="flex-1 relative border-l border-[#94a3b8]/40 min-w-[150px]"
+                        style={{ height: `${gridH}px` }}
+                      >
+                        {/* Day header */}
+                        <div
+                          className={`
                           flex flex-col items-center justify-center border border-[#94a3b8]/40
                           font-semibold text-[#0f172a] text-sm bg-white
                           ${isFirst ? "rounded-tl-lg" : ""}
-                          ${isLast  ? "rounded-tr-lg" : ""}
+                          ${isLast ? "rounded-tr-lg" : ""}
                         `}
-                        style={{ height: `${HEADER_H}px` }}
-                      >
-                        <span>{day}</span>
-                        <span className="text-[#94a3b8] text-xs font-normal">{dayDate}</span>
-                      </div>
-
-                      {/* 30-min slot cells — clickable in edit mode to add lecture */}
-                      {HALF_HOURS.map((h) => (
-                        <div
-                          key={h}
-                          className={`
-                            border-b border-[#94a3b8]/40 transition-colors
-                            ${isEditMode
-                              ? "cursor-pointer hover:bg-amber-50/60 group"
-                              : ""}
-                          `}
-                          style={{ height: `${SLOT_H}px` }}
-                          onClick={() => handleCellClick(day, h)}
+                          style={{ height: `${HEADER_H}px` }}
                         >
-                          {/* Subtle + hint on hover in edit mode */}
-                          {isEditMode && (
-                            <span className="hidden group-hover:flex items-center justify-center h-full text-amber-400 text-lg font-light select-none pointer-events-none opacity-60">
-                              +
-                            </span>
-                          )}
+                          <span>{day}</span>
+                          <span className="text-[#94a3b8] text-xs font-normal">
+                            {dayDate}
+                          </span>
                         </div>
-                      ))}
 
-                      {/* Lecture blocks */}
-                      {dayLectures.map((lec) => (
-                        <button
-                          key={lec.id}
-                          id={`lecture-block-${lec.id}`}
-                          onClick={(e) => {
-                            e.stopPropagation(); // don't trigger cell click
-                            handleLectureClick(lec, setSelected, setShowDetail);
-                          }}
-                          className={`
+                        {/* 30-min slot cells — clickable in edit mode to add lecture */}
+                        {HALF_HOURS.map((h) => (
+                          <div
+                            key={h}
+                            className={`
+                            border-b border-[#94a3b8]/40 transition-colors
+                            ${
+                              isEditMode
+                                ? "cursor-pointer hover:bg-amber-50/60 group"
+                                : ""
+                            }
+                          `}
+                            style={{ height: `${SLOT_H}px` }}
+                            onClick={() => handleCellClick(day, h)}
+                          >
+                            {/* Subtle + hint on hover in edit mode */}
+                            {isEditMode && (
+                              <span className="hidden group-hover:flex items-center justify-center h-full text-amber-400 text-lg font-light select-none pointer-events-none opacity-60">
+                                +
+                              </span>
+                            )}
+                          </div>
+                        ))}
+
+                        {/* Lecture blocks */}
+                        {dayLectures.map((lec) => (
+                          <button
+                            key={lec.lec_id}
+                            id={`lecture-block-${lec.lec_id}`}
+                            onClick={(e) => {
+                              e.stopPropagation(); // don't trigger cell click
+                              handleLectureClick(
+                                lec,
+                                setSelected,
+                                setShowDetail,
+                              );
+                            }}
+                            className={`
                             absolute left-1 right-1 rounded-lg text-white text-xs font-semibold
                             flex flex-col items-center justify-center text-center px-2
                             transition-all overflow-hidden
-                            ${isEditMode
-                              ? "bg-[#1e3b8a] hover:bg-[#2a4fa0] hover:shadow-lg active:scale-[0.98] cursor-pointer ring-2 ring-amber-400/0 hover:ring-amber-400/60"
-                              : "bg-[#1e3b8a] hover:bg-[#2a4fa0] hover:shadow-md cursor-pointer"
+                            ${
+                              isEditMode
+                                ? "bg-[#1e3b8a] hover:bg-[#2a4fa0] hover:shadow-lg active:scale-[0.98] cursor-pointer ring-2 ring-amber-400/0 hover:ring-amber-400/60"
+                                : "bg-[#1e3b8a] hover:bg-[#2a4fa0] hover:shadow-md cursor-pointer"
                             }
                           `}
-                          style={getLectureStyle(lec)}
-                        >
-                          <span className="leading-tight line-clamp-2">{lec.lectureName}</span>
-                          <span className="text-white/60 text-[10px] mt-0.5 leading-tight">
-                            {formatHour(lec.startHour)}–{formatHour(lec.endHour)}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  );
-                })}
+                            style={getLectureStyle(lec)}
+                          >
+                            <span className="leading-tight line-clamp-2">
+                              {lec.lectureName}
+                            </span>
+                            <span className="text-white/60 text-[10px] mt-0.5 leading-tight">
+                              {formatHour(lec.startHour)}–
+                              {formatHour(lec.endHour)}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </main>
       </div>
@@ -292,13 +369,23 @@ export default function TimetableViewPage() {
           isEditMode={isEditMode}
           onClose={() => handleCloseDetail(setSelected, setShowDetail)}
           onSaveEdit={(edited) =>
-            handleSaveEdit(edited, lectures, setLectures, () =>
-              handleCloseDetail(setSelected, setShowDetail)
+            handleSaveEdit(
+              edited,
+              lectures,
+              timetableId,
+              setLectures,
+              () => handleCloseDetail(setSelected, setShowDetail),
+              setError,
             )
           }
           onDelete={(id) =>
-            handleConfirmDelete(id, lectures, setLectures, () =>
-              handleCloseDetail(setSelected, setShowDetail)
+            handleConfirmDelete(
+              id,
+              lectures,
+              timetableId,
+              setLectures,
+              () => handleCloseDetail(setSelected, setShowDetail),
+              setError,
             )
           }
         />
@@ -311,7 +398,14 @@ export default function TimetableViewPage() {
         defaultStartHour={addCell?.startHour}
         onClose={() => setAddCell(null)}
         onConfirm={(newLec) =>
-          handleAddLecture(newLec, lectures, setLectures, () => setAddCell(null))
+          handleAddLecture(
+            newLec,
+            lectures,
+            timetableId,
+            setLectures,
+            () => setAddCell(null),
+            setError,
+          )
         }
       />
     </div>

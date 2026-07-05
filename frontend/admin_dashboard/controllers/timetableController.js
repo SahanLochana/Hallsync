@@ -2,14 +2,12 @@
  * Timetable Controller — controllers/timetableController.js
  * All business logic for the timetable list page.
  * The View (TimetablePage.jsx) calls these functions.
- * Replace TODO comments with real API calls when backend is ready.
  */
 
-import { SAMPLE_TIMETABLES } from "../models/timetableModel";
+const BASE_URL = "http://localhost:8000/api/timetables";
 
 /**
- * Fetches the list of timetables.
- * TODO: Replace with real API call — getTimetables()
+ * Fetches the list of timetables from the backend API.
  * @param {Function} setTimetables — React state setter
  * @param {Function} setIsLoading  — React state setter
  * @param {Function} setError      — React state setter
@@ -18,9 +16,12 @@ export async function fetchTimetables(setTimetables, setIsLoading, setError) {
   setIsLoading(true);
   setError(null);
   try {
-    // TODO: const data = await timetableService.getAll();
-    // Using sample data until backend is connected
-    setTimetables(SAMPLE_TIMETABLES);
+    const response = await fetch(`${BASE_URL}/`);
+    if (!response.ok) {
+      throw new Error(`Error: ${response.statusText}`);
+    }
+    const data = await response.json();
+    setTimetables(data.response || []);
   } catch (err) {
     setError(err?.message || "Failed to load timetables.");
   } finally {
@@ -66,7 +67,6 @@ export function handleDepartmentFilter(value, setDepartment) {
  * Called when the user clicks "Create" button.
  * Delegates navigation to the View.
  * @param {Function} onNavigate — e.g. router.push("/timetable/create")
- * TODO: handleCreateTimetable — navigate to timetable create page
  */
 export function handleCreateTimetable(onNavigate) {
   onNavigate();
@@ -76,8 +76,7 @@ export function handleCreateTimetable(onNavigate) {
  * Called when the user clicks on a timetable row.
  * Delegates navigation to the View.
  * @param {string}   id         — timetable ID
- * @param {Function} onNavigate — e.g. router.push(`/timetable/${id}`)
- * TODO: handleOpenTimetable — navigate to timetable detail/edit page
+ * @param {Function} onNavigate — e.g. router.push(`/timetable/view?id=${id}`)
  */
 export function handleOpenTimetable(id, onNavigate) {
   onNavigate(id);

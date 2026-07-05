@@ -17,6 +17,9 @@ class Database:
         hall_collection = self.database.get_collection("halls")
         await hall_collection.create_index("hallId", unique=True)
 
+        timetables_collection = self.database.get_collection("timetables")
+        await timetables_collection.create_index("timetable_id", unique=True)
+
     def get_collection(self, name: str):
         return self.database[name]
 

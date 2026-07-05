@@ -200,9 +200,8 @@ export default function TimetablePage() {
                         onClick={
                           (id) =>
                             handleOpenTimetable(id, (tid) =>
-                              router.push(`/timetable/${tid}`),
+                              router.push(`/timetable/view?id=${tid}`),
                             )
-                          // TODO: handleOpenTimetable — navigate to timetable detail/edit page
                         }
                       />
                     ))
