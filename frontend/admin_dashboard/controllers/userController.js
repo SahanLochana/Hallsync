@@ -54,15 +54,17 @@ export async function fetchUsers(setUsers, setIsLoading, setError) {
  * @param {string} role   — selected role filter ("All" | "Admin" | "Lecturer" | "Student")
  * @returns {Array} filtered list
  */
-export function filterUsers(users, search, role) {
+export function filterUsers(users, search, role, year, dept) {
   const q = search.toLowerCase().trim();
   return users.filter((u) => {
     const matchSearch =
       !q ||
-      u.name.toLowerCase().includes(q) ||
-      u.universityId.toLowerCase().includes(q);
-    const matchRole = role === "All" || u.role === role;
-    return matchSearch && matchRole;
+      u.universityId.toLowerCase().includes(q) ||
+      u.name.toLowerCase().includes(q);
+    const matchRole = !role || role === "All" || u.role.toLowerCase() === role.toLowerCase();
+    const matchYear = !year || year === "All" || u.academicYear === year;
+    const matchDept = !dept || dept === "All" || u.department === dept;
+    return matchSearch && matchRole && matchYear && matchDept;
   });
 }
 

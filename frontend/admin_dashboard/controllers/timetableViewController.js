@@ -3,42 +3,81 @@
  * All business logic for the timetable grid view page.
  *
  * The View (TimetableViewPage.jsx) calls these functions.
- * Replace TODO comments with API calls when backend is ready.
  */
 
-import { loadLectures, saveLectures, generateId } from "../models/timetableViewModel";
+import { generateId } from "../models/timetableViewModel";
+
+const BASE_URL = "http://localhost:8000/api/timetables";
 
 // ── Add ───────────────────────────────────────────────────────────────────────
 
 /**
  * Called when the admin confirms adding a new lecture from the AddLectureModal.
- * Appends to state + persists to localStorage.
- * TODO: Call API — createLecture(entry)
+ * Appends to state + persists to the backend.
  *
  * @param {Object}   newLec      — lecture fields (without id)
  * @param {Array}    lectures    — current lectures array from state
+ * @param {string}   timetableId — the active timetable database ID
  * @param {Function} setLectures — React state setter
  * @param {Function} onDone      — callback to close modal
+ * @param {Function} setError    — React state error setter
  */
-export function handleAddLecture(newLec, lectures, setLectures, onDone) {
-  const entry = { ...newLec, id: generateId() };
+export async function handleAddLecture(newLec, lectures, timetableId, setLectures, onDone, setError) {
+  if (setError) setError(null);
+  const entry = { ...newLec, lec_id: generateId() };
   const updated = [...lectures, entry];
-  setLectures(updated);
-  saveLectures(updated); // auto-save to localStorage
-  // TODO: await lectureService.create(entry);
-  onDone();
+
+  try {
+    const response = await fetch(`${BASE_URL}/${timetableId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lectures: updated }),
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.detail || "Failed to add lecture.");
+    }
+
+    const data = await response.json();
+    setLectures(data.lectures || []);
+    onDone();
+  } catch (err) {
+    if (setError) {
+      setError(err?.message || "Failed to add lecture.");
+    } else {
+      alert(err?.message || "Failed to add lecture.");
+    }
+  }
 }
 
 // ── Initialization ────────────────────────────────────────────────────────────
 
 /**
- * Load lectures from localStorage into state on mount.
- * TODO: Replace with API call — getTimetableById(id)
- * @param {Function} setLectures — React state setter
+ * Load lectures from backend into state on mount.
+ *
+ * @param {string}   timetableId — the active timetable database ID
+ * @param {Function} setLectures — React state setter for lectures
+ * @param {Function} setMeta     — React state setter for metadata
+ * @param {Function} setIsLoading — React state setter for loading state
+ * @param {Function} setError    — React state setter for errors
  */
-export function initLectures(setLectures) {
-  const data = loadLectures();
-  setLectures(data);
+export async function initLectures(timetableId, setLectures, setMeta, setIsLoading, setError) {
+  setIsLoading(true);
+  setError(null);
+  try {
+    const response = await fetch(`${BASE_URL}/${timetableId}`);
+    if (!response.ok) {
+      throw new Error(`Error: ${response.statusText}`);
+    }
+    const data = await response.json();
+    setLectures(data.lectures || []);
+    setMeta({ name: data.name, department: data.department, year: data.year });
+  } catch (err) {
+    setError(err?.message || "Failed to load timetable lectures.");
+  } finally {
+    setIsLoading(false);
+  }
 }
 
 // ── Lecture selection (popup trigger) ────────────────────────────────────────
@@ -67,40 +106,114 @@ export function handleCloseDetail(setSelected, setShowDetail) {
 
 /**
  * Called when the user confirms saving edited lecture details.
- * Updates array in state + persists to localStorage.
- * TODO: Call API — updateLecture(editedLecture)
+ * Updates array in state + persists to backend.
  *
  * @param {Object}   edited       — the edited lecture object
  * @param {Array}    lectures     — current lectures array from state
+ * @param {string}   timetableId  — the active timetable database ID
  * @param {Function} setLectures  — React state setter
  * @param {Function} onDone       — callback to close modal
+ * @param {Function} setError     — React state error setter
  */
-export function handleSaveEdit(edited, lectures, setLectures, onDone) {
-  const updated = lectures.map((l) => (l.id === edited.id ? edited : l));
-  setLectures(updated);
-  saveLectures(updated); // auto-save to localStorage
-  // TODO: await lectureService.update(edited);
-  onDone();
+export async function handleSaveEdit(edited, lectures, timetableId, setLectures, onDone, setError) {
+  if (setError) setError(null);
+  const updated = lectures.map((l) => (l.lec_id === edited.lec_id ? edited : l));
+
+  try {
+    const response = await fetch(`${BASE_URL}/${timetableId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lectures: updated }),
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.detail || "Failed to update lecture.");
+    }
+
+    const data = await response.json();
+    setLectures(data.lectures || []);
+    onDone();
+  } catch (err) {
+    if (setError) {
+      setError(err?.message || "Failed to update lecture.");
+    } else {
+      alert(err?.message || "Failed to update lecture.");
+    }
+  }
 }
 
-// ── Delete ────────────────────────────────────────────────────────────────────
+// ── Delete Lecture ────────────────────────────────────────────────────────────
 
 /**
  * Called when the user confirms deleting a lecture.
- * Removes from state + persists to localStorage.
- * TODO: Call API — deleteLecture(id)
+ * Removes from state + persists to backend.
  *
  * @param {string}   id          — lecture ID to remove
  * @param {Array}    lectures    — current lectures array from state
+ * @param {string}   timetableId — the active timetable database ID
  * @param {Function} setLectures — React state setter
  * @param {Function} onDone      — callback to close modal
+ * @param {Function} setError    — React state error setter
  */
-export function handleConfirmDelete(id, lectures, setLectures, onDone) {
-  const updated = lectures.filter((l) => l.id !== id);
-  setLectures(updated);
-  saveLectures(updated); // auto-save to localStorage
-  // TODO: await lectureService.delete(id);
-  onDone();
+export async function handleConfirmDelete(id, lectures, timetableId, setLectures, onDone, setError) {
+  if (setError) setError(null);
+  const updated = lectures.filter((l) => l.lec_id !== id);
+
+  try {
+    const response = await fetch(`${BASE_URL}/${timetableId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lectures: updated }),
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.detail || "Failed to delete lecture.");
+    }
+
+    const data = await response.json();
+    setLectures(data.lectures || []);
+    onDone();
+  } catch (err) {
+    if (setError) {
+      setError(err?.message || "Failed to delete lecture.");
+    } else {
+      alert(err?.message || "Failed to delete lecture.");
+    }
+  }
+}
+
+// ── Delete Timetable ──────────────────────────────────────────────────────────
+
+/**
+ * Called when the admin confirms deleting the entire timetable.
+ * Deletes from backend and redirects to list.
+ *
+ * @param {string}   timetableId — the active timetable database ID
+ * @param {Object}   router      — Next.js router
+ */
+export async function handleDeleteTimetable(timetableId, router, setIsDeleting) {
+  if (!confirm("Are you sure you want to delete this entire timetable? This action cannot be undone.")) {
+    return;
+  }
+  if (setIsDeleting) setIsDeleting(true);
+  try {
+    const response = await fetch(`${BASE_URL}/${timetableId}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.detail || "Failed to delete timetable.");
+    }
+
+    router.push("/timetable");
+  } catch (err) {
+    alert(err?.message || "Failed to delete timetable.");
+  } finally {
+    if (setIsDeleting) setIsDeleting(false);
+  }
 }
 
 // ── Week navigation ───────────────────────────────────────────────────────────

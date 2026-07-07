@@ -1,6 +1,7 @@
 from app.repositories.hall_repo import HallRepo
 
 
+
 class HallService:
     def __init__(self):
         self.hall_repo = HallRepo()

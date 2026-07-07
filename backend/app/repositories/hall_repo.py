@@ -4,6 +4,7 @@ from app.core.config import settings
 from pymongo.errors import DuplicateKeyError
 
 
+
 class HallRepo:
     def __init__(self):
         self.db = Database()

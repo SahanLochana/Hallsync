@@ -24,7 +24,6 @@ const EMPTY_FORM = {
   department: "",
   faculty: "",
   academicYear: "",
-
 };
 
 // ── Field wrapper — defined at module level to avoid React re-mount on rerender ─
@@ -42,14 +41,18 @@ function Field({ label, error, children }) {
 
 // ── Modal ──────────────────────────────────────────────────────────────────────
 export default function AddUserModal({ isOpen, onClose, onConfirm }) {
-  const [form, setForm]     = useState(EMPTY_FORM);
+  const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [modalError, setModalError] = useState(null);
 
   // Reset whenever modal opens
   useEffect(() => {
     if (isOpen) {
       setForm(EMPTY_FORM);
       setErrors({});
+      setIsSubmitting(false);
+      setModalError(null);
     }
   }, [isOpen]);
 
@@ -60,10 +63,21 @@ export default function AddUserModal({ isOpen, onClose, onConfirm }) {
     setErrors((prev) => ({ ...prev, [field]: undefined }));
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     const e = validateUserForm(form);
-    if (Object.keys(e).length > 0) { setErrors(e); return; }
-    onConfirm({ ...form });
+    if (Object.keys(e).length > 0) {
+      setErrors(e);
+      return;
+    }
+    setIsSubmitting(true);
+    setModalError(null);
+    try {
+      await onConfirm({ ...form });
+    } catch (err) {
+      setModalError(err.message || "Failed to add user.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   const inputCls =
@@ -97,7 +111,8 @@ export default function AddUserModal({ isOpen, onClose, onConfirm }) {
             <button
               id="btn-add-user-close"
               onClick={onClose}
-              className="text-white/70 hover:text-white transition-colors"
+              disabled={isSubmitting}
+              className="text-white/70 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <X size={20} />
             </button>
@@ -105,17 +120,27 @@ export default function AddUserModal({ isOpen, onClose, onConfirm }) {
 
           {/* Body */}
           <div className="p-6 flex flex-col gap-4 overflow-y-auto max-h-[70vh]">
+            {modalError && (
+              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 flex items-center gap-2">
+                <span className="text-red-600 text-xs font-medium">
+                  {modalError}
+                </span>
+              </div>
+            )}
 
             {/* Role */}
             <Field label="Role" error={errors.role}>
               <select
                 id="add-user-role"
-                className={`${inputCls} ${errors.role ? "border-red-400" : "border-[#e2e8f0]"}`}
+                disabled={isSubmitting}
+                className={`${inputCls} ${errors.role ? "border-red-400" : "border-[#e2e8f0]"} disabled:opacity-60 disabled:cursor-not-allowed`}
                 value={form.role}
                 onChange={(e) => set("role", e.target.value)}
               >
                 {ROLE_FORM_OPTIONS.map((r) => (
-                  <option key={r} value={r}>{r}</option>
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
                 ))}
               </select>
             </Field>
@@ -124,7 +149,8 @@ export default function AddUserModal({ isOpen, onClose, onConfirm }) {
             <Field label={idLabel} error={errors.universityId}>
               <input
                 id="add-user-university-id"
-                className={`${inputCls} ${errors.universityId ? "border-red-400" : "border-[#e2e8f0]"}`}
+                disabled={isSubmitting}
+                className={`${inputCls} ${errors.universityId ? "border-red-400" : "border-[#e2e8f0]"} disabled:opacity-60 disabled:cursor-not-allowed`}
                 placeholder={idPlaceholder}
                 value={form.universityId}
                 onChange={(e) => set("universityId", e.target.value)}
@@ -135,7 +161,8 @@ export default function AddUserModal({ isOpen, onClose, onConfirm }) {
             <Field label="Full Name" error={errors.name}>
               <input
                 id="add-user-name"
-                className={`${inputCls} ${errors.name ? "border-red-400" : "border-[#e2e8f0]"}`}
+                disabled={isSubmitting}
+                className={`${inputCls} ${errors.name ? "border-red-400" : "border-[#e2e8f0]"} disabled:opacity-60 disabled:cursor-not-allowed`}
                 placeholder="e.g. Amal Perera"
                 value={form.name}
                 onChange={(e) => set("name", e.target.value)}
@@ -147,7 +174,8 @@ export default function AddUserModal({ isOpen, onClose, onConfirm }) {
               <input
                 id="add-user-email"
                 type="email"
-                className={`${inputCls} ${errors.email ? "border-red-400" : "border-[#e2e8f0]"}`}
+                disabled={isSubmitting}
+                className={`${inputCls} ${errors.email ? "border-red-400" : "border-[#e2e8f0]"} disabled:opacity-60 disabled:cursor-not-allowed`}
                 placeholder="e.g. amal@university.ac.lk"
                 value={form.email}
                 onChange={(e) => set("email", e.target.value)}
@@ -158,7 +186,8 @@ export default function AddUserModal({ isOpen, onClose, onConfirm }) {
             <Field label="Faculty" error={errors.faculty}>
               <input
                 id="add-user-faculty"
-                className={`${inputCls} ${errors.faculty ? "border-red-400" : "border-[#e2e8f0]"}`}
+                disabled={isSubmitting}
+                className={`${inputCls} ${errors.faculty ? "border-red-400" : "border-[#e2e8f0]"} disabled:opacity-60 disabled:cursor-not-allowed`}
                 placeholder="e.g. Computing"
                 value={form.faculty}
                 onChange={(e) => set("faculty", e.target.value)}
@@ -169,8 +198,8 @@ export default function AddUserModal({ isOpen, onClose, onConfirm }) {
             <Field label="Department" error={errors.department}>
               <input
                 id="add-user-department"
-                className={`${inputCls} ${errors.department ? "border-red-400" : "border-[#e2e8f0]"}`}
-                placeholder="e.g. Software Engineering"
+                disabled={isSubmitting}
+                className={`${inputCls} ${errors.department ? "border-red-400" : "border-[#e2e8f0]"} disabled:opacity-60 disabled:cursor-not-allowed`}
                 value={form.department}
                 onChange={(e) => set("department", e.target.value)}
               />
@@ -181,15 +210,13 @@ export default function AddUserModal({ isOpen, onClose, onConfirm }) {
               <Field label="Academic Year" error={errors.academicYear}>
                 <input
                   id="add-user-academic-year"
-                  className={`${inputCls} ${errors.academicYear ? "border-red-400" : "border-[#e2e8f0]"}`}
-                  placeholder="e.g. 2nd Year"
+                  disabled={isSubmitting}
+                  className={`${inputCls} ${errors.academicYear ? "border-red-400" : "border-[#e2e8f0]"} disabled:opacity-60 disabled:cursor-not-allowed`}
                   value={form.academicYear}
                   onChange={(e) => set("academicYear", e.target.value)}
                 />
               </Field>
             )}
-
-
           </div>
 
           {/* Footer */}
@@ -197,19 +224,25 @@ export default function AddUserModal({ isOpen, onClose, onConfirm }) {
             <button
               id="btn-add-user-cancel"
               onClick={onClose}
-              className="px-5 py-2.5 rounded-xl border border-[#e2e8f0] text-[#334155] font-semibold text-sm hover:bg-[#f8fafc] transition-colors"
+              disabled={isSubmitting}
+              className="px-5 py-2.5 rounded-xl border border-[#e2e8f0] text-[#334155] font-semibold text-sm hover:bg-[#f8fafc] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
             <button
               id="btn-add-user-confirm"
               onClick={handleSubmit}
+              disabled={isSubmitting}
               className="px-5 py-2.5 rounded-xl bg-[#1e3b8a] text-white font-semibold text-sm
                          flex items-center gap-1.5 hover:bg-[#162d6b] active:scale-[0.98]
-                         transition-all shadow-[0_4px_12px_rgba(30,59,138,0.25)]"
+                         transition-all shadow-[0_4px_12px_rgba(30,59,138,0.25)] disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              <UserPlus size={15} strokeWidth={2.5} />
-              Add User
+              {isSubmitting ? (
+                <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+              ) : (
+                <UserPlus size={15} strokeWidth={2.5} />
+              )}
+              {isSubmitting ? "Adding..." : "Add User"}
             </button>
           </div>
         </div>

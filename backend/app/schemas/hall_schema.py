@@ -4,6 +4,7 @@ from typing import Optional
 
 class Hall(BaseModel):
     """Full hall representation returned by the API."""
+
     hallId: str
     name: str
     capacity: int
@@ -18,6 +19,7 @@ class HallsResponse(BaseModel):
 
 class HallCreate(BaseModel):
     """Request body for creating a new hall."""
+
     hallId: str
     name: str
     capacity: int
@@ -28,6 +30,7 @@ class HallCreate(BaseModel):
 
 class HallUpdate(BaseModel):
     """All fields optional — only supplied fields are patched."""
+
     name: Optional[str] = None
     capacity: Optional[int] = None
     availability: Optional[bool] = None

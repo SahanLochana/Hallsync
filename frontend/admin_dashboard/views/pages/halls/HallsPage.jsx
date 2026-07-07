@@ -18,8 +18,9 @@ import { Plus, Search, X, ChevronDown, Settings2, MapPin, CheckCircle2, XCircle,
 
 import TopHeader       from "@/views/components/TopHeader";
 import Sidebar         from "@/views/components/Sidebar";
-import AddHallModal    from "@/views/components/AddHallModal";
-import ManageHallModal from "@/views/components/ManageHallModal";
+import AddHallModal     from "@/views/components/AddHallModal";
+import ManageHallModal  from "@/views/components/ManageHallModal";
+import LoadingSpinner  from "@/views/components/LoadingSpinner";
 
 import { AVAILABILITY_OPTIONS } from "@/models/hallModel";
 import {
@@ -338,10 +339,7 @@ export default function HallsPage() {
 
             {/* Loading state */}
             {isLoading ? (
-              <div className="flex flex-col items-center justify-center h-48 gap-3 text-[#94a3b8]">
-                <div className="w-8 h-8 border-2 border-[#1e3b8a]/20 border-t-[#1e3b8a] rounded-full animate-spin" />
-                <span className="text-sm">Loading halls…</span>
-              </div>
+              <LoadingSpinner text="Loading halls…" />
             ) : (
               <table className="w-full text-left border-collapse">
                 {/* Table header */}
