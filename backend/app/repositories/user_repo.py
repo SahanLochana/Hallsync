@@ -1,7 +1,9 @@
+from app.core.security import get_password_hash
 from pymongo import ReturnDocument
 from pymongo.errors import BulkWriteError, DuplicateKeyError
 from app.core.database import Database
 from app.core.config import settings
+from typing import Optional
 
 
 class UserRepo:
