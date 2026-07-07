@@ -40,17 +40,18 @@ const SLOT_H   = 30;   // px per 30-min cell
 const HEADER_H = 64;   // px for day-header row
 
 // ── Small select dropdown ─────────────────────────────────────────────────────
-function MetaSelect({ id, value, options, placeholder, onChange }) {
+function MetaSelect({ id, value, options, placeholder, onChange, disabled }) {
   return (
     <div className="relative">
       <select
         id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
         className="appearance-none bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a] text-sm
                    font-medium pl-3 pr-8 py-2 rounded-lg focus:outline-none focus:ring-2
                    focus:ring-[#1e3b8a]/25 focus:border-[#1e3b8a] transition cursor-pointer
-                   min-w-[160px]"
+                   min-w-[160px] disabled:opacity-60 disabled:cursor-not-allowed"
       >
         <option value="">{placeholder}</option>
         {options.map((o) => <option key={o} value={o}>{o}</option>)}
@@ -70,6 +71,7 @@ export default function TimetableCreatePage() {
   // ── State ──────────────────────────────────────────────────────────────────
   const [meta, setMeta]         = useState(INITIAL_META);
   const [lectures, setLectures] = useState([]);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Add lecture modal
   const [addCell, setAddCell]   = useState(null);   // { day, startHour }
@@ -143,8 +145,16 @@ export default function TimetableCreatePage() {
 
   // ── Save handler ───────────────────────────────────────────────────────────
   async function onSave() {
-    const result = await handleSaveTimetable(meta, lectures, router);
-    if (!result.ok) setSaveError(result.error);
+    setIsSaving(true);
+    setSaveError(null);
+    try {
+      const result = await handleSaveTimetable(meta, lectures, router);
+      if (!result.ok) setSaveError(result.error);
+    } catch (err) {
+      setSaveError(err.message || "Failed to save timetable.");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
@@ -157,12 +167,17 @@ export default function TimetableCreatePage() {
           <button
             id="btn-save-timetable"
             onClick={onSave}
+            disabled={isSaving}
             className="bg-[#1e3b8a] text-white font-semibold text-sm flex items-center gap-1.5
                        px-4 h-10 rounded-2xl hover:bg-[#162d6b] active:scale-[0.98]
-                       transition-all shadow-[0_4px_12px_rgba(30,59,138,0.25)]"
+                       transition-all shadow-[0_4px_12px_rgba(30,59,138,0.25)] disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            <Save size={14} strokeWidth={2.5} />
-            Save Timetable
+            {isSaving ? (
+              <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+            ) : (
+              <Save size={14} strokeWidth={2.5} />
+            )}
+            {isSaving ? "Saving..." : "Save Timetable"}
           </button>
         }
       />
@@ -192,9 +207,10 @@ export default function TimetableCreatePage() {
                 placeholder="Timetable name…"
                 value={meta.name}
                 onChange={(e) => handleNameChange(e.target.value)}
+                disabled={isSaving}
                 className="flex-1 min-w-[180px] bg-[#f8fafc] border border-[#e2e8f0] text-[#0f172a]
                            text-sm font-medium px-3 py-2 rounded-lg focus:outline-none
-                           focus:ring-2 focus:ring-[#1e3b8a]/25 focus:border-[#1e3b8a] transition"
+                           focus:ring-2 focus:ring-[#1e3b8a]/25 focus:border-[#1e3b8a] transition disabled:opacity-60 disabled:cursor-not-allowed"
               />
 
               <MetaSelect
@@ -203,6 +219,7 @@ export default function TimetableCreatePage() {
                 options={DEPARTMENT_OPTIONS}
                 placeholder="Department…"
                 onChange={handleDepartmentChange}
+                disabled={isSaving}
               />
 
               <MetaSelect
@@ -211,6 +228,7 @@ export default function TimetableCreatePage() {
                 options={YEAR_OPTIONS}
                 placeholder="Year…"
                 onChange={handleYearChange}
+                disabled={isSaving}
               />
 
               {/* Draft lecture count badge */}
@@ -273,20 +291,25 @@ export default function TimetableCreatePage() {
                         <span>{day}</span>
                       </div>
 
-                      {/* 30-min cells — always clickable */}
+                      {/* 30-min cells — always clickable unless saving */}
                       {HALF_HOURS.map((h) => (
                         <div
                           key={h}
-                          className="border-b border-[#94a3b8]/30 cursor-pointer transition-colors
-                                     hover:bg-amber-50/70 group"
+                          className={`border-b border-[#94a3b8]/30 transition-colors ${
+                            isSaving
+                              ? "cursor-not-allowed opacity-50"
+                              : "cursor-pointer hover:bg-amber-50/70 group"
+                          }`}
                           style={{ height: `${SLOT_H}px` }}
-                          onClick={() => setAddCell({ day, startHour: h })}
+                          onClick={() => !isSaving && setAddCell({ day, startHour: h })}
                         >
-                          <span className="hidden group-hover:flex items-center justify-center h-full
-                                           text-amber-400 text-base font-light select-none
-                                           pointer-events-none opacity-60">
-                            +
-                          </span>
+                          {!isSaving && (
+                            <span className="hidden group-hover:flex items-center justify-center h-full
+                                             text-amber-400 text-base font-light select-none
+                                             pointer-events-none opacity-60">
+                              +
+                            </span>
+                          )}
                         </div>
                       ))}
 
@@ -295,7 +318,8 @@ export default function TimetableCreatePage() {
                         <button
                           key={lec.lec_id}
                           id={`draft-block-${lec.lec_id}`}
-                          title="Click to remove"
+                          title={isSaving ? undefined : "Click to remove"}
+                          disabled={isSaving}
                           onClick={(e) => {
                             e.stopPropagation();
                             setRemoveId(lec.lec_id);
@@ -303,7 +327,8 @@ export default function TimetableCreatePage() {
                           className="absolute left-1 right-1 rounded-lg text-white text-xs font-semibold
                                      flex flex-col items-center justify-center text-center px-2
                                      bg-[#1e3b8a] hover:bg-red-500 active:scale-[0.98]
-                                     transition-all overflow-hidden cursor-pointer group"
+                                     transition-all overflow-hidden cursor-pointer group
+                                     disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-[#1e3b8a]"
                           style={getLectureStyle(lec)}
                         >
                           <span className="leading-tight line-clamp-2 group-hover:hidden">

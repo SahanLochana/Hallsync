@@ -193,10 +193,11 @@ export async function handleConfirmDelete(id, lectures, timetableId, setLectures
  * @param {string}   timetableId — the active timetable database ID
  * @param {Object}   router      — Next.js router
  */
-export async function handleDeleteTimetable(timetableId, router) {
+export async function handleDeleteTimetable(timetableId, router, setIsDeleting) {
   if (!confirm("Are you sure you want to delete this entire timetable? This action cannot be undone.")) {
     return;
   }
+  if (setIsDeleting) setIsDeleting(true);
   try {
     const response = await fetch(`${BASE_URL}/${timetableId}`, {
       method: "DELETE",
@@ -210,6 +211,8 @@ export async function handleDeleteTimetable(timetableId, router) {
     router.push("/timetable");
   } catch (err) {
     alert(err?.message || "Failed to delete timetable.");
+  } finally {
+    if (setIsDeleting) setIsDeleting(false);
   }
 }
 

@@ -86,6 +86,7 @@ export default function TimetableViewPage() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // ── Load lectures on mount ─────────────────────────────────────────────
   useEffect(() => {
@@ -177,13 +178,18 @@ export default function TimetableViewPage() {
             {/* Delete Timetable */}
             {isEditMode && (
               <button
-                id="btn-delete-timetable"
-                onClick={() => handleDeleteTimetable(timetableId, router)}
-                className="bg-red-600 text-white font-semibold text-sm flex items-center gap-1.5 px-4 h-10 rounded-2xl hover:bg-red-700 active:scale-[0.98] transition-all shadow-[0_4px_12px_rgba(220,38,38,0.2)]"
-              >
+              id="btn-delete-timetable"
+              onClick={() => handleDeleteTimetable(timetableId, router, setIsDeleting)}
+              disabled={isDeleting}
+              className="bg-red-600 text-white font-semibold text-sm flex items-center gap-1.5 px-4 h-10 rounded-2xl hover:bg-red-700 active:scale-[0.98] transition-all shadow-[0_4px_12px_rgba(220,38,38,0.2)] disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {isDeleting ? (
+                <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+              ) : (
                 <Trash size={14} strokeWidth={2.5} />
-                Delete Timetable
-              </button>
+              )}
+              {isDeleting ? "Deleting..." : "Delete Timetable"}
+            </button>
             )}
           </div>
         }
