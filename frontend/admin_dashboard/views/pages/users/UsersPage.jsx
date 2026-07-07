@@ -22,11 +22,9 @@ import Sidebar from "@/views/components/Sidebar";
 import AddUserModal from "@/views/components/AddUserModal";
 import UserDetailModal from "@/views/components/UserDetailModal";
 import ImportCsvModal from "@/views/components/ImportCsvModal";
-import LoadingSpinner from "@/views/components/LoadingSpinner";
 import FilterDropdown from "@/views/components/FilterDropdown";
 import PaginationBar from "@/views/components/PaginationBar";
 
-import { ROLE_OPTIONS } from "@/models/userModel";
 import {
   fetchUsers,
   filterUsers,
@@ -146,20 +144,12 @@ export default function UsersPage() {
 
   // Compute departments dynamically from fetched users
   const departments = useMemo(() => {
-    return [
-      ...new Set(users.map((u) => u.department).filter(Boolean)),
-    ].sort();
+    return [...new Set(users.map((u) => u.department).filter(Boolean))].sort();
   }, [users]);
 
   // ── Filtered list ────────────────────────────────────────────────────────
   const filteredUsers = useMemo(() => {
-    return filterUsers(
-      users,
-      activeSearch,
-      activeRole,
-      activeYear,
-      activeDept,
-    );
+    return filterUsers(users, activeSearch, activeRole, activeYear, activeDept);
   }, [users, activeSearch, activeRole, activeYear, activeDept]);
 
   // Total pages calculation
@@ -315,7 +305,7 @@ export default function UsersPage() {
                 onChange={setRoleFilter}
                 options={[
                   { value: "Student", label: "Student" },
-                  { value: "Lecturer", label: "Lecturer" }
+                  { value: "Lecturer", label: "Lecturer" },
                 ]}
                 defaultOptionLabel="All Roles"
               />
@@ -398,12 +388,21 @@ export default function UsersPage() {
                       className="py-16 text-center text-[#94a3b8] text-sm"
                     >
                       <div className="flex flex-col items-center justify-center gap-3">
-                        <UserX size={36} className="text-[#cbd5e1] animate-bounce" />
-                        <span className="font-semibold text-slate-700">No users match your search</span>
-                        <span className="text-xs text-slate-400 max-w-[240px] leading-relaxed mx-auto">
-                          Try adjusting your search keywords, role filters, or department filters to see matches.
+                        <UserX
+                          size={36}
+                          className="text-[#cbd5e1] animate-bounce"
+                        />
+                        <span className="font-semibold text-slate-700">
+                          No users match your search
                         </span>
-                        {(activeSearch || activeRole !== "All" || activeYear !== "All" || activeDept !== "All") && (
+                        <span className="text-xs text-slate-400 max-w-[240px] leading-relaxed mx-auto">
+                          Try adjusting your search keywords, role filters, or
+                          department filters to see matches.
+                        </span>
+                        {(activeSearch ||
+                          activeRole !== "All" ||
+                          activeYear !== "All" ||
+                          activeDept !== "All") && (
                           <button
                             onClick={handleResetFilters}
                             type="button"
@@ -417,11 +416,7 @@ export default function UsersPage() {
                   </tr>
                 ) : (
                   paginatedUsers.map((user) => (
-                    <UserRow
-                      key={user.id}
-                      user={user}
-                      onView={setViewTarget}
-                    />
+                    <UserRow key={user.id} user={user} onView={setViewTarget} />
                   ))
                 )}
               </tbody>
