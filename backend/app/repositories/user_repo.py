@@ -2,8 +2,6 @@ from pymongo import ReturnDocument
 from pymongo.errors import BulkWriteError, DuplicateKeyError
 from app.core.database import Database
 from app.core.config import settings
-from typing import Optional
-from app.core.security import get_password_hash
 
 
 class UserRepo:
@@ -25,7 +23,7 @@ class UserRepo:
         users = await cursor.to_list(length=100)
         return [self._format_user(u) for u in users]
 
-    async def get_user_by_university_id(self, university_id: str) -> Optional[dict]:
+    async def get_user_by_university_id(self, university_id: str) -> dict | None:
         user = await self.user_collection.find_one({"universityId": university_id})
         return self._format_user(user) if user else None
 

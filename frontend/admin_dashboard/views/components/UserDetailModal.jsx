@@ -16,31 +16,29 @@
  */
 
 import { useState, useEffect } from "react";
-import { X, Pencil, Save, User, Mail, BookOpen, Layers, Award, ShieldAlert, CheckCircle2 } from "lucide-react";
+import {
+  X,
+  Pencil,
+  Save,
+  User,
+  Mail,
+  BookOpen,
+  Layers,
+  Award,
+  ShieldAlert,
+  CheckCircle2,
+} from "lucide-react";
 import ConfirmModal from "./ConfirmModal";
 import { ROLE_FORM_OPTIONS } from "@/models/userModel";
 import { validateUserForm } from "@/controllers/userController";
 
-const DEPARTMENT_OPTIONS = [
-  "Computing & Information Systems (CIS)",
-  "Software Engineering (SE)",
-  "Data Science (DS)",
-];
-
-const BATCH_OPTIONS = [
-  "1st Year",
-  "2nd Year",
-  "3rd Year",
-  "4th Year",
-];
-
 export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
-  const [isEditing, setIsEditing]             = useState(false);
-  const [form, setForm]                       = useState({});
-  const [errors, setErrors]                   = useState({});
+  const [isEditing, setIsEditing] = useState(false);
+  const [form, setForm] = useState({});
+  const [errors, setErrors] = useState({});
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
-  const [isSaving, setIsSaving]               = useState(false);
-  const [modalError, setModalError]           = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [modalError, setModalError] = useState(null);
 
   // Sync form when user changes or modal opens
   useEffect(() => {
@@ -62,7 +60,10 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
 
   function handleSaveClick() {
     const e = validateUserForm(form);
-    if (Object.keys(e).length > 0) { setErrors(e); return; }
+    if (Object.keys(e).length > 0) {
+      setErrors(e);
+      return;
+    }
     setShowSaveConfirm(true);
   }
 
@@ -95,8 +96,12 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
         <Icon size={16} strokeWidth={2} />
       </div>
       <div className="flex flex-col gap-0.5">
-        <span className="text-[#94a3b8] text-xs font-semibold uppercase tracking-wide">{label}</span>
-        <span className="text-[#0f172a] text-sm font-medium">{value || "—"}</span>
+        <span className="text-[#94a3b8] text-xs font-semibold uppercase tracking-wide">
+          {label}
+        </span>
+        <span className="text-[#0f172a] text-sm font-medium">
+          {value || "—"}
+        </span>
       </div>
     </div>
   );
@@ -134,7 +139,9 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
           <div className="p-6 flex flex-col gap-5 overflow-y-auto max-h-[60vh]">
             {modalError && (
               <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 flex items-center gap-2">
-                <span className="text-red-600 text-xs font-medium">{modalError}</span>
+                <span className="text-red-600 text-xs font-medium">
+                  {modalError}
+                </span>
               </div>
             )}
             {isEditing ? (
@@ -153,7 +160,9 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
                     onChange={(e) => set("role", e.target.value)}
                   >
                     {ROLE_FORM_OPTIONS.map((r) => (
-                      <option key={r} value={r}>{r}</option>
+                      <option key={r} value={r}>
+                        {r}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -171,7 +180,11 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
                     value={form.universityId || ""}
                     onChange={(e) => set("universityId", e.target.value)}
                   />
-                  {errors.universityId && <span className="text-red-500 text-xs">{errors.universityId}</span>}
+                  {errors.universityId && (
+                    <span className="text-red-500 text-xs">
+                      {errors.universityId}
+                    </span>
+                  )}
                 </div>
 
                 {/* Full Name */}
@@ -187,7 +200,9 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
                     value={form.name || ""}
                     onChange={(e) => set("name", e.target.value)}
                   />
-                  {errors.name && <span className="text-red-500 text-xs">{errors.name}</span>}
+                  {errors.name && (
+                    <span className="text-red-500 text-xs">{errors.name}</span>
+                  )}
                 </div>
 
                 {/* Email */}
@@ -204,7 +219,9 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
                     value={form.email || ""}
                     onChange={(e) => set("email", e.target.value)}
                   />
-                  {errors.email && <span className="text-red-500 text-xs">{errors.email}</span>}
+                  {errors.email && (
+                    <span className="text-red-500 text-xs">{errors.email}</span>
+                  )}
                 </div>
 
                 {/* Faculty */}
@@ -220,7 +237,11 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
                     value={form.faculty || ""}
                     onChange={(e) => set("faculty", e.target.value)}
                   />
-                  {errors.faculty && <span className="text-red-500 text-xs">{errors.faculty}</span>}
+                  {errors.faculty && (
+                    <span className="text-red-500 text-xs">
+                      {errors.faculty}
+                    </span>
+                  )}
                 </div>
 
                 {/* Department */}
@@ -228,19 +249,18 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
                   <label className="text-[#334155] font-semibold text-xs uppercase tracking-wide">
                     Department
                   </label>
-                  <select
+                  <input
                     id="edit-user-department"
                     disabled={isSaving}
                     className={`${inputCls} ${errors.department ? "border-red-400" : ""} disabled:opacity-60 disabled:cursor-not-allowed`}
                     value={form.department || ""}
                     onChange={(e) => set("department", e.target.value)}
-                  >
-                    <option value="" disabled>Select Department</option>
-                    {DEPARTMENT_OPTIONS.map((dept) => (
-                      <option key={dept} value={dept}>{dept}</option>
-                    ))}
-                  </select>
-                  {errors.department && <span className="text-red-500 text-xs">{errors.department}</span>}
+                  />
+                  {errors.department && (
+                    <span className="text-red-500 text-xs">
+                      {errors.department}
+                    </span>
+                  )}
                 </div>
 
                 {/* Academic Year (Student only) */}
@@ -249,19 +269,18 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
                     <label className="text-[#334155] font-semibold text-xs uppercase tracking-wide">
                       Academic Year
                     </label>
-                    <select
+                    <input
                       id="edit-user-academic-year"
                       disabled={isSaving}
                       className={`${inputCls} ${errors.academicYear ? "border-red-400" : ""} disabled:opacity-60 disabled:cursor-not-allowed`}
                       value={form.academicYear || ""}
                       onChange={(e) => set("academicYear", e.target.value)}
-                    >
-                      <option value="" disabled>Select Academic Year</option>
-                      {BATCH_OPTIONS.map((batch) => (
-                        <option key={batch} value={batch}>{batch}</option>
-                      ))}
-                    </select>
-                    {errors.academicYear && <span className="text-red-500 text-xs">{errors.academicYear}</span>}
+                    />
+                    {errors.academicYear && (
+                      <span className="text-red-500 text-xs">
+                        {errors.academicYear}
+                      </span>
+                    )}
                   </div>
                 )}
               </div>
@@ -273,8 +292,12 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
                     <User size={24} strokeWidth={1.5} />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[#0f172a] font-bold text-base">{user.name}</span>
-                    <span className="text-[#94a3b8] text-xs font-semibold uppercase tracking-wider">{user.role}</span>
+                    <span className="text-[#0f172a] font-bold text-base">
+                      {user.name}
+                    </span>
+                    <span className="text-[#94a3b8] text-xs font-semibold uppercase tracking-wider">
+                      {user.role}
+                    </span>
                   </div>
                 </div>
 
@@ -282,12 +305,28 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <DetailRow icon={Mail} label="Email" value={user.email} />
-                  <DetailRow icon={BookOpen} label="Faculty" value={user.faculty} />
-                  <DetailRow icon={Layers} label="Department" value={user.department} />
+                  <DetailRow
+                    icon={BookOpen}
+                    label="Faculty"
+                    value={user.faculty}
+                  />
+                  <DetailRow
+                    icon={Layers}
+                    label="Department"
+                    value={user.department}
+                  />
                   {isStudent && (
-                    <DetailRow icon={Award} label="Academic Year" value={user.academicYear} />
+                    <DetailRow
+                      icon={Award}
+                      label="Academic Year"
+                      value={user.academicYear}
+                    />
                   )}
-                  <DetailRow icon={ShieldAlert} label={idLabel} value={user.universityId} />
+                  <DetailRow
+                    icon={ShieldAlert}
+                    label={idLabel}
+                    value={user.universityId}
+                  />
                 </div>
               </div>
             )}

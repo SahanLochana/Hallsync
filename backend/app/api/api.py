@@ -10,6 +10,7 @@ from app.api.routes.auth import router as auth_router
 
 api_router = APIRouter()
 
+
 api_router.include_router(user_router, prefix="/users", tags=["Users"])
 api_router.include_router(hall_router, prefix="/halls", tags=["Halls"])
 api_router.include_router(timetable_router, prefix="/timetables", tags=["Timetables"])

@@ -26,19 +26,6 @@ const EMPTY_FORM = {
   academicYear: "",
 };
 
-const DEPARTMENT_OPTIONS = [
-  "Computing & Information Systems (CIS)",
-  "Software Engineering (SE)",
-  "Data Science (DS)",
-];
-
-const BATCH_OPTIONS = [
-  "1st Year",
-  "2nd Year",
-  "3rd Year",
-  "4th Year",
-];
-
 // ── Field wrapper — defined at module level to avoid React re-mount on rerender ─
 function Field({ label, error, children }) {
   return (
@@ -54,7 +41,7 @@ function Field({ label, error, children }) {
 
 // ── Modal ──────────────────────────────────────────────────────────────────────
 export default function AddUserModal({ isOpen, onClose, onConfirm }) {
-  const [form, setForm]     = useState(EMPTY_FORM);
+  const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [modalError, setModalError] = useState(null);
@@ -78,7 +65,10 @@ export default function AddUserModal({ isOpen, onClose, onConfirm }) {
 
   async function handleSubmit() {
     const e = validateUserForm(form);
-    if (Object.keys(e).length > 0) { setErrors(e); return; }
+    if (Object.keys(e).length > 0) {
+      setErrors(e);
+      return;
+    }
     setIsSubmitting(true);
     setModalError(null);
     try {
@@ -132,7 +122,9 @@ export default function AddUserModal({ isOpen, onClose, onConfirm }) {
           <div className="p-6 flex flex-col gap-4 overflow-y-auto max-h-[70vh]">
             {modalError && (
               <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 flex items-center gap-2">
-                <span className="text-red-600 text-xs font-medium">{modalError}</span>
+                <span className="text-red-600 text-xs font-medium">
+                  {modalError}
+                </span>
               </div>
             )}
 
@@ -146,7 +138,9 @@ export default function AddUserModal({ isOpen, onClose, onConfirm }) {
                 onChange={(e) => set("role", e.target.value)}
               >
                 {ROLE_FORM_OPTIONS.map((r) => (
-                  <option key={r} value={r}>{r}</option>
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
                 ))}
               </select>
             </Field>
@@ -202,39 +196,27 @@ export default function AddUserModal({ isOpen, onClose, onConfirm }) {
 
             {/* Department */}
             <Field label="Department" error={errors.department}>
-              <select
+              <input
                 id="add-user-department"
                 disabled={isSubmitting}
                 className={`${inputCls} ${errors.department ? "border-red-400" : "border-[#e2e8f0]"} disabled:opacity-60 disabled:cursor-not-allowed`}
                 value={form.department}
                 onChange={(e) => set("department", e.target.value)}
-              >
-                <option value="" disabled>Select Department</option>
-                {DEPARTMENT_OPTIONS.map((dept) => (
-                  <option key={dept} value={dept}>{dept}</option>
-                ))}
-              </select>
+              />
             </Field>
 
             {/* Academic Year (Student only) */}
             {isStudent && (
               <Field label="Academic Year" error={errors.academicYear}>
-                <select
+                <input
                   id="add-user-academic-year"
                   disabled={isSubmitting}
                   className={`${inputCls} ${errors.academicYear ? "border-red-400" : "border-[#e2e8f0]"} disabled:opacity-60 disabled:cursor-not-allowed`}
                   value={form.academicYear}
                   onChange={(e) => set("academicYear", e.target.value)}
-                >
-                  <option value="" disabled>Select Academic Year</option>
-                  {BATCH_OPTIONS.map((batch) => (
-                    <option key={batch} value={batch}>{batch}</option>
-                  ))}
-                </select>
+                />
               </Field>
             )}
-
-
           </div>
 
           {/* Footer */}

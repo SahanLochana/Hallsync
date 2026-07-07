@@ -1,14 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/lecture_model.dart';
 import 'create_lecture_screen.dart';
-import 'lecture_detail_screen.dart';
-import 'my_lectures_screen.dart';
-import '../../services/lecture_service.dart';
-import '../send_report_screen.dart' as send_report_screen;
-import '../../services/auth_service.dart';
-import '../../widgets/bottom_nav_bar.dart';
-import '../settings_screen.dart';
-import '../notifications_screen.dart';
+
 class LecturerDashboard extends StatefulWidget {
   const LecturerDashboard({super.key});
 
@@ -17,59 +10,38 @@ class LecturerDashboard extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<LecturerDashboard> {
-  int _selectedIndex = 0;
-  List<Lecture> _lectures = [];
-  bool _isLoading = true;
-  String _userName = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _loadUserDetails();
-  }
-
-  Future<void> _loadUserDetails() async {
-    final name = await AuthService.getUsername();
-    if (mounted) {
-      setState(() {
-        _userName = name ?? 'Lecturer';
-      });
-    }
-    _fetchLectures();
-  }
-
-  Future<void> _fetchLectures() async {
-    try {
-      final lecturerEmail = await AuthService.getEmail();
-      final data = await LectureService.getLectures(lecturerId: lecturerEmail);
-      setState(() {
-        _lectures = data.map<Lecture>((json) {
-          return Lecture(
-            id: json['_id'] ?? '',
-            title: json['title'] ?? '',
-            subject: 'Unknown', // Backend doesn't store subject yet, hardcoding for now
-            venue: json['hall_id'] ?? '',
-            date: DateTime.parse(json['start_time']),
-            startTime: TimeOfDay.fromDateTime(DateTime.parse(json['start_time'])),
-            endTime: TimeOfDay.fromDateTime(DateTime.parse(json['end_time'])),
-            description: json['description'] ?? '',
-            lecturerId: json['lecturer_id'] ?? 'admin',
-            tags: [], // Tags aren't saved to backend currently
-          );
-        }).toList();
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load lectures: $e')),
-        );
-      }
-    }
-  }
+  final List<Lecture> _lectures = [
+    Lecture(
+      title: 'Advanced Mathematics',
+      subject: 'Mathematics',
+      venue: 'Mini Auditorium',
+      date: DateTime.now(),
+      startTime: const TimeOfDay(hour: 8, minute: 0),
+      endTime: const TimeOfDay(hour: 10, minute: 0),
+      description: '',
+      tags: [],
+    ),
+    Lecture(
+      title: 'Advanced Mathematics',
+      subject: 'Mathematics',
+      venue: 'Mini Auditorium',
+      date: DateTime.now(),
+      startTime: const TimeOfDay(hour: 8, minute: 0),
+      endTime: const TimeOfDay(hour: 10, minute: 0),
+      description: '',
+      tags: [],
+    ),
+    Lecture(
+      title: 'Advanced Mathematics',
+      subject: 'Mathematics',
+      venue: 'Mini Auditorium',
+      date: DateTime.now(),
+      startTime: const TimeOfDay(hour: 8, minute: 0),
+      endTime: const TimeOfDay(hour: 10, minute: 0),
+      description: '',
+      tags: [],
+    ),
+  ];
 
   void _onLectureCreated(Lecture lecture) {
     setState(() => _lectures.insert(0, lecture));
@@ -88,34 +60,19 @@ class _HomeScreenState extends State<LecturerDashboard> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F0),
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: [
-          _buildDashboardContent(),
-          const NotificationsScreen(),
-          const SettingsScreen(),
-        ],
-      ),
-      bottomNavigationBar: BottomNavBar(
-        selectedIndex: _selectedIndex,
-        onItemTapped: (index) => setState(() => _selectedIndex = index),
-      ),
-    );
-  }
-
-  Widget _buildDashboardContent() {
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(),
-            const SizedBox(height: 28),
-            _buildQuickActions(),
-            const SizedBox(height: 28),
-            _buildTodaysLectures(),
-          ],
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(),
+              const SizedBox(height: 28),
+              _buildQuickActions(),
+              const SizedBox(height: 28),
+              _buildTodaysLectures(),
+            ],
+          ),
         ),
       ),
     );
@@ -127,33 +84,47 @@ class _HomeScreenState extends State<LecturerDashboard> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Flexible(
-                    child: Text(
-                      'Hi, $_userName',
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1A237E),
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: const [
+                Text(
+                  'Hi, Mr. Herath ',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1A237E),
                   ),
-                  const SizedBox(width: 4),
-                  const Text('👋', style: TextStyle(fontSize: 22)),
-                ],
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'Monday, 23 October',
-                style: TextStyle(fontSize: 14, color: Color(0xFF5C6BC0)),
+                ),
+                Text('👋', style: TextStyle(fontSize: 22)),
+              ],
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Monday, 23 October',
+              style: TextStyle(fontSize: 14, color: Color(0xFF5C6BC0)),
+            ),
+          ],
+        ),
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.06),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
             ],
+          ),
+          child: const Icon(
+            Icons.notifications_outlined,
+            color: Color(0xFF1A237E),
+            size: 20,
           ),
         ),
       ],
@@ -186,28 +157,9 @@ class _HomeScreenState extends State<LecturerDashboard> {
             _buildActionButton(
               Icons.calendar_today_outlined,
               'Manage\nSchedule',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const MyLecturesScreen(),
-                  ),
-                );
-              },
             ),
             const SizedBox(width: 16),
-            _buildActionButton(
-              Icons.campaign_outlined, 
-              'Send\nAlert',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const send_report_screen.SendReportScreen(),
-                  ),
-                );
-              },
-            ),
+            _buildActionButton(Icons.campaign_outlined, 'Send\nAlert'),
           ],
         ),
       ],
@@ -272,14 +224,7 @@ class _HomeScreenState extends State<LecturerDashboard> {
               ),
             ),
             TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const MyLecturesScreen(),
-                  ),
-                );
-              },
+              onPressed: () {},
               style: TextButton.styleFrom(
                 padding: EdgeInsets.zero,
                 minimumSize: Size.zero,
@@ -297,14 +242,7 @@ class _HomeScreenState extends State<LecturerDashboard> {
           ],
         ),
         const SizedBox(height: 12),
-        if (_isLoading)
-          const Center(
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 32),
-              child: CircularProgressIndicator(color: Color(0xFF283593)),
-            ),
-          )
-        else if (_lectures.isEmpty)
+        if (_lectures.isEmpty)
           Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 32),
@@ -336,20 +274,8 @@ class _HomeScreenState extends State<LecturerDashboard> {
   }
 
   Widget _buildLectureCard(Lecture lecture) {
-    return GestureDetector(
-      onTap: () async {
-        final result = await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => LectureDetailScreen(lecture: lecture),
-          ),
-        );
-        if (result == true) {
-          _fetchLectures();
-        }
-      },
-      child: Container(
-        padding: const EdgeInsets.all(14),
+    return Container(
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: const Color(0xFF283593),
         borderRadius: BorderRadius.circular(16),
@@ -442,7 +368,6 @@ class _HomeScreenState extends State<LecturerDashboard> {
           ),
           const Icon(Icons.chevron_right, color: Colors.white54, size: 22),
         ],
-        ),
       ),
     );
   }

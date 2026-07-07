@@ -33,16 +33,14 @@ async def login(login_data: LoginRequest):
         )
 
     # Generate a token containing their identity and role
-    token_data = {"sub": user["email"], "role": user["role"]}
+    token_data = {"sub": user["username"], "role": user["role"]}
     access_token = create_access_token(data=token_data)
 
     # Return the payload back to frontend
     return {
         "status": "success",
-        "username": user.get("name") or user.get("email") or "Unknown",
+        "username": user["username"],
         "email": user["email"],
-        "department": user.get("department") or "Unknown",
-        "batch": user.get("academicYear") or "Unknown",
         "role": user["role"],  # 'student' or 'lecturer'
         "token": access_token,
         "isFirstLogin": user.get("isFirstLogin", True),

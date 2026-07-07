@@ -3,7 +3,7 @@ from app.api.api import api_router
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import Database
 
-app = FastAPI(redirect_slashes=False)
+app = FastAPI()
 
 origins = [
     "http://localhost:3000",
