@@ -50,8 +50,10 @@ class ChangePasswordRequest(BaseModel):
 
 # ── Bulk import schemas ────────────────────────────────────────────────────────
 
+
 class BulkUserRequest(BaseModel):
     """Request body for POST /api/users/bulk"""
+
     users: list[User]
 
 
@@ -76,12 +78,13 @@ class BulkImportResponse(BaseModel):
 class ForgotPasswordRequest(BaseModel):
     email: str
 
+
 class VerifyOTPRequest(BaseModel):
     email: str
     otp: str
+
 
 class ResetPasswordRequest(BaseModel):
     email: str
     token: str
     new_password: str
-

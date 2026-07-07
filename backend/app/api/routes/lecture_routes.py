@@ -2,6 +2,7 @@
 from fastapi import APIRouter, HTTPException
 from typing import Optional
 from datetime import datetime
+
 # pyrefly: ignore [missing-import]
 from bson import ObjectId
 from app.core.database import lectures_collection
@@ -9,7 +10,8 @@ from app.schemas.lecture_schema import LectureCreate, AvailabilityCheck
 from app.services.notification_service import NotificationService
 from app.repositories.user_repo import UserRepo
 
-router = APIRouter(prefix="/lectures", tags=["Lectures"])
+router = APIRouter()
+
 notification_service = NotificationService()
 user_repo = UserRepo()
 
@@ -19,19 +21,14 @@ async def create_lecture(lecture: LectureCreate):
 
     # Validate dates
     if lecture.end_time <= lecture.start_time:
-        raise HTTPException(
-            status_code=400,
-            detail="End time must be after start time"
-        )
+        raise HTTPException(status_code=400, detail="End time must be after start time")
 
     lecture_data = lecture.model_dump()
 
     lecture_data["created_at"] = datetime.utcnow()
     lecture_data["updated_at"] = datetime.utcnow()
 
-    result = await lectures_collection.insert_one(
-        lecture_data
-    )
+    result = await lectures_collection.insert_one(lecture_data)
 
     lecture_id_str = str(result.inserted_id)
 
@@ -48,25 +45,23 @@ async def create_lecture(lecture: LectureCreate):
                 lecturer_name = users[0]["name"]
         except Exception:
             pass
-            
+
         # Fire and forget or await
         await notification_service.create_lecture_notifications(
             lecture_id=lecture_id_str,
             lecturer_name=lecturer_name,
             lecture_title=lecture.title,
-            department=lecture.department
+            department=lecture.department,
         )
 
-    return {
-        "message": "Lecture created successfully",
-        "lecture_id": lecture_id_str
-    }
+    return {"message": "Lecture created successfully", "lecture_id": lecture_id_str}
+
 
 @router.get("")
 async def get_lectures(
     lecturer_id: Optional[str] = None,
     department: Optional[str] = None,
-    batch: Optional[str] = None
+    batch: Optional[str] = None,
 ):
     query = {}
     if lecturer_id:
@@ -75,16 +70,17 @@ async def get_lectures(
         query["department"] = department
     if batch:
         query["batch"] = batch
-        
+
     print(f"GET /lectures query: {query}")
     cursor = lectures_collection.find(query)
     lectures = await cursor.to_list()
-    
+
     # Convert ObjectId to string for JSON serialization
     for lecture in lectures:
         lecture["_id"] = str(lecture["_id"])
-        
+
     return lectures
+
 
 @router.post("/check-availability")
 async def check_availability(check: AvailabilityCheck):
@@ -97,46 +93,48 @@ async def check_availability(check: AvailabilityCheck):
             # 2. Existing lecture ends during the new time slot
             {"end_time": {"$gt": check.start_time, "$lte": check.end_time}},
             # 3. Existing lecture completely envelops the new time slot
-            {"start_time": {"$lte": check.start_time}, "end_time": {"$gte": check.end_time}}
-        ]
+            {
+                "start_time": {"$lte": check.start_time},
+                "end_time": {"$gte": check.end_time},
+            },
+        ],
     }
-    
+
     if check.exclude_lecture_id:
         try:
+            # pyrefly: ignore [bad-assignment]
             overlap_query["_id"] = {"$ne": ObjectId(check.exclude_lecture_id)}
         except Exception:
             pass
-            
+
     count = await lectures_collection.count_documents(overlap_query)
     is_available = count == 0
-    
-    return {
-        "available": is_available,
-        "conflict_count": count
-    }
+
+    return {"available": is_available, "conflict_count": count}
+
 
 @router.put("/{lecture_id}")
 async def update_lecture(lecture_id: str, lecture: LectureCreate):
     if lecture.end_time <= lecture.start_time:
         raise HTTPException(status_code=400, detail="End time must be after start time")
-        
+
     try:
         obj_id = ObjectId(lecture_id)
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid lecture ID format")
-        
+
     lecture_data = lecture.model_dump()
     lecture_data["updated_at"] = datetime.utcnow()
-    
+
     result = await lectures_collection.update_one(
-        {"_id": obj_id},
-        {"$set": lecture_data}
+        {"_id": obj_id}, {"$set": lecture_data}
     )
-    
+
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Lecture not found")
-        
+
     return {"message": "Lecture updated successfully"}
+
 
 @router.delete("/{lecture_id}")
 async def delete_lecture(lecture_id: str):
@@ -144,10 +142,10 @@ async def delete_lecture(lecture_id: str):
         obj_id = ObjectId(lecture_id)
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid lecture ID format")
-        
+
     result = await lectures_collection.delete_one({"_id": obj_id})
-    
+
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Lecture not found")
-        
+
     return {"message": "Lecture deleted successfully"}

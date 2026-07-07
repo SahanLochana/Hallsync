@@ -1,6 +1,7 @@
 from app.repositories.hall_repo import HallRepo
 from typing import Optional
 
+
 class HallService:
     def __init__(self):
         self.hall_repo = HallRepo()

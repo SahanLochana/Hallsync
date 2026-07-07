@@ -3,10 +3,11 @@
  *
  * Business logic for the timetable creation page.
  * The View (TimetableCreatePage.jsx) calls these functions.
- * Replace TODO comments with API calls when backend is ready.
  */
 
-import { generateId, loadTimetableList, saveTimetableList } from "../models/timetableCreateModel";
+import { generateId } from "../models/timetableCreateModel";
+
+const BASE_URL = "http://localhost:8000/api/timetables";
 
 // ── Draft lecture management ──────────────────────────────────────────────────
 
@@ -19,7 +20,7 @@ import { generateId, loadTimetableList, saveTimetableList } from "../models/time
  * @param {Function} onDone      — callback to close modal
  */
 export function handleAddDraftLecture(newLec, lectures, setLectures, onDone) {
-  const entry = { ...newLec, id: generateId() };
+  const entry = { ...newLec, lec_id: generateId() };
   setLectures([...lectures, entry]);
   onDone();
 }
@@ -32,41 +33,55 @@ export function handleAddDraftLecture(newLec, lectures, setLectures, onDone) {
  * @param {Function} setLectures — React state setter
  */
 export function handleRemoveDraftLecture(id, lectures, setLectures) {
-  setLectures(lectures.filter((l) => l.id !== id));
+  setLectures(lectures.filter((l) => l.lec_id !== id));
 }
 
 // ── Save timetable ────────────────────────────────────────────────────────────
 
 /**
- * Persist the new timetable to localStorage and navigate back to /timetable.
- * TODO: Replace with API call — createTimetable(meta, lectures)
+ * Persist the new timetable to the backend API and navigate back to /timetable.
  *
  * @param {Object}   meta      — { name, department, year }
  * @param {Array}    lectures  — the draft lecture list
- * @param {Function} router    — Next.js router
- * @returns {{ ok: boolean, error?: string }}
+ * @param {Object}   router    — Next.js router
+ * @returns {Promise<{ ok: boolean, error?: string }>}
  */
-export function handleSaveTimetable(meta, lectures, router) {
+export async function handleSaveTimetable(meta, lectures, router) {
   // Basic validation
   if (!meta.name.trim()) return { ok: false, error: "Timetable name is required." };
   if (!meta.department)  return { ok: false, error: "Please select a department." };
   if (!meta.year)        return { ok: false, error: "Please select a year." };
 
-  const newEntry = {
-    id:           generateId(),
+  const payload = {
     name:         meta.name.trim(),
     department:   meta.department,
     year:         meta.year,
-    lastModified: new Date().toLocaleDateString("en-US", {
-      month: "short", day: "numeric", year: "numeric",
-    }),
-    lectures,
+    lectures:     lectures.map((l) => ({
+      lec_id:       l.lec_id,
+      lectureName:  l.lectureName,
+      lecturerName: l.lecturerName,
+      day:          l.day,
+      startHour:    Number(l.startHour),
+      endHour:      Number(l.endHour),
+      location:     l.location,
+    })),
   };
 
-  const existing = loadTimetableList();
-  saveTimetableList([...existing, newEntry]);
+  try {
+    const response = await fetch(`${BASE_URL}/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
 
-  // TODO: await timetableService.create(newEntry);
-  router.push("/timetable");
-  return { ok: true };
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.detail || "Failed to create timetable.");
+    }
+
+    router.push("/timetable");
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err.message || "Network error occurred." };
+  }
 }

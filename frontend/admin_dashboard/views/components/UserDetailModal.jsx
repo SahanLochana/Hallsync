@@ -39,6 +39,8 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
   const [form, setForm]                       = useState({});
   const [errors, setErrors]                   = useState({});
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+  const [isSaving, setIsSaving]               = useState(false);
+  const [modalError, setModalError]           = useState(null);
 
   // Sync form when user changes or modal opens
   useEffect(() => {
@@ -46,6 +48,8 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
       setForm({ ...user });
       setIsEditing(false);
       setErrors({});
+      setIsSaving(false);
+      setModalError(null);
     }
   }, [isOpen, user]);
 
@@ -62,10 +66,18 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
     setShowSaveConfirm(true);
   }
 
-  function handleConfirmSave() {
+  async function handleConfirmSave() {
     setShowSaveConfirm(false);
-    onSaveEdit({ ...form });
-    setIsEditing(false);
+    setIsSaving(true);
+    setModalError(null);
+    try {
+      await onSaveEdit({ ...form });
+      setIsEditing(false);
+    } catch (err) {
+      setModalError(err.message || "Failed to update user.");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   const inputCls =
@@ -111,7 +123,8 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
             <button
               id="btn-user-detail-close"
               onClick={onClose}
-              className="text-white/70 hover:text-white transition-colors"
+              disabled={isSaving}
+              className="text-white/70 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <X size={20} />
             </button>
@@ -119,6 +132,11 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
 
           {/* Body */}
           <div className="p-6 flex flex-col gap-5 overflow-y-auto max-h-[60vh]">
+            {modalError && (
+              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 flex items-center gap-2">
+                <span className="text-red-600 text-xs font-medium">{modalError}</span>
+              </div>
+            )}
             {isEditing ? (
               /* ── EDIT FORM ─────────────────────────────────────────── */
               <div className="flex flex-col gap-4">
@@ -129,7 +147,8 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
                   </label>
                   <select
                     id="edit-user-role"
-                    className={inputCls}
+                    disabled={isSaving}
+                    className={`${inputCls} disabled:opacity-60 disabled:cursor-not-allowed`}
                     value={form.role || "Student"}
                     onChange={(e) => set("role", e.target.value)}
                   >
@@ -146,7 +165,8 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
                   </label>
                   <input
                     id="edit-user-university-id"
-                    className={`${inputCls} ${errors.universityId ? "border-red-400" : ""}`}
+                    disabled={isSaving}
+                    className={`${inputCls} ${errors.universityId ? "border-red-400" : ""} disabled:opacity-60 disabled:cursor-not-allowed`}
                     placeholder={idPlaceholder}
                     value={form.universityId || ""}
                     onChange={(e) => set("universityId", e.target.value)}
@@ -161,7 +181,8 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
                   </label>
                   <input
                     id="edit-user-name"
-                    className={`${inputCls} ${errors.name ? "border-red-400" : ""}`}
+                    disabled={isSaving}
+                    className={`${inputCls} ${errors.name ? "border-red-400" : ""} disabled:opacity-60 disabled:cursor-not-allowed`}
                     placeholder="e.g. Sithumi Fernando"
                     value={form.name || ""}
                     onChange={(e) => set("name", e.target.value)}
@@ -177,7 +198,8 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
                   <input
                     id="edit-user-email"
                     type="email"
-                    className={`${inputCls} ${errors.email ? "border-red-400" : ""}`}
+                    disabled={isSaving}
+                    className={`${inputCls} ${errors.email ? "border-red-400" : ""} disabled:opacity-60 disabled:cursor-not-allowed`}
                     placeholder="e.g. sithumi@university.ac.lk"
                     value={form.email || ""}
                     onChange={(e) => set("email", e.target.value)}
@@ -192,7 +214,8 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
                   </label>
                   <input
                     id="edit-user-faculty"
-                    className={`${inputCls} ${errors.faculty ? "border-red-400" : ""}`}
+                    disabled={isSaving}
+                    className={`${inputCls} ${errors.faculty ? "border-red-400" : ""} disabled:opacity-60 disabled:cursor-not-allowed`}
                     placeholder="e.g. Computing"
                     value={form.faculty || ""}
                     onChange={(e) => set("faculty", e.target.value)}
@@ -207,7 +230,8 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
                   </label>
                   <select
                     id="edit-user-department"
-                    className={`${inputCls} ${errors.department ? "border-red-400" : ""}`}
+                    disabled={isSaving}
+                    className={`${inputCls} ${errors.department ? "border-red-400" : ""} disabled:opacity-60 disabled:cursor-not-allowed`}
                     value={form.department || ""}
                     onChange={(e) => set("department", e.target.value)}
                   >
@@ -227,7 +251,8 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
                     </label>
                     <select
                       id="edit-user-academic-year"
-                      className={`${inputCls} ${errors.academicYear ? "border-red-400" : ""}`}
+                      disabled={isSaving}
+                      className={`${inputCls} ${errors.academicYear ? "border-red-400" : ""} disabled:opacity-60 disabled:cursor-not-allowed`}
                       value={form.academicYear || ""}
                       onChange={(e) => set("academicYear", e.target.value)}
                     >
@@ -239,54 +264,59 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
                     {errors.academicYear && <span className="text-red-500 text-xs">{errors.academicYear}</span>}
                   </div>
                 )}
-
-
               </div>
             ) : (
-              /* ── DETAIL VIEW ────────────────────────────────────────── */
-              <div className="flex flex-col gap-5">
-                {/* ID (Lecturer or Student) */}
-                <DetailRow icon={BookOpen} label={user.role === "Student" ? "Uni ID" : "Lec ID"} value={user.universityId} />
-                
-                {/* Full Name */}
-                <DetailRow icon={User} label="Name" value={user.name} />
+              /* ── VIEW MODE ─────────────────────────────────────────── */
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-[#1e3b8a]/10 flex items-center justify-center text-[#1e3b8a] shrink-0">
+                    <User size={24} strokeWidth={1.5} />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[#0f172a] font-bold text-base">{user.name}</span>
+                    <span className="text-[#94a3b8] text-xs font-semibold uppercase tracking-wider">{user.role}</span>
+                  </div>
+                </div>
 
-                {/* Email (Student: email, Lecturer: mail) */}
-                <DetailRow icon={Mail} label={user.role === "Student" ? "Email" : "Mail"} value={user.email} />
+                <div className="h-px bg-[#e2e8f0] my-1" />
 
-                {/* Department */}
-                <DetailRow icon={Layers} label="Department" value={user.department} />
-
-                {/* Faculty */}
-                <DetailRow icon={Award} label="Faculty" value={user.faculty} />
-
-                {/* Academic Year (Student only) */}
-                {user.role === "Student" && (
-                  <DetailRow icon={Award} label="Academic Yr" value={user.academicYear} />
-                )}
-
-
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <DetailRow icon={Mail} label="Email" value={user.email} />
+                  <DetailRow icon={BookOpen} label="Faculty" value={user.faculty} />
+                  <DetailRow icon={Layers} label="Department" value={user.department} />
+                  {isStudent && (
+                    <DetailRow icon={Award} label="Academic Year" value={user.academicYear} />
+                  )}
+                  <DetailRow icon={ShieldAlert} label={idLabel} value={user.universityId} />
+                </div>
               </div>
             )}
           </div>
 
           {/* Footer Actions */}
-          <div className="px-6 pb-6 pt-2 flex items-center justify-between gap-3 border-t border-[#f1f5f9] mt-2 bg-[#f8fafc]">
+          <div className="px-6 py-4 bg-[#f8fafc] border-t border-[#e2e8f0] flex items-center justify-end gap-3 shrink-0">
             {isEditing ? (
               <>
                 <button
                   id="btn-edit-user-cancel"
-                  onClick={() => { setIsEditing(false); setForm({ ...user }); }}
-                  className="px-5 py-2.5 rounded-xl border border-[#e2e8f0] text-[#334155] font-semibold text-sm hover:bg-[#f8fafc] transition-colors bg-white"
+                  onClick={() => setIsEditing(false)}
+                  disabled={isSaving}
+                  className="px-5 py-2.5 rounded-xl border border-[#e2e8f0] text-[#334155] font-semibold text-sm hover:bg-[#f8fafc] transition-colors bg-white disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button
                   id="btn-edit-user-save"
                   onClick={handleSaveClick}
-                  className="px-5 py-2.5 rounded-xl bg-[#1e3b8a] text-white font-semibold text-sm hover:bg-[#162d6b] transition-colors"
+                  disabled={isSaving}
+                  className="px-5 py-2.5 rounded-xl bg-[#1e3b8a] text-white font-semibold text-sm hover:bg-[#162d6b] transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-1.5"
                 >
-                  Save Changes
+                  {isSaving ? (
+                    <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <Save size={14} />
+                  )}
+                  {isSaving ? "Saving..." : "Save Changes"}
                 </button>
               </>
             ) : (

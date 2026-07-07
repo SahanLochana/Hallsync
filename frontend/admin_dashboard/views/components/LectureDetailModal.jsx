@@ -262,7 +262,7 @@ export default function LectureDetailModal({ lecture, onClose, onSaveEdit, onDel
         onCancel={() => setShowDelConfirm(false)}
         onConfirm={() => {
           setShowDelConfirm(false);
-          onDelete(lecture.id); // calls controller → removes from grid + localStorage
+          onDelete(lecture.lec_id); // calls controller → removes from grid + localStorage
         }}
       />
     </>

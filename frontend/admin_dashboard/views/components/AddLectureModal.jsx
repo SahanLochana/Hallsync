@@ -53,6 +53,7 @@ export default function AddLectureModal({
 }) {
   const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Reset & pre-fill whenever the modal opens
   useEffect(() => {
@@ -66,6 +67,7 @@ export default function AddLectureModal({
         endHour:   end,
       });
       setErrors({});
+      setIsSubmitting(false);
     }
   }, [isOpen, defaultDay, defaultStartHour]);
 
@@ -91,10 +93,17 @@ export default function AddLectureModal({
     return e;
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     const e = validate();
     if (Object.keys(e).length > 0) { setErrors(e); return; }
-    onConfirm({ ...form });
+    setIsSubmitting(true);
+    try {
+      await onConfirm({ ...form });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   const inputCls =
@@ -124,7 +133,8 @@ export default function AddLectureModal({
             <button
               id="btn-add-lecture-close"
               onClick={onClose}
-              className="text-white/70 hover:text-white transition-colors"
+              disabled={isSubmitting}
+              className="text-white/70 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <X size={20} />
             </button>
@@ -137,8 +147,9 @@ export default function AddLectureModal({
             <Field label="Lecture Name" error={errors.lectureName}>
               <input
                 id="add-lecture-name"
-                className={`${inputCls} ${errors.lectureName ? "border-red-400" : "border-[#e2e8f0]"}`}
-                placeholder="e.g. Software Engineering"
+                disabled={isSubmitting}
+                className={`${inputCls} ${errors.lectureName ? "border-red-400" : "border-[#e2e8f0]"} disabled:opacity-60 disabled:cursor-not-allowed`}
+                placeholder="e.g. Software Engineering II"
                 value={form.lectureName}
                 onChange={(e) => set("lectureName", e.target.value)}
               />
@@ -148,18 +159,20 @@ export default function AddLectureModal({
             <Field label="Lecturer Name" error={errors.lecturerName}>
               <input
                 id="add-lecturer-name"
-                className={`${inputCls} ${errors.lecturerName ? "border-red-400" : "border-[#e2e8f0]"}`}
-                placeholder="e.g. Dr. Perera"
+                disabled={isSubmitting}
+                className={`${inputCls} ${errors.lecturerName ? "border-red-400" : "border-[#e2e8f0]"} disabled:opacity-60 disabled:cursor-not-allowed`}
+                placeholder="e.g. Dr. Jane Doe"
                 value={form.lecturerName}
                 onChange={(e) => set("lecturerName", e.target.value)}
               />
             </Field>
 
-            {/* Day */}
-            <Field label="Day">
+            {/* Day Select */}
+            <Field label="Day" error={errors.day}>
               <select
                 id="add-day"
-                className={`${inputCls} border-[#e2e8f0]`}
+                disabled={isSubmitting}
+                className={`${inputCls} border-[#e2e8f0] disabled:opacity-60 disabled:cursor-not-allowed`}
                 value={form.day}
                 onChange={(e) => set("day", e.target.value)}
               >
@@ -172,7 +185,8 @@ export default function AddLectureModal({
               <Field label="Start Time" error={errors.startHour}>
                 <select
                   id="add-start-hour"
-                  className={`${inputCls} border-[#e2e8f0] flex-1`}
+                  disabled={isSubmitting}
+                  className={`${inputCls} border-[#e2e8f0] flex-1 disabled:opacity-60 disabled:cursor-not-allowed`}
                   value={form.startHour}
                   onChange={(e) => set("startHour", Number(e.target.value))}
                 >
@@ -184,7 +198,8 @@ export default function AddLectureModal({
               <Field label="End Time" error={errors.endHour}>
                 <select
                   id="add-end-hour"
-                  className={`${inputCls} ${errors.endHour ? "border-red-400" : "border-[#e2e8f0]"} flex-1`}
+                  disabled={isSubmitting}
+                  className={`${inputCls} ${errors.endHour ? "border-red-400" : "border-[#e2e8f0]"} flex-1 disabled:opacity-60 disabled:cursor-not-allowed`}
                   value={form.endHour}
                   onChange={(e) => set("endHour", Number(e.target.value))}
                 >
@@ -199,7 +214,8 @@ export default function AddLectureModal({
             <Field label="Location" error={errors.location}>
               <input
                 id="add-location"
-                className={`${inputCls} ${errors.location ? "border-red-400" : "border-[#e2e8f0]"}`}
+                disabled={isSubmitting}
+                className={`${inputCls} ${errors.location ? "border-red-400" : "border-[#e2e8f0]"} disabled:opacity-60 disabled:cursor-not-allowed`}
                 placeholder="e.g. Hall A - Room 101"
                 value={form.location}
                 onChange={(e) => set("location", e.target.value)}
@@ -212,19 +228,25 @@ export default function AddLectureModal({
             <button
               id="btn-add-cancel"
               onClick={onClose}
-              className="px-5 py-2.5 rounded-xl border border-[#e2e8f0] text-[#334155] font-semibold text-sm hover:bg-[#f8fafc] transition-colors"
+              disabled={isSubmitting}
+              className="px-5 py-2.5 rounded-xl border border-[#e2e8f0] text-[#334155] font-semibold text-sm hover:bg-[#f8fafc] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
             <button
               id="btn-add-confirm"
               onClick={handleSubmit}
+              disabled={isSubmitting}
               className="px-5 py-2.5 rounded-xl bg-[#1e3b8a] text-white font-semibold text-sm
                          flex items-center gap-1.5 hover:bg-[#162d6b] active:scale-[0.98]
-                         transition-all shadow-[0_4px_12px_rgba(30,59,138,0.25)]"
+                         transition-all shadow-[0_4px_12px_rgba(30,59,138,0.25)] disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              <Plus size={15} strokeWidth={2.5} />
-              Add Lecture
+              {isSubmitting ? (
+                <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+              ) : (
+                <Plus size={15} strokeWidth={2.5} />
+              )}
+              {isSubmitting ? "Adding..." : "Add Lecture"}
             </button>
           </div>
         </div>

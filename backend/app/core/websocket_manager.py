@@ -1,6 +1,7 @@
 from fastapi import WebSocket
 from typing import Dict, List
 
+
 class ConnectionManager:
     def __init__(self):
         # Maps user_email to their active WebSocket connection
@@ -19,16 +20,17 @@ class ConnectionManager:
             try:
                 import json
                 from datetime import datetime
-                
+
                 def json_serial(obj):
                     if isinstance(obj, datetime):
                         return obj.isoformat()
                     raise TypeError(f"Type {type(obj)} not serializable")
-                    
+
                 json_str = json.dumps(message, default=json_serial)
                 await self.active_connections[user_email].send_text(json_str)
             except Exception as e:
                 print(f"Error sending ws message to {user_email}: {e}")
                 self.disconnect(user_email)
+
 
 manager = ConnectionManager()
