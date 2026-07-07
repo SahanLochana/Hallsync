@@ -33,6 +33,7 @@ import {
 import TopHeader from "@/views/components/TopHeader";
 import LectureDetailModal from "@/views/components/LectureDetailModal";
 import AddLectureModal from "@/views/components/AddLectureModal";
+import LoadingSpinner from "@/views/components/LoadingSpinner";
 
 import {
   DAYS,
@@ -235,9 +236,7 @@ export default function TimetableViewPage() {
 
             {/* ── GRID — only this area scrolls ───────────────────────── */}
             {isLoading ? (
-              <div className="flex-1 flex items-center justify-center text-[#94a3b8] text-sm">
-                Loading timetable data…
-              </div>
+              <LoadingSpinner text="Loading timetable data…" heightClass="flex-1" />
             ) : (
               <div className="flex flex-1 min-h-0 overflow-auto">
                 {/* Time column */}

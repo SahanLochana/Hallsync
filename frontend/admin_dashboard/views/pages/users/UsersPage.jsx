@@ -22,6 +22,7 @@ import Sidebar          from "@/views/components/Sidebar";
 import AddUserModal     from "@/views/components/AddUserModal";
 import UserDetailModal  from "@/views/components/UserDetailModal";
 import ImportCsvModal   from "@/views/components/ImportCsvModal";
+import LoadingSpinner   from "@/views/components/LoadingSpinner";
 
 import { ROLE_OPTIONS } from "@/models/userModel";
 import {
@@ -240,9 +241,7 @@ export default function UsersPage() {
 
             {/* Loading state */}
             {isLoading ? (
-              <div className="flex items-center justify-center h-48 text-[#94a3b8] text-sm">
-                Loading users…
-              </div>
+              <LoadingSpinner text="Loading users…" />
             ) : (
               <table className="w-full text-left border-collapse">
                 {/* Table header */}

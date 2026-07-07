@@ -17,6 +17,7 @@ import { Plus, ChevronDown } from "lucide-react";
 
 import TopHeader from "@/views/components/TopHeader";
 import Sidebar from "@/views/components/Sidebar";
+import LoadingSpinner from "@/views/components/LoadingSpinner";
 
 import {
   initialFilterState,
@@ -158,9 +159,7 @@ export default function TimetablePage() {
 
             {/* Loading state */}
             {isLoading ? (
-              <div className="flex items-center justify-center h-48 text-[#94a3b8] text-sm">
-                Loading timetables…
-              </div>
+              <LoadingSpinner text="Loading timetables…" />
             ) : (
               <table className="w-full text-left border-collapse">
                 {/* Table header */}

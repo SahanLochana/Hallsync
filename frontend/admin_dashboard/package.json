@@ -9,6 +9,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@lottiefiles/dotlottie-react": "^0.19.7",
+    "ldrs": "^1.1.9",
     "lucide-react": "^1.7.0",
     "next": "16.2.1",
     "react": "19.2.4",
