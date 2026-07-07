@@ -24,6 +24,7 @@ import UserDetailModal from "@/views/components/UserDetailModal";
 import ImportCsvModal from "@/views/components/ImportCsvModal";
 import LoadingSpinner from "@/views/components/LoadingSpinner";
 import FilterDropdown from "@/views/components/FilterDropdown";
+import PaginationBar from "@/views/components/PaginationBar";
 
 import { ROLE_OPTIONS } from "@/models/userModel";
 import {
@@ -232,27 +233,7 @@ export default function UsersPage() {
     setCurrentPage(1);
   }
 
-  // Ellipsis pagination helper
-  function getPageNumbers(current, total) {
-    const list = [];
-    if (total <= 7) {
-      for (let i = 1; i <= total; i++) list.push(i);
-    } else {
-      if (current <= 4) {
-        list.push(1, 2, 3, 4, 5, "...", total);
-      } else if (current >= total - 3) {
-        list.push(1, "...", total - 4, total - 3, total - 2, total - 1, total);
-      } else {
-        list.push(1, "...", current - 1, current, current + 1, "...", total);
-      }
-    }
-    return list;
-  }
-
-  const counterText =
-    filteredUsers.length === 0
-      ? "Showing 0 of 0 users"
-      : `Showing ${startIndex + 1}-${endIndex} of ${filteredUsers.length} users`;
+  // Pagination helpers are handled by PaginationBar component
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -448,69 +429,15 @@ export default function UsersPage() {
           </div>
 
           {/* ── PAGINATION BAR ──────────────────────────────────────────────── */}
-          {filteredUsers.length > 0 && (
-            <div className="bg-white rounded-xl shadow-[0_8px_25px_rgba(226,232,240,0.75)] px-5 py-3 flex items-center justify-between gap-4 flex-wrap">
-              <span className="text-[#94a3b8] text-xs font-semibold">
-                {counterText}
-              </span>
-
-              <div className="flex items-center gap-1.5">
-                {/* Previous Button */}
-                <button
-                  type="button"
-                  id="btn-prev-page"
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  className="px-3 py-1.5 text-xs font-semibold border border-[#e2e8f0] rounded-xl text-[#64748b] hover:border-[#1e3b8a] hover:text-[#1e3b8a] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer bg-white"
-                >
-                  Previous
-                </button>
-
-                {/* Page numbers */}
-                {getPageNumbers(currentPage, totalPages).map((p, idx) => {
-                  if (p === "...") {
-                    return (
-                      <span
-                        key={`ellipsis-${idx}`}
-                        className="px-2 text-xs font-semibold text-[#94a3b8]"
-                      >
-                        ...
-                      </span>
-                    );
-                  }
-                  const isActive = p === currentPage;
-                  return (
-                    <button
-                      key={`page-${p}`}
-                      type="button"
-                      id={`btn-page-${p}`}
-                      onClick={() => setCurrentPage(p)}
-                      className={`px-3 py-1.5 text-xs font-semibold rounded-xl border transition-all cursor-pointer bg-white ${
-                        isActive
-                          ? "bg-[#1e3b8a] border-[#1e3b8a] text-[#64748b] shadow-[0_4px_12px_rgba(30,59,138,0.25)]"
-                          : "border-[#e2e8f0] text-[#abc2e1] hover:border-[#1e3b8a] hover:text-[#1e3b8a]"
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  );
-                })}
-
-                {/* Next Button */}
-                <button
-                  type="button"
-                  id="btn-next-page"
-                  disabled={currentPage === totalPages}
-                  onClick={() =>
-                    setCurrentPage((p) => Math.min(totalPages, p + 1))
-                  }
-                  className="px-3 py-1.5 text-xs font-semibold border border-[#e2e8f0] rounded-xl text-[#64748b] hover:border-[#1e3b8a] hover:text-[#1e3b8a] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer bg-white"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          )}
+          <PaginationBar
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            totalItems={filteredUsers.length}
+            startIndex={startIndex}
+            endIndex={endIndex}
+            itemName="users"
+          />
         </main>
       </div>
 
