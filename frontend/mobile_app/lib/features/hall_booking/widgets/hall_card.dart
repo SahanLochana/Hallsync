@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/hall.dart';
+import 'facility_icon.dart';
 
 class HallCard extends StatelessWidget {
   final Hall hall;
@@ -114,7 +115,7 @@ class HallCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Icon(
-                            _getIconData(hall.facilities[i].icon),
+                            getFacilityIconData(hall.facilities[i].icon),
                             size: 12,
                             color: const Color(0xFF1E5AA8),
                           ),
@@ -173,18 +174,5 @@ class HallCard extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  IconData _getIconData(String name) {
-    switch (name.toLowerCase()) {
-      case 'wifi':
-        return Icons.wifi;
-      case 'projector':
-        return Icons.screenshare;
-      case 'ac':
-        return Icons.ac_unit;
-      default:
-        return Icons.info;
-    }
   }
 }
