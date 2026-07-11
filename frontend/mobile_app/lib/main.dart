@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'features/auth/screens/login_screen.dart';
 import 'features/hall_booking/screens/hall_booking_screen.dart';
 
 void main() {
