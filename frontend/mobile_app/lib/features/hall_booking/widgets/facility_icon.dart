@@ -1,5 +1,24 @@
 import 'package:flutter/material.dart';
 
+IconData getFacilityIconData(String name) {
+  switch (name.toLowerCase()) {
+    case 'wifi':
+      return Icons.wifi;
+    case 'projector':
+      return Icons.present_to_all;
+    case 'ac':
+      return Icons.ac_unit;
+    case 'parking':
+      return Icons.local_parking;
+    case 'food':
+      return Icons.restaurant;
+    case 'restroom':
+      return Icons.wc;
+    default:
+      return Icons.info;
+  }
+}
+
 class FacilityIcon extends StatelessWidget {
   final String iconName;
   final String label;
@@ -11,25 +30,6 @@ class FacilityIcon extends StatelessWidget {
     required this.label,
     this.size = 50,
   });
-
-  IconData _getIconData(String name) {
-    switch (name.toLowerCase()) {
-      case 'wifi':
-        return Icons.wifi;
-      case 'projector':
-        return Icons.screenshare;
-      case 'ac':
-        return Icons.ac_unit;
-      case 'parking':
-        return Icons.local_parking;
-      case 'food':
-        return Icons.restaurant;
-      case 'restroom':
-        return Icons.wc;
-      default:
-        return Icons.info;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +44,7 @@ class FacilityIcon extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(
-            _getIconData(iconName),
+            getFacilityIconData(iconName),
             color: const Color(0xFF1E5AA8),
             size: size * 0.5,
           ),
