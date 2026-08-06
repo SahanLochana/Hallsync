@@ -11,7 +11,7 @@ from app.dependencies.db import get_timetable_service
 router = APIRouter()
 
 
-@router.get("", response_model=TimetablesListResponse)
+@router.get("/", response_model=TimetablesListResponse)
 async def get_timetables(
     timetable_service: TimetableService = Depends(get_timetable_service),
 ):
@@ -25,7 +25,7 @@ async def get_timetables(
         )
 
 
-@router.post("", response_model=TimetableResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=TimetableResponse, status_code=status.HTTP_201_CREATED)
 async def create_timetable(
     timetable: TimetableCreate,
     timetable_service: TimetableService = Depends(get_timetable_service),

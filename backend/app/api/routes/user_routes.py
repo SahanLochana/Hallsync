@@ -17,7 +17,7 @@ router = APIRouter()
 # ── Collection endpoints ───────────────────────────────────────────────────────
 
 
-@router.get("", response_model=UsersResponse)
+@router.get("/", response_model=UsersResponse)
 async def get_users(user_service: UserService = Depends(get_user_service)):
     try:
         users = await user_service.get_users()
@@ -29,7 +29,7 @@ async def get_users(user_service: UserService = Depends(get_user_service)):
         )
 
 
-@router.post("", response_model=User, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=User, status_code=status.HTTP_201_CREATED)
 async def create_user(
     user: User,
     user_service: UserService = Depends(get_user_service),

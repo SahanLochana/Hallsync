@@ -90,7 +90,7 @@ class AuthService {
   Future<Map<String, dynamic>> requestPasswordReset(String email) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/auth/forgot-password'),
+        Uri.parse('$baseUrl/api/auth/forgot-password'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email}),
       );
@@ -113,7 +113,7 @@ class AuthService {
   Future<Map<String, dynamic>> verifyOTP(String email, String otp) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/auth/verify-otp'),
+        Uri.parse('$baseUrl/api/auth/verify-otp'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'otp': otp}),
       );
@@ -142,7 +142,7 @@ class AuthService {
   ) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/auth/reset-password'),
+        Uri.parse('$baseUrl/api/auth/reset-password'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': email,

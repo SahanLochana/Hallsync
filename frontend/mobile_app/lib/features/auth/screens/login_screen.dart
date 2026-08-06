@@ -92,11 +92,26 @@ class _LoginScreenState extends State<LoginScreen> {
         final responseData = jsonDecode(response.body);
         String? token = responseData['token'];
         String? role = responseData['role'];
+        bool isFirstLogin = responseData['isFirstLogin'] ??
+            responseData['is_first_login'] ??
+            false;
 
         if (!mounted) return;
 
-        if (role?.toLowerCase() == 'admin') {
-          Navigator.pushReplacementNamed(context, '/admin-dashboard');
+        if (isFirstLogin) {
+          _showSnackBar(
+            "First time login detected. Please update your password.",
+            isError: false,
+          );
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ForgotPasswordScreen(),
+            ),
+          ).then((_) {
+            _usernameController.clear();
+            _passwordController.clear();
+          });
         } else if (role?.toLowerCase() == 'lecturer') {
           Navigator.pushReplacementNamed(context, '/lecturer-dashboard');
         } else {

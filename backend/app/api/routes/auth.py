@@ -48,7 +48,7 @@ async def login(
         "department": user["department"],
         "batch": user["academicYear"],  # TODO
         "token": access_token,
-        "isFirstLogin": user.get("isFirstLogin", True),
+        "isFirstLogin": user.get("isFirstLogin", user.get("is_first_login", True)),
     }
 
 

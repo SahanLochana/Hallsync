@@ -26,7 +26,7 @@ async def get_halls(hall_service: HallService = Depends(get_hall_service)):
         )
 
 
-@router.post("", response_model=Hall, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=Hall, status_code=status.HTTP_201_CREATED)
 async def create_hall(
     hall: HallCreate,
     hall_service: HallService = Depends(get_hall_service),

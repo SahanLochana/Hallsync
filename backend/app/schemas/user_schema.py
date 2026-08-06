@@ -36,7 +36,7 @@ class LoginResponse(BaseModel):
     username: str
     email: str
     department: str
-    batch: str
+    batch: Optional[str] = None
     role: str
     token: str
     isFirstLogin: bool
