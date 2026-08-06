@@ -25,7 +25,7 @@ class UserRepo:
         users = await cursor.to_list(length=100)
         return [self._format_user(u) for u in users]
 
-    async def get_user_by_university_id(self, university_id: str) -> dict | None:
+    async def get_user_by_university_id(self, university_id: str) -> Optional[dict]:
         user = await self.user_collection.find_one({"universityId": university_id})
         return self._format_user(user) if user else None
 

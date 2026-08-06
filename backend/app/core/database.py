@@ -14,7 +14,7 @@ class Database:
         user_collection = self.database.get_collection(settings.USER_COLLECTION)
         await user_collection.create_index("universityId", unique=True)
 
-        hall_collection = self.database.get_collection(settings.HALL_COLLECTION)
+        hall_collection = self.database.get_collection("halls")
         await hall_collection.create_index("hallId", unique=True)
 
         timetables_collection = self.database.get_collection("timetables")

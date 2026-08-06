@@ -58,70 +58,70 @@ class _LoginScreenState extends State<LoginScreen> {
         borderRadius: BorderRadius.circular(14),
         borderSide: const BorderSide(color: primaryBlue, width: 1.5),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 16,
+      ),
     );
   }
 
   // THE LOGIC TO CONNECT TO FASTAPI
-  Future<void> _handleLogin() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() => _isLoading = true);
-
-    // Choose the right URL depending on the platform
-    String baseUrl = 'http://127.0.0.1:8000';
-    if (!kIsWeb && Platform.isAndroid) {
-      baseUrl = 'http://10.0.2.2:8000';
-    }
-
-    final url = Uri.parse('$baseUrl/api/auth/login');
-
-    try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'username': _usernameController.text.trim(),
-          'password': _passwordController.text,
-        }),
-      );
-
-      setState(() => _isLoading = false); // MOVE THIS HERE
-
-      if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
-        String? token = responseData['token'];
-        String? role = responseData['role'];
-
-        if (!mounted) return;
-
-        if (role?.toLowerCase() == 'admin') {
-          Navigator.pushReplacementNamed(context, '/admin-dashboard');
-        } else if (role?.toLowerCase() == 'lecturer') {
-          Navigator.pushReplacementNamed(context, '/lecturer-dashboard');
-        } else {
-          Navigator.pushReplacementNamed(context, '/student-dashboard');
-        }
-      } else {
-        // WRAP ERROR HANDLING IN TRY-CATCH
-        try {
-          final errorData = jsonDecode(response.body);
-          _showSnackBar(
-            errorData['detail'] ?? 'Invalid credentials',
-            isError: true,
-          );
-        } catch (parseError) {
-          // If error parsing fails, show the actual response
-          print(" Backend returned ${response.statusCode}: ${response.body}");
-          _showSnackBar('Login failed (${response.statusCode})', isError: true);
-        }
-      }
-    } catch (e) {
-      setState(() => _isLoading = false);
-      print(" Network Error: $e");
-      _showSnackBar('Can not connect to HallSync Server: $e', isError: true);
-    }
+Future<void> _handleLogin() async {
+  if (!_formKey.currentState!.validate()) return;
+  
+  setState(() => _isLoading = true);
+  
+  // Choose the right URL depending on the platform
+  String baseUrl = 'http://127.0.0.1:8000';
+  if (!kIsWeb && Platform.isAndroid) {
+    baseUrl = 'http://10.0.2.2:8000';
   }
+  
+  final url = Uri.parse('$baseUrl/api/v1/login');
+  
+  try {
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'username': _usernameController.text.trim(),
+        'password': _passwordController.text,
+      }),
+    );
+
+    setState(() => _isLoading = false);  // MOVE THIS HERE
+    
+    if (response.statusCode == 200) {
+      final responseData = jsonDecode(response.body);
+      String? token = responseData['token'];
+      String? role = responseData['role'];
+      
+      if (!mounted) return;
+      
+      if (role?.toLowerCase() == 'admin') {
+        Navigator.pushReplacementNamed(context, '/admin-dashboard');
+      } else if (role?.toLowerCase() == 'lecturer') {
+        Navigator.pushReplacementNamed(context, '/lecturer-dashboard');
+      } else {
+        Navigator.pushReplacementNamed(context, '/student-dashboard');
+      }
+    } else {
+      // WRAP ERROR HANDLING IN TRY-CATCH
+      try {
+        final errorData = jsonDecode(response.body);
+        _showSnackBar(errorData['detail'] ?? 'Invalid credentials', isError: true);
+      } catch (parseError) {
+        // If error parsing fails, show the actual response
+        print(" Backend returned ${response.statusCode}: ${response.body}");
+        _showSnackBar('Login failed (${response.statusCode})', isError: true);
+      }
+    }
+  } catch (e) {
+    setState(() => _isLoading = false);
+    print(" Network Error: $e");
+    _showSnackBar('Can not connect to HallSync Server: $e', isError: true);
+  }
+}
 
   void _showSnackBar(String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -205,10 +205,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           }
                           return null;
                         },
-                        decoration: _inputDecoration(
-                          "Username",
-                          Icons.person_outline_rounded,
-                        ),
+                        decoration: _inputDecoration("Username", Icons.person_outline_rounded),
                       ),
 
                       const SizedBox(height: 18),
@@ -227,10 +224,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           }
                           return null;
                         },
-                        decoration: _inputDecoration(
-                          "Password",
-                          Icons.lock_outline,
-                        ),
+                        decoration: _inputDecoration("Password", Icons.lock_outline),
                       ),
 
                       const SizedBox(height: 14),
@@ -242,15 +236,12 @@ class _LoginScreenState extends State<LoginScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) =>
-                                    const ForgotPasswordScreen(),
+                                builder: (context) => const ForgotPasswordScreen(),
                               ),
                             ).then((_) {
                               _usernameController.clear();
                               _passwordController.clear();
-                              _showSnackBar(
-                                "Please login with your new password",
-                              );
+                              _showSnackBar("Please login with your new password");
                             });
                           },
                           child: const Text(
@@ -274,9 +265,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: primaryBlue,
                             foregroundColor: Colors.white,
-                            disabledBackgroundColor: primaryBlue.withOpacity(
-                              0.6,
-                            ),
+                            disabledBackgroundColor: primaryBlue.withOpacity(0.6),
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
@@ -307,7 +296,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       const Text(
                         "Welcome back! Please sign in to your account.",
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: textLight, fontSize: 13),
+                        style: TextStyle(
+                          color: textLight,
+                          fontSize: 13,
+                        ),
                       ),
                     ],
                   ),

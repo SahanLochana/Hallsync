@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../models/lecture_model.dart';
+import '../screens/lecturer/lecture_detail_screen.dart';
 
 class LectureCard extends StatelessWidget {
   final Lecture lecture;
@@ -9,9 +10,18 @@ class LectureCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => LectureDetailScreen(lecture: lecture),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
         color: AppColors.primaryBlue,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
@@ -110,8 +120,9 @@ class LectureCard extends StatelessWidget {
               size: 22,
             ),
           ],
-        ),
-      ),
-    );
+        ), // closes Row
+      ), // closes Padding
+    ), // closes Container
+    ); // closes GestureDetector
   }
 }
