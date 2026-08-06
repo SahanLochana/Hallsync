@@ -3,22 +3,16 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
-
   //use 10.0.2.2 rather than localhost for Android emulator. For iOS simulator, you can use localhost.
-  static const String baseUrl = 'http://10.0.2.2:8000'; 
+  static const String baseUrl = 'http://10.0.2.2:8000';
 
   /// Returns true if login is successful, false otherwise.
   static Future<bool> login(String email, String password) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/auth/login'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'username': email,
-          'password': password,
-        }),
+        Uri.parse('$baseUrl/api/auth/login'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'username': email, 'password': password}),
       );
 
       if (response.statusCode == 200) {
@@ -30,7 +24,10 @@ class AuthService {
           await prefs.setString('user_role', data['role']);
           await prefs.setString('user_email', data['email']);
           await prefs.setString('user_name', data['username'] ?? 'User');
-          await prefs.setString('user_department', data['department'] ?? 'Unknown');
+          await prefs.setString(
+            'user_department',
+            data['department'] ?? 'Unknown',
+          );
           await prefs.setString('user_batch', data['batch'] ?? 'Unknown');
           return true;
         }
@@ -102,7 +99,10 @@ class AuthService {
         return {'success': true, 'message': 'OTP sent to email'};
       } else {
         final error = jsonDecode(response.body);
-        return {'success': false, 'message': error['detail'] ?? 'Failed to send OTP'};
+        return {
+          'success': false,
+          'message': error['detail'] ?? 'Failed to send OTP',
+        };
       }
     } catch (e) {
       return {'success': false, 'message': 'Network error occurred'};
@@ -121,9 +121,9 @@ class AuthService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         return {
-          'success': true, 
+          'success': true,
           'message': data['message'],
-          'token': data['token'] 
+          'token': data['token'],
         };
       } else {
         final error = jsonDecode(response.body);
@@ -135,7 +135,11 @@ class AuthService {
   }
 
   /// Resets the user's password using the verification token
-  Future<Map<String, dynamic>> resetPassword(String email, String token, String newPassword) async {
+  Future<Map<String, dynamic>> resetPassword(
+    String email,
+    String token,
+    String newPassword,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/auth/reset-password'),
@@ -143,7 +147,7 @@ class AuthService {
         body: jsonEncode({
           'email': email,
           'token': token,
-          'new_password': newPassword
+          'new_password': newPassword,
         }),
       );
 
@@ -151,7 +155,10 @@ class AuthService {
         return {'success': true, 'message': 'Password reset successfully'};
       } else {
         final error = jsonDecode(response.body);
-        return {'success': false, 'message': error['detail'] ?? 'Failed to reset password'};
+        return {
+          'success': false,
+          'message': error['detail'] ?? 'Failed to reset password',
+        };
       }
     } catch (e) {
       return {'success': false, 'message': 'Network error occurred'};
