@@ -6,8 +6,8 @@ from typing import Optional
 
 
 class HallRepo:
-    def __init__(self):
-        self.db = Database()
+    def __init__(self, db: Database):
+        self.db = db
         self.hall_collection = self.db.get_collection("halls")
 
     # ── Internal helpers ───────────────────────────────────────────────────────

@@ -1,10 +1,12 @@
 from app.repositories.hall_repo import HallRepo
+from app.core.database import Database
 from typing import Optional
 
 
 class HallService:
-    def __init__(self):
-        self.hall_repo = HallRepo()
+    def __init__(self, db: Database):
+        self.db = db
+        self.hall_repo = HallRepo(db)
 
     async def get_halls(self) -> list[dict]:
         return await self.hall_repo.get_halls()

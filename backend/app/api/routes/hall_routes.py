@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from app.schemas.hall_schema import (
     Hall,
     HallsResponse,
@@ -6,6 +6,7 @@ from app.schemas.hall_schema import (
     HallUpdate,
 )
 from app.services.hall_service import HallService
+from app.dependencies.db import get_hall_service
 
 router = APIRouter()
 
@@ -13,9 +14,8 @@ router = APIRouter()
 # ── Collection endpoints ───────────────────────────────────────────────────────
 
 
-@router.get("/", response_model=HallsResponse)
-async def get_halls():
-    hall_service = HallService()
+@router.get("", response_model=HallsResponse)
+async def get_halls(hall_service: HallService = Depends(get_hall_service)):
     try:
         halls = await hall_service.get_halls()
         return {"response": halls}
@@ -26,9 +26,11 @@ async def get_halls():
         )
 
 
-@router.post("/", response_model=Hall, status_code=status.HTTP_201_CREATED)
-async def create_hall(hall: HallCreate):
-    hall_service = HallService()
+@router.post("", response_model=Hall, status_code=status.HTTP_201_CREATED)
+async def create_hall(
+    hall: HallCreate,
+    hall_service: HallService = Depends(get_hall_service),
+):
     try:
         existing = await hall_service.get_hall(hall.hallId)
         if existing:
@@ -55,8 +57,10 @@ async def create_hall(hall: HallCreate):
 
 
 @router.get("/{hall_id}", response_model=Hall)
-async def get_hall(hall_id: str):
-    hall_service = HallService()
+async def get_hall(
+    hall_id: str,
+    hall_service: HallService = Depends(get_hall_service),
+):
     try:
         hall = await hall_service.get_hall(hall_id)
         if not hall:
@@ -75,8 +79,11 @@ async def get_hall(hall_id: str):
 
 
 @router.put("/{hall_id}", response_model=Hall)
-async def update_hall(hall_id: str, update_data: HallUpdate):
-    hall_service = HallService()
+async def update_hall(
+    hall_id: str,
+    update_data: HallUpdate,
+    hall_service: HallService = Depends(get_hall_service),
+):
     try:
         update_dict = update_data.model_dump(exclude_unset=True)
         if not update_dict:
@@ -105,8 +112,10 @@ async def update_hall(hall_id: str, update_data: HallUpdate):
 
 
 @router.delete("/{hall_id}", status_code=status.HTTP_200_OK)
-async def delete_hall(hall_id: str):
-    hall_service = HallService()
+async def delete_hall(
+    hall_id: str,
+    hall_service: HallService = Depends(get_hall_service),
+):
     try:
         success = await hall_service.delete_hall(hall_id)
         if not success:
@@ -125,3 +134,4 @@ async def delete_hall(hall_id: str):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete hall: {str(e)}",
         )
+
