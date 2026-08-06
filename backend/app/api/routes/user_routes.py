@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from app.schemas.user_schema import (
     User,
     UsersResponse,
@@ -9,6 +9,7 @@ from app.schemas.user_schema import (
     BulkFailedEntry,
 )
 from app.services.user_service import UserService
+from app.dependencies.db import get_user_service
 
 router = APIRouter()
 
@@ -17,8 +18,7 @@ router = APIRouter()
 
 
 @router.get("/", response_model=UsersResponse)
-async def get_users():
-    user_service = UserService()
+async def get_users(user_service: UserService = Depends(get_user_service)):
     try:
         users = await user_service.get_users()
         return {"response": users}
@@ -30,8 +30,9 @@ async def get_users():
 
 
 @router.post("/", response_model=User, status_code=status.HTTP_201_CREATED)
-async def create_user(user: User):
-    user_service = UserService()
+async def create_user(
+    user: User, user_service: UserService = Depends(get_user_service)
+):
     try:
         existing = await user_service.get_user(user.universityId)
         if existing:
@@ -53,12 +54,13 @@ async def create_user(user: User):
 
 
 @router.post("/bulk", response_model=BulkImportResponse, status_code=status.HTTP_200_OK)
-async def bulk_create_users(body: BulkUserRequest):
+async def bulk_create_users(
+    body: BulkUserRequest, user_service: UserService = Depends(get_user_service)
+):
     """
     Accept a list of users and attempt to create all of them.
     Returns success/failed arrays and a summary — no streaming.
     """
-    user_service = UserService()
     try:
         result = await user_service.bulk_create_users(
             [u.model_dump() for u in body.users]
@@ -84,8 +86,9 @@ async def bulk_create_users(body: BulkUserRequest):
 
 
 @router.get("/{university_id:path}", response_model=User)
-async def get_user(university_id: str):
-    user_service = UserService()
+async def get_user(
+    university_id: str, user_service: UserService = Depends(get_user_service)
+):
     try:
         user = await user_service.get_user(university_id)
         if not user:
@@ -104,8 +107,11 @@ async def get_user(university_id: str):
 
 
 @router.put("/{university_id:path}", response_model=User)
-async def update_user(university_id: str, update_data: UserUpdate):
-    user_service = UserService()
+async def update_user(
+    university_id: str,
+    update_data: UserUpdate,
+    user_service: UserService = Depends(get_user_service),
+):
     try:
         update_dict = update_data.model_dump(exclude_unset=True)
         if not update_dict:
@@ -134,8 +140,9 @@ async def update_user(university_id: str, update_data: UserUpdate):
 
 
 @router.delete("/{university_id:path}", status_code=status.HTTP_200_OK)
-async def delete_user(university_id: str):
-    user_service = UserService()
+async def delete_user(
+    university_id: str, user_service: UserService = Depends(get_user_service)
+):
     try:
         success = await user_service.delete_user(university_id)
         if not success:

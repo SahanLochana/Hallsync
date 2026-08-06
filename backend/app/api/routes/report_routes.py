@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from app.schemas.report_schema import ReportCreate, ReportResponse
-from app.core.database import reports_collection
+from app.core.database import Database
+from app.dependencies.db import get_db
 from datetime import datetime
 import uuid
 
@@ -8,9 +9,9 @@ router = APIRouter()
 
 
 @router.post("", response_model=ReportResponse, status_code=status.HTTP_201_CREATED)
-async def create_report(report: ReportCreate):
+async def create_report(report: ReportCreate, db: Database = Depends(get_db)):
+    reports_collection = db.get_collection("reports")
     report_dict = report.model_dump()
-    # MongoDB doesn't automatically create string IDs like we want here, so we generate a uuid or use ObjectId
     report_dict["_id"] = str(uuid.uuid4())
 
     result = await reports_collection.insert_one(report_dict)

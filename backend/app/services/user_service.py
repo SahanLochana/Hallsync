@@ -1,12 +1,13 @@
 from app.repositories.user_repo import UserRepo
+from app.core.database import Database
 from app.core.security import verify_password, get_password_hash
 import random
 from datetime import datetime, timedelta
 
 
 class UserService:
-    def __init__(self):
-        self.user_repo = UserRepo()
+    def __init__(self, db: Database | None = None):
+        self.user_repo = UserRepo(db)
 
     async def get_users(self):
         return await self.user_repo.get_users()

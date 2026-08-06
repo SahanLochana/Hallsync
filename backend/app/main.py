@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from app.api.api import api_router
 from fastapi.middleware.cors import CORSMiddleware
-from app.core.database import Database
+from app.core.database import init_database, close_database
 
 app = FastAPI()
 
@@ -23,8 +23,12 @@ app.include_router(api_router, prefix="/api")
 
 @app.on_event("startup")
 async def startup():
-    db = Database()
-    await db.create_index()
+    await init_database()
+
+
+@app.on_event("shutdown")
+async def shutdown():
+    await close_database()
 
 
 @app.get("/")

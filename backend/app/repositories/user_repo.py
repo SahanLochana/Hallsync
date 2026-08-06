@@ -1,14 +1,14 @@
 from app.core.security import get_password_hash
 from pymongo import ReturnDocument
 from pymongo.errors import BulkWriteError, DuplicateKeyError
-from app.core.database import Database
+from app.core.database import Database, get_database
 from app.core.config import settings
 from typing import Optional
 
 
 class UserRepo:
-    def __init__(self):
-        self.db = Database()
+    def __init__(self, db: Database | None = None):
+        self.db = db if db is not None else get_database()
         self.user_collection = self.db.get_collection(settings.USER_COLLECTION)
 
     def _format_user(self, doc: dict) -> dict:

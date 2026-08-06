@@ -1,14 +1,17 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from typing import List
 from app.services.notification_service import NotificationService
+from app.dependencies.db import get_notification_service
 from app.schemas.notification_schema import Notification
 
 router = APIRouter()
-notification_service = NotificationService()
 
 
 @router.get("/{user_id}", response_model=List[Notification])
-async def get_notifications(user_id: str):
+async def get_notifications(
+    user_id: str,
+    notification_service: NotificationService = Depends(get_notification_service),
+):
     """
     Get all notifications for a specific user, ordered by newest first.
     """
@@ -17,7 +20,10 @@ async def get_notifications(user_id: str):
 
 
 @router.put("/{notification_id}/read")
-async def mark_notification_as_read(notification_id: str):
+async def mark_notification_as_read(
+    notification_id: str,
+    notification_service: NotificationService = Depends(get_notification_service),
+):
     """
     Mark a notification as read.
     """

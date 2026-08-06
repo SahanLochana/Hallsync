@@ -13,6 +13,7 @@ class Database:
     async def create_index(self):
         user_collection = self.database.get_collection(settings.USER_COLLECTION)
         await user_collection.create_index("universityId", unique=True)
+        await user_collection.create_index("email", unique=True)
 
         hall_collection = self.database.get_collection(settings.HALL_COLLECTION)
         await hall_collection.create_index("hallId", unique=True)
@@ -27,9 +28,25 @@ class Database:
         await self.client.close()
 
 
-# Global instances for legacy routes
-db = Database()
-lectures_collection = db.get_collection("lectures")
-reports_collection = db.get_collection("reports")
-timetables_collection = db.get_collection("timetables")
-notifications_collection = db.get_collection("notifications")
+_db_instance: Database | None = None
+
+
+def get_database() -> Database:
+    global _db_instance
+    if _db_instance is None:
+        _db_instance = Database()
+    return _db_instance
+
+
+async def init_database() -> Database:
+    db = get_database()
+    await db.create_index()
+    return db
+
+
+async def close_database() -> None:
+    global _db_instance
+    if _db_instance is not None:
+        await _db_instance.close()
+        _db_instance = None
+

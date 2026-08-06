@@ -1,13 +1,12 @@
 from pymongo import ReturnDocument
-from app.core.database import Database
+from app.core.database import Database, get_database
 from app.core.config import settings
 from pymongo.errors import DuplicateKeyError
 
 
-
 class HallRepo:
-    def __init__(self):
-        self.db = Database()
+    def __init__(self, db: Database | None = None):
+        self.db = db if db is not None else get_database()
         self.hall_collection = self.db.get_collection(settings.HALL_COLLECTION)
 
     # ── Internal helpers ───────────────────────────────────────────────────────

@@ -1,11 +1,11 @@
 from pymongo import ReturnDocument
-from app.core.database import Database
+from app.core.database import Database, get_database
 from bson import ObjectId
 from typing import Optional
 
 class TimetableRepo:
-    def __init__(self):
-        self.db = Database()
+    def __init__(self, db: Database | None = None):
+        self.db = db if db is not None else get_database()
         self.timetables_collection = self.db.get_collection("timetables")
 
     def _format_timetable(self, doc: dict) -> dict:

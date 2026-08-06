@@ -1,4 +1,4 @@
-from app.core.database import notifications_collection
+from app.core.database import Database, get_database
 from app.repositories.user_repo import UserRepo
 from app.schemas.notification_schema import NotificationCreate
 from app.core.websocket_manager import manager
@@ -7,8 +7,10 @@ import traceback
 
 
 class NotificationService:
-    def __init__(self):
-        self.user_repo = UserRepo()
+    def __init__(self, db: Database | None = None):
+        self.db = db if db is not None else get_database()
+        self.user_repo = UserRepo(self.db)
+        self.notifications_collection = self.db.get_collection("notifications")
 
     async def create_lecture_notifications(
         self, lecture_id: str, lecturer_name: str, lecture_title: str, department: str
@@ -49,7 +51,7 @@ class NotificationService:
                 notifications.append(notif.model_dump())
 
             if notifications:
-                result = await notifications_collection.insert_many(notifications)
+                result = await self.notifications_collection.insert_many(notifications)
                 # Map inserted IDs back to the dicts so we can send complete payload
                 for i, notif in enumerate(notifications):
                     notif["_id"] = str(result.inserted_ids[i])
@@ -66,7 +68,7 @@ class NotificationService:
 
     async def get_user_notifications(self, user_id: str) -> List[dict]:
         cursor = (
-            notifications_collection.find({"recipient_user_id": user_id})
+            self.notifications_collection.find({"recipient_user_id": user_id})
             .sort("created_at", -1)
             .limit(50)
         )
@@ -79,7 +81,7 @@ class NotificationService:
         from bson import ObjectId
 
         try:
-            result = await notifications_collection.update_one(
+            result = await self.notifications_collection.update_one(
                 {"_id": ObjectId(notification_id)}, {"$set": {"is_read": True}}
             )
             return result.modified_count > 0
