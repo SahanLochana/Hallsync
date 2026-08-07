@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http; // Added for network requests
-import 'dart:convert'; // Added for JSON encoding/decoding
-import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
+import '../../../services/auth_service.dart';
 import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -62,39 +59,23 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // THE LOGIC TO CONNECT TO FASTAPI
+  // LOGIC TO CONNECT TO AUTH SERVICE
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
-    // Choose the right URL depending on the platform
-    String baseUrl = 'http://127.0.0.1:8000';
-    if (!kIsWeb && Platform.isAndroid) {
-      baseUrl = 'http://10.0.2.2:8000';
-    }
-
-    final url = Uri.parse('$baseUrl/api/auth/login');
-
     try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'username': _usernameController.text.trim(),
-          'password': _passwordController.text,
-        }),
+      final result = await AuthService.login(
+        _usernameController.text.trim(),
+        _passwordController.text,
       );
 
-      setState(() => _isLoading = false); // MOVE THIS HERE
+      setState(() => _isLoading = false);
 
-      if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
-        String? token = responseData['token'];
-        String? role = responseData['role'];
-        bool isFirstLogin = responseData['isFirstLogin'] ??
-            responseData['is_first_login'] ??
-            false;
+      if (result['success'] == true) {
+        bool isFirstLogin = result['isFirstLogin'] ?? false;
+        String? role = result['role'];
 
         if (!mounted) return;
 
@@ -118,23 +99,14 @@ class _LoginScreenState extends State<LoginScreen> {
           Navigator.pushReplacementNamed(context, '/student-dashboard');
         }
       } else {
-        // WRAP ERROR HANDLING IN TRY-CATCH
-        try {
-          final errorData = jsonDecode(response.body);
-          _showSnackBar(
-            errorData['detail'] ?? 'Invalid credentials',
-            isError: true,
-          );
-        } catch (parseError) {
-          // If error parsing fails, show the actual response
-          print(" Backend returned ${response.statusCode}: ${response.body}");
-          _showSnackBar('Login failed (${response.statusCode})', isError: true);
-        }
+        _showSnackBar(
+          result['message'] ?? 'Login failed',
+          isError: true,
+        );
       }
     } catch (e) {
       setState(() => _isLoading = false);
-      print(" Network Error: $e");
-      _showSnackBar('Can not connect to HallSync Server: $e', isError: true);
+      _showSnackBar('Login error: $e', isError: true);
     }
   }
 
