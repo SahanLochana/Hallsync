@@ -2,11 +2,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class HallService {
-  static const String baseUrl = 'http://localhost:8000/api';
+  static const String baseUrl = 'http://10.0.2.2:8000/api';
 
   static Future<List<Map<String, dynamic>>> getHalls() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/halls/'));
+      final response = await http.get(Uri.parse('$baseUrl/halls'));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['response'] != null) {

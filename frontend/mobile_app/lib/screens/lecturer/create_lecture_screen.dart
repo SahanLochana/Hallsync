@@ -22,8 +22,6 @@ class CreateLectureScreen extends StatefulWidget {
 }
 
 class _CreateLectureScreenState extends State<CreateLectureScreen> {
-  final _formKey = GlobalKey<FormState>();
-
   String? _selectedDepartment;
   String? _selectedSemester;
   String? _selectedModule;
@@ -38,6 +36,7 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
   bool _isAvailable = true; 
   bool _canOverwrite = false;
   bool _isLoadingHalls = true;
+  String? _timeValidationError;
 
   @override
   void initState() {
@@ -95,16 +94,74 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
     );
     if (picked != null) {
       setState(() {
-        if (isStart) _startTime = picked;
-        else _endTime = picked;
+        if (isStart) {
+          _startTime = picked;
+        } else {
+          _endTime = picked;
+        }
         _checkConflict();
       });
     }
   }
 
+  String? _validateTimePeriod() {
+    if (_startTime == null || _endTime == null) {
+      return null;
+    }
+
+    final startMinutes = _startTime!.hour * 60 + _startTime!.minute;
+    final endMinutes = _endTime!.hour * 60 + _endTime!.minute;
+
+    if (endMinutes <= startMinutes) {
+      return 'End time must be after start time';
+    }
+
+    if (endMinutes - startMinutes < 15) {
+      return 'Lecture must be at least 15 minutes long';
+    }
+
+    if (_selectedDate != null) {
+      final now = DateTime.now();
+      final startDateTime = DateTime(
+        _selectedDate!.year, _selectedDate!.month, _selectedDate!.day,
+        _startTime!.hour, _startTime!.minute,
+      );
+      // Check if lecture start time is in the past (allowing 2 min buffer)
+      if (startDateTime.isBefore(now.subtract(const Duration(minutes: 2)))) {
+        return 'Cannot schedule a lecture in the past';
+      }
+    }
+
+    return null;
+  }
+
   Future<void> _checkConflict() async {
+    final timeError = _validateTimePeriod();
+    if (timeError != null) {
+      if (mounted) {
+        setState(() {
+          _timeValidationError = timeError;
+          _isCheckingAvailability = false;
+          _isAvailable = true;
+          _canOverwrite = false;
+        });
+      }
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _timeValidationError = null;
+      });
+    }
+
     if (_selectedDate == null || _startTime == null || _endTime == null || _selectedVenue == null) {
-      setState(() => _isAvailable = true);
+      if (mounted) {
+        setState(() {
+          _isAvailable = true;
+          _canOverwrite = false;
+        });
+      }
       return;
     }
 
@@ -118,15 +175,6 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
       _selectedDate!.year, _selectedDate!.month, _selectedDate!.day,
       _endTime!.hour, _endTime!.minute,
     );
-
-    // Don't check if end time is before start time
-    if (!endDateTime.isAfter(startDateTime)) {
-      setState(() {
-        _isCheckingAvailability = false;
-        _isAvailable = true;
-      });
-      return;
-    }
 
     final result = await LectureService.checkAvailability(
       hallId: _selectedVenue!,
@@ -144,8 +192,21 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
   }
 
   Future<void> _submit() async {
-    if (_selectedModule == null || _selectedBatch == null || _selectedDate == null || _startTime == null || _endTime == null || _selectedVenue == null) {
-      _showSnack('Please fill all fields');
+    if (_selectedDepartment == null ||
+        _selectedSemester == null ||
+        _selectedModule == null ||
+        _selectedBatch == null ||
+        _selectedDate == null ||
+        _startTime == null ||
+        _endTime == null ||
+        _selectedVenue == null) {
+      _showSnack('Please fill all required fields');
+      return;
+    }
+
+    final timeError = _validateTimePeriod();
+    if (timeError != null) {
+      _showSnack(timeError);
       return;
     }
 
@@ -162,11 +223,6 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
       _selectedDate!.year, _selectedDate!.month, _selectedDate!.day,
       _endTime!.hour, _endTime!.minute,
     );
-
-    if (!endDateTime.isAfter(startDateTime)) {
-      _showSnack('End time must be after start time');
-      return;
-    }
     
     bool doOverwrite = false;
     if (!_isAvailable && _canOverwrite) {
@@ -224,6 +280,7 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
             tags: [],
           ),
         );
+        if (!mounted) return;
         Navigator.pop(context);
         _showSnack('Lecture Created successfully!');
       } else {
@@ -420,6 +477,33 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
                         ),
                       ],
                     ),
+                    if (_timeValidationError != null) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF2F2),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFFECACA)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.error_outline_rounded, color: Color(0xFFEF4444), size: 18),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _timeValidationError!,
+                                style: const TextStyle(
+                                  color: Color(0xFFDC2626),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 20),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -429,6 +513,28 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
                           const SizedBox(
                             width: 12, height: 12,
                             child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        else if (_timeValidationError != null)
+                          Row(
+                            children: [
+                              Container(
+                                width: 6,
+                                height: 6,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFFEF4444),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              const Text(
+                                'Invalid Time',
+                                style: TextStyle(
+                                  color: Color(0xFFEF4444),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           )
                         else if (_selectedVenue != null && _selectedDate != null && _startTime != null && _endTime != null)
                           Row(
@@ -468,7 +574,7 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
                             },
                           ),
                     const SizedBox(height: 20),
-                    if (!_isAvailable && !_canOverwrite)
+                    if (_timeValidationError == null && !_isAvailable && !_canOverwrite)
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
@@ -494,7 +600,7 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
                           ],
                         ),
                       )
-                    else if (!_isAvailable && _canOverwrite)
+                    else if (_timeValidationError == null && !_isAvailable && _canOverwrite)
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(

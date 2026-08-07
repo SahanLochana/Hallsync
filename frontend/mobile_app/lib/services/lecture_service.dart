@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 class LectureService {
   static const String baseUrl =
-      'http://localhost:8000/api'; // Android Emulator
+      'http://10.0.2.2:8000/api'; // Android Emulator
 
   // Returns the lecture_id if successful, null otherwise
   static Future<String?> createLecture({
