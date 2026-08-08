@@ -2,25 +2,39 @@ from pydantic import BaseModel
 from typing import Optional
 
 
-class Module(BaseModel):
-    """Full lecture module representation returned by the API."""
+class ModuleItem(BaseModel):
+    """Individual module representation within a semester."""
 
     module_id: str
     name: str
 
 
-class ModulesResponse(BaseModel):
-    response: list[Module]
+class SemesterModules(BaseModel):
+    """Full representation of a semester and its modules returned by the API."""
+
+    semester: str
+    modules: list[ModuleItem] = []
 
 
-class ModuleCreate(BaseModel):
-    """Request body for creating a new lecture module."""
+class SemesterModulesResponse(BaseModel):
+    response: list[SemesterModules]
+
+
+class SemesterModulesCreate(BaseModel):
+    """Request body for creating a new semester module list."""
+
+    semester: str
+    modules: list[ModuleItem] = []
+
+
+class SemesterModulesUpdate(BaseModel):
+    """Request body for replacing modules list for a semester."""
+
+    modules: list[ModuleItem]
+
+
+class ModuleItemCreate(BaseModel):
+    """Request body for adding a single module to a semester."""
 
     module_id: str
     name: str
-
-
-class ModuleUpdate(BaseModel):
-    """Fields optional — only supplied fields are patched."""
-
-    name: Optional[str] = None

@@ -21,7 +21,7 @@ class Database:
         await timetables_collection.create_index("timetable_id", unique=True)
 
         modules_collection = self.database.get_collection("modules")
-        await modules_collection.create_index("module_id", unique=True)
+        await modules_collection.create_index("semester", unique=True)
 
     def get_collection(self, name: str):
         return self.database[name]

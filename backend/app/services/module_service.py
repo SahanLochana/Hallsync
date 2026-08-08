@@ -8,19 +8,31 @@ class ModuleService:
         self.db = db
         self.module_repo = ModuleRepo(db)
 
-    async def get_modules(self) -> list[dict]:
-        return await self.module_repo.get_modules()
+    async def get_all_semesters(self) -> list[dict]:
+        return await self.module_repo.get_all_semesters()
 
-    async def get_module(self, module_id: str) -> Optional[dict]:
-        return await self.module_repo.get_module_by_id(module_id)
+    async def get_semester(self, semester: str) -> Optional[dict]:
+        return await self.module_repo.get_semester(semester)
 
-    async def create_module(self, module_data: dict) -> dict:
-        return await self.module_repo.create_module(module_data)
+    async def create_semester(self, data: dict) -> dict:
+        return await self.module_repo.create_semester(data)
 
-    async def update_module(
-        self, module_id: str, update_data: dict
+    async def update_semester(
+        self, semester: str, update_data: dict
     ) -> Optional[dict]:
-        return await self.module_repo.update_module(module_id, update_data)
+        return await self.module_repo.update_semester(semester, update_data)
 
-    async def delete_module(self, module_id: str) -> bool:
-        return await self.module_repo.delete_module(module_id)
+    async def delete_semester(self, semester: str) -> bool:
+        return await self.module_repo.delete_semester(semester)
+
+    async def add_module_to_semester(
+        self, semester: str, module_item: dict
+    ) -> Optional[dict]:
+        return await self.module_repo.add_module_to_semester(semester, module_item)
+
+    async def remove_module_from_semester(
+        self, semester: str, module_id: str
+    ) -> Optional[dict]:
+        return await self.module_repo.remove_module_from_semester(
+            semester, module_id
+        )
