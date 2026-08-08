@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from app.schemas.timetable_schema import (
     TimetableCreate,
     TimetableUpdate,
@@ -6,13 +6,15 @@ from app.schemas.timetable_schema import (
     TimetablesListResponse,
 )
 from app.services.timetable_service import TimetableService
+from app.dependencies.db import get_timetable_service
 
 router = APIRouter()
 
 
 @router.get("/", response_model=TimetablesListResponse)
-async def get_timetables():
-    timetable_service = TimetableService()
+async def get_timetables(
+    timetable_service: TimetableService = Depends(get_timetable_service),
+):
     try:
         timetables = await timetable_service.get_timetables()
         return {"response": timetables}
@@ -24,8 +26,10 @@ async def get_timetables():
 
 
 @router.post("/", response_model=TimetableResponse, status_code=status.HTTP_201_CREATED)
-async def create_timetable(timetable: TimetableCreate):
-    timetable_service = TimetableService()
+async def create_timetable(
+    timetable: TimetableCreate,
+    timetable_service: TimetableService = Depends(get_timetable_service),
+):
     try:
         return await timetable_service.create_timetable(timetable.model_dump())
     except Exception as e:
@@ -36,8 +40,10 @@ async def create_timetable(timetable: TimetableCreate):
 
 
 @router.get("/{timetable_id}", response_model=TimetableResponse)
-async def get_timetable(timetable_id: str):
-    timetable_service = TimetableService()
+async def get_timetable(
+    timetable_id: str,
+    timetable_service: TimetableService = Depends(get_timetable_service),
+):
     try:
         timetable = await timetable_service.get_timetable(timetable_id)
         if not timetable:
@@ -56,8 +62,11 @@ async def get_timetable(timetable_id: str):
 
 
 @router.put("/{timetable_id}", response_model=TimetableResponse)
-async def update_timetable(timetable_id: str, update_data: TimetableUpdate):
-    timetable_service = TimetableService()
+async def update_timetable(
+    timetable_id: str,
+    update_data: TimetableUpdate,
+    timetable_service: TimetableService = Depends(get_timetable_service),
+):
     try:
         update_dict = update_data.model_dump(exclude_unset=True)
         if not update_dict:
@@ -86,8 +95,10 @@ async def update_timetable(timetable_id: str, update_data: TimetableUpdate):
 
 
 @router.delete("/{timetable_id}", status_code=status.HTTP_200_OK)
-async def delete_timetable(timetable_id: str):
-    timetable_service = TimetableService()
+async def delete_timetable(
+    timetable_id: str,
+    timetable_service: TimetableService = Depends(get_timetable_service),
+):
     try:
         deleted = await timetable_service.delete_timetable(timetable_id)
         if not deleted:
@@ -103,3 +114,4 @@ async def delete_timetable(timetable_id: str):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete timetable: {str(e)}",
         )
+

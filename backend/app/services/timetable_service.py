@@ -1,9 +1,11 @@
 from app.repositories.timetable_repo import TimetableRepo
+from app.core.database import Database
 from datetime import datetime
 
 class TimetableService:
-    def __init__(self):
-        self.timetable_repo = TimetableRepo()
+    def __init__(self, db: Database):
+        self.db = db
+        self.timetable_repo = TimetableRepo(db)
 
     async def get_timetables(self):
         return await self.timetable_repo.get_timetables()

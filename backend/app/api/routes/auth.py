@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from app.schemas.user_schema import (
     LoginRequest,
     LoginResponse,
@@ -8,15 +8,18 @@ from app.schemas.user_schema import (
     ResetPasswordRequest,
 )
 from app.services.user_service import UserService
+from app.dependencies.db import get_user_service
 from app.core.security import create_access_token
 
 
 router = APIRouter()
-user_service = UserService()
 
 
 @router.post("/login", response_model=LoginResponse)
-async def login(login_data: LoginRequest):
+async def login(
+    login_data: LoginRequest,
+    user_service: UserService = Depends(get_user_service),
+):
     """
     Login endpoint using Auth0.
     Validates user credentials against Auth0 and returns JWT token.
@@ -33,24 +36,23 @@ async def login(login_data: LoginRequest):
         )
 
     # Generate a token containing their identity and role
-    token_data = {"sub": user["name"], "role": user["role"]}
+    token_data = {"sub": user["name"], "role": user["role"],"department": user["department"],
+        "batch": user["academicYear"],"email": user["email"],}
     access_token = create_access_token(data=token_data)
 
     # Return the payload back to frontend
     return {
-        "status": "success",
-        "username": user["name"],
-        "email": user["email"],
-        "role": user["role"],
-        "department": user["department"],
-        "batch": user["academicYear"],  # TODO
+        "status": "success",       
         "token": access_token,
-        "isFirstLogin": user.get("isFirstLogin", True),
+        "isFirstLogin": user.get("isFirstLogin", user.get("is_first_login", True)),
     }
 
 
 @router.post("/change-password")
-async def change_password(change_request: ChangePasswordRequest):
+async def change_password(
+    change_request: ChangePasswordRequest,
+    user_service: UserService = Depends(get_user_service),
+):
     """
     Change password endpoint using Auth0.
     Password changes should be handled through Auth0 Management API.
@@ -81,7 +83,10 @@ async def change_password(change_request: ChangePasswordRequest):
 
 
 @router.post("/forgot-password")
-async def forgot_password(request: ForgotPasswordRequest):
+async def forgot_password(
+    request: ForgotPasswordRequest,
+    user_service: UserService = Depends(get_user_service),
+):
     success = await user_service.generate_and_save_otp(request.email)
     if not success:
         raise HTTPException(
@@ -92,7 +97,10 @@ async def forgot_password(request: ForgotPasswordRequest):
 
 
 @router.post("/verify-otp")
-async def verify_otp(request: VerifyOTPRequest):
+async def verify_otp(
+    request: VerifyOTPRequest,
+    user_service: UserService = Depends(get_user_service),
+):
     is_valid = await user_service.verify_otp(request.email, request.otp)
     if not is_valid:
         raise HTTPException(
@@ -103,7 +111,10 @@ async def verify_otp(request: VerifyOTPRequest):
 
 
 @router.post("/reset-password")
-async def reset_password(request: ResetPasswordRequest):
+async def reset_password(
+    request: ResetPasswordRequest,
+    user_service: UserService = Depends(get_user_service),
+):
 
     success = await user_service.reset_password_with_otp(
         request.email, request.token, request.new_password
@@ -114,3 +125,4 @@ async def reset_password(request: ResetPasswordRequest):
             detail="Failed to reset password. OTP might be expired.",
         )
     return {"success": True, "message": "Password reset successful"}
+

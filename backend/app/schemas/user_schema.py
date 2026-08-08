@@ -33,11 +33,6 @@ class LoginRequest(BaseModel):
 
 class LoginResponse(BaseModel):
     status: str
-    username: str
-    email: str
-    department: str
-    batch: str
-    role: str
     token: str
     isFirstLogin: bool
 

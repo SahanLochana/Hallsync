@@ -1,12 +1,15 @@
 from app.repositories.user_repo import UserRepo
+from app.core.database import Database
 from app.core.security import verify_password, get_password_hash
+from app.services.email_service import EmailService
 import random
 from datetime import datetime, timedelta
 
 
 class UserService:
-    def __init__(self):
-        self.user_repo = UserRepo()
+    def __init__(self, db: Database):
+        self.db = db
+        self.user_repo = UserRepo(db)
 
     async def get_users(self):
         return await self.user_repo.get_users()
@@ -40,7 +43,12 @@ class UserService:
             return False
         hashed_password = get_password_hash(new_password)
         updated = await self.user_repo.update_user(
-            user["universityId"], {"password_hash": hashed_password}
+            user["universityId"],
+            {
+                "password_hash": hashed_password,
+                "is_first_login": False,
+                "isFirstLogin": False,
+            },
         )
         return bool(updated)
 
@@ -57,8 +65,9 @@ class UserService:
             user["universityId"], {"reset_otp": otp, "reset_otp_expires": expire_time}
         )
 
-        print(f"OTP for {email} is {otp}")
-        return True
+        email_service = EmailService()
+        sent = email_service.send_otp(email, user.get("name", "User"), otp)
+        return sent
 
     async def verify_otp(self, email: str, otp: str):
         user = await self.user_repo.get_user_by_email(email)
@@ -83,6 +92,8 @@ class UserService:
                 "password_hash": hashed_password,
                 "reset_otp": None,
                 "reset_otp_expires": None,
+                "is_first_login": False,
+                "isFirstLogin": False,
             },
         )
         return True

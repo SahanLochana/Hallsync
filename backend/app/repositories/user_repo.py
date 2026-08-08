@@ -7,8 +7,8 @@ from typing import Optional
 
 
 class UserRepo:
-    def __init__(self):
-        self.db = Database()
+    def __init__(self, db: Database):
+        self.db = db
         self.user_collection = self.db.get_collection(settings.USER_COLLECTION)
 
     def _format_user(self, doc: dict) -> dict:
