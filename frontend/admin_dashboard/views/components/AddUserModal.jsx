@@ -12,9 +12,9 @@
  */
 
 import { useState, useEffect } from "react";
-import { X, UserPlus } from "lucide-react";
+import { X, UserPlus, BookOpen, Check } from "lucide-react";
 import { ROLE_FORM_OPTIONS } from "@/models/userModel";
-import { validateUserForm } from "@/controllers/userController";
+import { validateUserForm, fetchModules } from "@/controllers/userController";
 
 const EMPTY_FORM = {
   universityId: "",
@@ -24,6 +24,7 @@ const EMPTY_FORM = {
   department: "",
   faculty: "",
   academicYear: "",
+  modules: [],
 };
 
 const DEPARTMENT_OPTIONS = [
@@ -39,7 +40,7 @@ const BATCH_OPTIONS = [
   "4th Year",
 ];
 
-// ── Field wrapper — defined at module level to avoid React re-mount on rerender ─
+// ── Field wrapper ──────────────────────────────────────────────────────────────
 function Field({ label, error, children }) {
   return (
     <div className="flex flex-col gap-1.5">
@@ -54,18 +55,26 @@ function Field({ label, error, children }) {
 
 // ── Modal ──────────────────────────────────────────────────────────────────────
 export default function AddUserModal({ isOpen, onClose, onConfirm }) {
-  const [form, setForm]     = useState(EMPTY_FORM);
-  const [errors, setErrors] = useState({});
+  const [form, setForm]                 = useState(EMPTY_FORM);
+  const [errors, setErrors]             = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [modalError, setModalError] = useState(null);
+  const [modalError, setModalError]     = useState(null);
+  const [availableModules, setAvailableModules] = useState([]);
+  const [isLoadingModules, setIsLoadingModules] = useState(false);
 
-  // Reset whenever modal opens
+  // Fetch modules & reset form whenever modal opens
   useEffect(() => {
     if (isOpen) {
       setForm(EMPTY_FORM);
       setErrors({});
       setIsSubmitting(false);
       setModalError(null);
+
+      setIsLoadingModules(true);
+      fetchModules().then((mods) => {
+        setAvailableModules(mods);
+        setIsLoadingModules(false);
+      });
     }
   }, [isOpen]);
 
@@ -76,9 +85,26 @@ export default function AddUserModal({ isOpen, onClose, onConfirm }) {
     setErrors((prev) => ({ ...prev, [field]: undefined }));
   }
 
+  function handleAddModule(moduleId) {
+    if (!moduleId) return;
+    if (!form.modules.includes(moduleId)) {
+      set("modules", [...form.modules, moduleId]);
+    }
+  }
+
+  function handleRemoveModule(moduleId) {
+    set(
+      "modules",
+      form.modules.filter((m) => m !== moduleId)
+    );
+  }
+
   async function handleSubmit() {
     const e = validateUserForm(form);
-    if (Object.keys(e).length > 0) { setErrors(e); return; }
+    if (Object.keys(e).length > 0) {
+      setErrors(e);
+      return;
+    }
     setIsSubmitting(true);
     setModalError(null);
     try {
@@ -95,8 +121,14 @@ export default function AddUserModal({ isOpen, onClose, onConfirm }) {
     "focus:outline-none focus:ring-2 focus:ring-[#1e3b8a]/30 focus:border-[#1e3b8a] transition w-full";
 
   const isStudent = form.role === "Student";
+  const isLecturer = form.role === "Lecturer";
   const idLabel = isStudent ? "University ID" : "Lecturer ID";
   const idPlaceholder = isStudent ? "e.g. SE/2021/001" : "e.g. LEC/001";
+
+  // Unselected modules list
+  const unselectedModules = availableModules.filter(
+    (m) => !form.modules.includes(m.module_id)
+  );
 
   return (
     <>
@@ -132,7 +164,9 @@ export default function AddUserModal({ isOpen, onClose, onConfirm }) {
           <div className="p-6 flex flex-col gap-4 overflow-y-auto max-h-[70vh]">
             {modalError && (
               <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 flex items-center gap-2">
-                <span className="text-red-600 text-xs font-medium">{modalError}</span>
+                <span className="text-red-600 text-xs font-medium">
+                  {modalError}
+                </span>
               </div>
             )}
 
@@ -146,7 +180,9 @@ export default function AddUserModal({ isOpen, onClose, onConfirm }) {
                 onChange={(e) => set("role", e.target.value)}
               >
                 {ROLE_FORM_OPTIONS.map((r) => (
-                  <option key={r} value={r}>{r}</option>
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
                 ))}
               </select>
             </Field>
@@ -209,9 +245,13 @@ export default function AddUserModal({ isOpen, onClose, onConfirm }) {
                 value={form.department}
                 onChange={(e) => set("department", e.target.value)}
               >
-                <option value="" disabled>Select Department</option>
+                <option value="" disabled>
+                  Select Department
+                </option>
                 {DEPARTMENT_OPTIONS.map((dept) => (
-                  <option key={dept} value={dept}>{dept}</option>
+                  <option key={dept} value={dept}>
+                    {dept}
+                  </option>
                 ))}
               </select>
             </Field>
@@ -226,15 +266,75 @@ export default function AddUserModal({ isOpen, onClose, onConfirm }) {
                   value={form.academicYear}
                   onChange={(e) => set("academicYear", e.target.value)}
                 >
-                  <option value="" disabled>Select Academic Year</option>
+                  <option value="" disabled>
+                    Select Academic Year
+                  </option>
                   {BATCH_OPTIONS.map((batch) => (
-                    <option key={batch} value={batch}>{batch}</option>
+                    <option key={batch} value={batch}>
+                      {batch}
+                    </option>
                   ))}
                 </select>
               </Field>
             )}
 
+            {/* Assigned Modules (Lecturer only) */}
+            {isLecturer && (
+              <Field label="Assigned Modules" error={errors.modules}>
+                <div className="flex flex-col gap-2">
+                  {/* Selected module chips */}
+                  {form.modules.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 p-2 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl">
+                      {form.modules.map((modId) => {
+                        const modObj = availableModules.find(
+                          (m) => m.module_id === modId
+                        );
+                        return (
+                          <span
+                            key={modId}
+                            className="inline-flex items-center gap-1.5 bg-[#1e3b8a] text-white text-xs px-2.5 py-1 rounded-lg shadow-sm"
+                          >
+                            <BookOpen size={12} />
+                            <span>
+                              {modId} {modObj ? `(${modObj.name})` : ""}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveModule(modId)}
+                              className="hover:text-red-300 transition-colors ml-0.5"
+                            >
+                              <X size={13} />
+                            </button>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
 
+                  {/* Dropdown to pick and assign module */}
+                  <select
+                    id="add-user-module-picker"
+                    disabled={isSubmitting || isLoadingModules}
+                    className={`${inputCls} border-[#e2e8f0] disabled:opacity-60 disabled:cursor-not-allowed`}
+                    value=""
+                    onChange={(e) => handleAddModule(e.target.value)}
+                  >
+                    <option value="" disabled>
+                      {isLoadingModules
+                        ? "Loading modules..."
+                        : unselectedModules.length === 0
+                        ? "No more modules available"
+                        : "Select module to assign..."}
+                    </option>
+                    {unselectedModules.map((m) => (
+                      <option key={m.module_id} value={m.module_id}>
+                        {m.module_id} — {m.name} ({m.semester})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </Field>
+            )}
           </div>
 
           {/* Footer */}

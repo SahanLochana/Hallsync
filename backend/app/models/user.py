@@ -1,4 +1,5 @@
 from pydantic import EmailStr
+from typing import Optional
 from enum import Enum
 from .common import MongoBaseModel
 
@@ -15,3 +16,5 @@ class User(MongoBaseModel):
     email: EmailStr
     password_hash: str
     role: UserRole
+    modules: Optional[list[str]] = []
+
