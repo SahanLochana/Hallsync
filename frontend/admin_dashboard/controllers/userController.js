@@ -14,6 +14,33 @@ import * as XLSX from "xlsx";
  */
 export async function fetchModules() {
   try {
+    // Primary source: MongoDB departments collection API
+    const deptRes = await fetch("http://localhost:8000/api/departments/");
+    if (deptRes.ok) {
+      const data = await deptRes.json();
+      const departments = data.response || [];
+      const lecturesList = [];
+      departments.forEach((dept) => {
+        (dept.lectures || []).forEach((lec) => {
+          const semStr = typeof lec.semester === "number" ? `Semester ${lec.semester}` : (lec.semester || "");
+          lecturesList.push({
+            module_id: lec.courseCode,
+            courseCode: lec.courseCode,
+            name: lec.courseTitle,
+            courseTitle: lec.courseTitle,
+            semester: semStr,
+            semesterNum: lec.semester,
+            departmentCode: dept.departmentCode,
+            displayText: `${lec.courseCode} - ${lec.courseTitle} (${semStr})`,
+          });
+        });
+      });
+      if (lecturesList.length > 0) {
+        return lecturesList;
+      }
+    }
+
+    // Fallback: modules API
     const response = await fetch("http://localhost:8000/api/modules");
     if (!response.ok) return [];
     const data = await response.json();
@@ -21,10 +48,14 @@ export async function fetchModules() {
     const modulesList = [];
     semesters.forEach((sem) => {
       (sem.modules || []).forEach((m) => {
+        const semStr = typeof sem.semester === "number" ? `Semester ${sem.semester}` : sem.semester;
         modulesList.push({
           module_id: m.module_id,
+          courseCode: m.module_id,
           name: m.name,
-          semester: sem.semester,
+          courseTitle: m.name,
+          semester: semStr,
+          displayText: `${m.module_id} - ${m.name} (${semStr})`,
         });
       });
     });
@@ -60,7 +91,7 @@ export async function fetchUsers(setUsers, setIsLoading, setError) {
         ? u.role.charAt(0).toUpperCase() + u.role.slice(1)
         : "Student",
       department: u.department || "",
-      faculty: u.faculty || "",
+      faculty: u.faculty || "Computing",
       academicYear: u.academicYear || "",
       modules: u.modules || [],
     }));
@@ -123,7 +154,6 @@ export function validateUserForm(form) {
     errors.role = "Role must be Lecturer or Student.";
   }
   if (!form.department?.trim()) errors.department = "Department is required.";
-  if (!form.faculty?.trim()) errors.faculty = "Faculty is required.";
   if (form.role === "Student" && !form.academicYear?.trim()) {
     errors.academicYear = "Academic Year is required.";
   }
@@ -145,7 +175,7 @@ export async function addUser(users, form, setUsers) {
     email: form.email,
     role: form.role.toLowerCase(),
     department: form.department,
-    faculty: form.faculty,
+    faculty: form.faculty || "Computing",
     academicYear: form.role === "Student" ? form.academicYear : null,
     modules: form.role === "Lecturer" ? (form.modules || []) : [],
   };
@@ -201,7 +231,7 @@ export async function editUser(users, updatedUser, setUsers) {
     email: cleanUser.email,
     role: cleanUser.role.toLowerCase(),
     department: cleanUser.department,
-    faculty: cleanUser.faculty,
+    faculty: cleanUser.faculty || "Computing",
     academicYear: cleanUser.academicYear || null,
     modules: cleanUser.role === "Lecturer" ? (cleanUser.modules || []) : [],
   };
@@ -288,7 +318,6 @@ export async function parseSpreadsheetToUsers(file) {
           "email",
           "role",
           "department",
-          "faculty",
         ];
         const missingHeaders = required.filter((r) => !header.includes(r));
         if (missingHeaders.length > 0) {
@@ -310,7 +339,8 @@ export async function parseSpreadsheetToUsers(file) {
           const email = String(cols[idxOf("email")] || "").trim();
           const role = String(cols[idxOf("role")] || "").trim();
           const department = String(cols[idxOf("department")] || "").trim();
-          const faculty = String(cols[idxOf("faculty")] || "").trim();
+          const facultyIdx = idxOf("faculty");
+          const faculty = facultyIdx !== -1 ? (String(cols[facultyIdx] || "").trim() || "Computing") : "Computing";
 
           const academicYearIdx = idxOf("academicyear");
           const academicYear =

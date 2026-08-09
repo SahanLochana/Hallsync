@@ -12,9 +12,10 @@
  */
 
 import { useState, useEffect } from "react";
-import { X, UserPlus, BookOpen, Check } from "lucide-react";
+import { X, UserPlus } from "lucide-react";
 import { ROLE_FORM_OPTIONS } from "@/models/userModel";
 import { validateUserForm, fetchModules } from "@/controllers/userController";
+import LectureAssigner from "@/views/components/LectureAssigner";
 
 const EMPTY_FORM = {
   universityId: "",
@@ -22,7 +23,7 @@ const EMPTY_FORM = {
   email: "",
   role: "Student",
   department: "",
-  faculty: "",
+  faculty: "Computing",
   academicYear: "",
   modules: [],
 };
@@ -108,7 +109,7 @@ export default function AddUserModal({ isOpen, onClose, onConfirm }) {
     setIsSubmitting(true);
     setModalError(null);
     try {
-      await onConfirm({ ...form });
+      await onConfirm({ ...form, faculty: "Computing" });
     } catch (err) {
       setModalError(err.message || "Failed to add user.");
     } finally {
@@ -124,11 +125,6 @@ export default function AddUserModal({ isOpen, onClose, onConfirm }) {
   const isLecturer = form.role === "Lecturer";
   const idLabel = isStudent ? "University ID" : "Lecturer ID";
   const idPlaceholder = isStudent ? "e.g. SE/2021/001" : "e.g. LEC/001";
-
-  // Unselected modules list
-  const unselectedModules = availableModules.filter(
-    (m) => !form.modules.includes(m.module_id)
-  );
 
   return (
     <>
@@ -161,7 +157,7 @@ export default function AddUserModal({ isOpen, onClose, onConfirm }) {
           </div>
 
           {/* Body */}
-          <div className="p-6 flex flex-col gap-4 overflow-y-auto max-h-[70vh]">
+          <div className="p-6 flex flex-col gap-4 overflow-y-auto max-h-[75vh]">
             {modalError && (
               <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 flex items-center gap-2">
                 <span className="text-red-600 text-xs font-medium">
@@ -224,18 +220,6 @@ export default function AddUserModal({ isOpen, onClose, onConfirm }) {
               />
             </Field>
 
-            {/* Faculty */}
-            <Field label="Faculty" error={errors.faculty}>
-              <input
-                id="add-user-faculty"
-                disabled={isSubmitting}
-                className={`${inputCls} ${errors.faculty ? "border-red-400" : "border-[#e2e8f0]"} disabled:opacity-60 disabled:cursor-not-allowed`}
-                placeholder="e.g. Computing"
-                value={form.faculty}
-                onChange={(e) => set("faculty", e.target.value)}
-              />
-            </Field>
-
             {/* Department */}
             <Field label="Department" error={errors.department}>
               <select
@@ -278,61 +262,17 @@ export default function AddUserModal({ isOpen, onClose, onConfirm }) {
               </Field>
             )}
 
-            {/* Assigned Modules (Lecturer only) */}
+            {/* Assigned Modules (Lecturer only with Search) */}
             {isLecturer && (
-              <Field label="Assigned Modules" error={errors.modules}>
-                <div className="flex flex-col gap-2">
-                  {/* Selected module chips */}
-                  {form.modules.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 p-2 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl">
-                      {form.modules.map((modId) => {
-                        const modObj = availableModules.find(
-                          (m) => m.module_id === modId
-                        );
-                        return (
-                          <span
-                            key={modId}
-                            className="inline-flex items-center gap-1.5 bg-[#1e3b8a] text-white text-xs px-2.5 py-1 rounded-lg shadow-sm"
-                          >
-                            <BookOpen size={12} />
-                            <span>
-                              {modId} {modObj ? `(${modObj.name})` : ""}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveModule(modId)}
-                              className="hover:text-red-300 transition-colors ml-0.5"
-                            >
-                              <X size={13} />
-                            </button>
-                          </span>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {/* Dropdown to pick and assign module */}
-                  <select
-                    id="add-user-module-picker"
-                    disabled={isSubmitting || isLoadingModules}
-                    className={`${inputCls} border-[#e2e8f0] disabled:opacity-60 disabled:cursor-not-allowed`}
-                    value=""
-                    onChange={(e) => handleAddModule(e.target.value)}
-                  >
-                    <option value="" disabled>
-                      {isLoadingModules
-                        ? "Loading modules..."
-                        : unselectedModules.length === 0
-                        ? "No more modules available"
-                        : "Select module to assign..."}
-                    </option>
-                    {unselectedModules.map((m) => (
-                      <option key={m.module_id} value={m.module_id}>
-                        {m.module_id} — {m.name} ({m.semester})
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              <Field label="Assigned Lectures" error={errors.modules}>
+                <LectureAssigner
+                  assignedModuleIds={form.modules}
+                  availableModules={availableModules}
+                  onAddModule={handleAddModule}
+                  onRemoveModule={handleRemoveModule}
+                  disabled={isSubmitting}
+                  isLoading={isLoadingModules}
+                />
               </Field>
             )}
           </div>

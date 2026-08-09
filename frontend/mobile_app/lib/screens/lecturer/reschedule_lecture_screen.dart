@@ -16,7 +16,6 @@ class _RescheduleLectureScreenState extends State<RescheduleLectureScreen> {
   final _formKey = GlobalKey<FormState>();
 
   String? _selectedModule;
-  String? _selectedBatch;
   String? _selectedVenue;
   DateTime? _selectedDate;
   TimeOfDay? _startTime;
@@ -35,13 +34,6 @@ class _RescheduleLectureScreenState extends State<RescheduleLectureScreen> {
     'Computer Science',
   ];
 
-  final List<String> _batches = [
-    '2024-A',
-    '2024-B',
-    '2025-A',
-    '2025-B',
-  ];
-
   List<String> _venues = [];
 
   @override
@@ -53,13 +45,14 @@ class _RescheduleLectureScreenState extends State<RescheduleLectureScreen> {
     _startTime = widget.lecture.startTime;
     _endTime = widget.lecture.endTime;
     
-    // Attempt to extract module and batch
+    // Attempt to extract module
     if (widget.lecture.title.contains(' for ')) {
       final parts = widget.lecture.title.split(' for ');
-      if (parts.length == 2) {
-        if (_modules.contains(parts[0])) _selectedModule = parts[0];
-        if (_batches.contains(parts[1])) _selectedBatch = parts[1];
+      if (parts.isNotEmpty && _modules.contains(parts[0])) {
+        _selectedModule = parts[0];
       }
+    } else {
+      _selectedModule = widget.lecture.subject;
     }
     _loadHalls();
   }
@@ -152,7 +145,7 @@ class _RescheduleLectureScreenState extends State<RescheduleLectureScreen> {
   }
 
   Future<void> _submit() async {
-    if (_selectedModule == null || _selectedBatch == null || _selectedDate == null || _startTime == null || _endTime == null || _selectedVenue == null) {
+    if (_selectedModule == null || _selectedDate == null || _startTime == null || _endTime == null || _selectedVenue == null) {
       _showSnack('Please fill all fields');
       return;
     }
@@ -209,7 +202,7 @@ class _RescheduleLectureScreenState extends State<RescheduleLectureScreen> {
       // However, the error was just about the map to bool.
       final success = await LectureService.updateLecture(
         lectureId: widget.lecture.id,
-        title: '$_selectedModule for $_selectedBatch',
+        title: _selectedModule!,
         description: '',
         lecturerId: 'lecturer123',
         hallId: _selectedVenue!,
@@ -286,19 +279,6 @@ class _RescheduleLectureScreenState extends State<RescheduleLectureScreen> {
                       onChanged: (v) {
                         setState(() {
                           _selectedModule = v;
-                          _checkConflict();
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    _buildLabel('Batch'),
-                    _buildDropdown(
-                      hint: 'Select Batch',
-                      value: _selectedBatch,
-                      items: _batches,
-                      onChanged: (v) {
-                        setState(() {
-                          _selectedBatch = v;
                           _checkConflict();
                         });
                       },
@@ -546,18 +526,30 @@ class _RescheduleLectureScreenState extends State<RescheduleLectureScreen> {
     required List<String> items,
     required void Function(String?) onChanged,
   }) {
+    final effectiveItems = List<String>.from(items);
+    if (value != null && value.isNotEmpty && !effectiveItems.contains(value)) {
+      effectiveItems.insert(0, value);
+    }
+    final effectiveValue =
+        (value != null && effectiveItems.contains(value)) ? value : null;
+
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: const Color(0xFFE2E8F0)),
         borderRadius: BorderRadius.circular(16),
       ),
       child: DropdownButtonFormField<String>(
-        value: value,
+        isExpanded: true,
+        value: effectiveValue,
         onChanged: onChanged,
-        items: items
+        items: effectiveItems
             .map((s) => DropdownMenuItem(
                   value: s,
-                  child: Text(s, style: const TextStyle(fontSize: 15, color: Color(0xFF1E293B))),
+                  child: Text(
+                    s,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 15, color: Color(0xFF1E293B)),
+                  ),
                 ))
             .toList(),
         icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF94A3B8)),
