@@ -16,10 +16,20 @@
  */
 
 import { useState, useEffect } from "react";
-import { X, Pencil, Save, User, Mail, BookOpen, Layers, Award, ShieldAlert, CheckCircle2 } from "lucide-react";
+import {
+  X,
+  Pencil,
+  Save,
+  User,
+  Mail,
+  BookOpen,
+  Layers,
+  Award,
+  ShieldAlert,
+} from "lucide-react";
 import ConfirmModal from "./ConfirmModal";
 import { ROLE_FORM_OPTIONS } from "@/models/userModel";
-import { validateUserForm } from "@/controllers/userController";
+import { validateUserForm, fetchModules } from "@/controllers/userController";
 
 const DEPARTMENT_OPTIONS = [
   "Computing & Information Systems (CIS)",
@@ -41,15 +51,23 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const [isSaving, setIsSaving]               = useState(false);
   const [modalError, setModalError]           = useState(null);
+  const [availableModules, setAvailableModules] = useState([]);
+  const [isLoadingModules, setIsLoadingModules] = useState(false);
 
-  // Sync form when user changes or modal opens
+  // Sync form & fetch available modules when user changes or modal opens
   useEffect(() => {
     if (isOpen && user) {
-      setForm({ ...user });
+      setForm({ ...user, modules: user.modules || [] });
       setIsEditing(false);
       setErrors({});
       setIsSaving(false);
       setModalError(null);
+
+      setIsLoadingModules(true);
+      fetchModules().then((mods) => {
+        setAvailableModules(mods);
+        setIsLoadingModules(false);
+      });
     }
   }, [isOpen, user]);
 
@@ -60,9 +78,28 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
     setErrors((prev) => ({ ...prev, [field]: undefined }));
   }
 
+  function handleAddModule(moduleId) {
+    if (!moduleId) return;
+    const currentMods = form.modules || [];
+    if (!currentMods.includes(moduleId)) {
+      set("modules", [...currentMods, moduleId]);
+    }
+  }
+
+  function handleRemoveModule(moduleId) {
+    const currentMods = form.modules || [];
+    set(
+      "modules",
+      currentMods.filter((m) => m !== moduleId)
+    );
+  }
+
   function handleSaveClick() {
     const e = validateUserForm(form);
-    if (Object.keys(e).length > 0) { setErrors(e); return; }
+    if (Object.keys(e).length > 0) {
+      setErrors(e);
+      return;
+    }
     setShowSaveConfirm(true);
   }
 
@@ -85,8 +122,14 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
     "focus:outline-none focus:ring-2 focus:ring-[#1e3b8a]/30 focus:border-[#1e3b8a] transition w-full";
 
   const isStudent = (isEditing ? form.role : user.role) === "Student";
+  const isLecturer = (isEditing ? form.role : user.role) === "Lecturer";
   const idLabel = isStudent ? "University ID" : "Lecturer ID";
   const idPlaceholder = isStudent ? "e.g. SE/2021/001" : "e.g. LEC/001";
+
+  const currentFormModules = form.modules || [];
+  const unselectedModules = availableModules.filter(
+    (m) => !currentFormModules.includes(m.module_id)
+  );
 
   // ── View mode row component ──────────────────────────────────────────────────
   const DetailRow = ({ icon: Icon, label, value }) => (
@@ -95,7 +138,9 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
         <Icon size={16} strokeWidth={2} />
       </div>
       <div className="flex flex-col gap-0.5">
-        <span className="text-[#94a3b8] text-xs font-semibold uppercase tracking-wide">{label}</span>
+        <span className="text-[#94a3b8] text-xs font-semibold uppercase tracking-wide">
+          {label}
+        </span>
         <span className="text-[#0f172a] text-sm font-medium">{value || "—"}</span>
       </div>
     </div>
@@ -134,7 +179,9 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
           <div className="p-6 flex flex-col gap-5 overflow-y-auto max-h-[60vh]">
             {modalError && (
               <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 flex items-center gap-2">
-                <span className="text-red-600 text-xs font-medium">{modalError}</span>
+                <span className="text-red-600 text-xs font-medium">
+                  {modalError}
+                </span>
               </div>
             )}
             {isEditing ? (
@@ -153,7 +200,9 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
                     onChange={(e) => set("role", e.target.value)}
                   >
                     {ROLE_FORM_OPTIONS.map((r) => (
-                      <option key={r} value={r}>{r}</option>
+                      <option key={r} value={r}>
+                        {r}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -171,7 +220,11 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
                     value={form.universityId || ""}
                     onChange={(e) => set("universityId", e.target.value)}
                   />
-                  {errors.universityId && <span className="text-red-500 text-xs">{errors.universityId}</span>}
+                  {errors.universityId && (
+                    <span className="text-red-500 text-xs">
+                      {errors.universityId}
+                    </span>
+                  )}
                 </div>
 
                 {/* Full Name */}
@@ -187,7 +240,9 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
                     value={form.name || ""}
                     onChange={(e) => set("name", e.target.value)}
                   />
-                  {errors.name && <span className="text-red-500 text-xs">{errors.name}</span>}
+                  {errors.name && (
+                    <span className="text-red-500 text-xs">{errors.name}</span>
+                  )}
                 </div>
 
                 {/* Email */}
@@ -204,7 +259,9 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
                     value={form.email || ""}
                     onChange={(e) => set("email", e.target.value)}
                   />
-                  {errors.email && <span className="text-red-500 text-xs">{errors.email}</span>}
+                  {errors.email && (
+                    <span className="text-red-500 text-xs">{errors.email}</span>
+                  )}
                 </div>
 
                 {/* Faculty */}
@@ -220,7 +277,11 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
                     value={form.faculty || ""}
                     onChange={(e) => set("faculty", e.target.value)}
                   />
-                  {errors.faculty && <span className="text-red-500 text-xs">{errors.faculty}</span>}
+                  {errors.faculty && (
+                    <span className="text-red-500 text-xs">
+                      {errors.faculty}
+                    </span>
+                  )}
                 </div>
 
                 {/* Department */}
@@ -235,12 +296,20 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
                     value={form.department || ""}
                     onChange={(e) => set("department", e.target.value)}
                   >
-                    <option value="" disabled>Select Department</option>
+                    <option value="" disabled>
+                      Select Department
+                    </option>
                     {DEPARTMENT_OPTIONS.map((dept) => (
-                      <option key={dept} value={dept}>{dept}</option>
+                      <option key={dept} value={dept}>
+                        {dept}
+                      </option>
                     ))}
                   </select>
-                  {errors.department && <span className="text-red-500 text-xs">{errors.department}</span>}
+                  {errors.department && (
+                    <span className="text-red-500 text-xs">
+                      {errors.department}
+                    </span>
+                  )}
                 </div>
 
                 {/* Academic Year (Student only) */}
@@ -256,12 +325,79 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
                       value={form.academicYear || ""}
                       onChange={(e) => set("academicYear", e.target.value)}
                     >
-                      <option value="" disabled>Select Academic Year</option>
+                      <option value="" disabled>
+                        Select Academic Year
+                      </option>
                       {BATCH_OPTIONS.map((batch) => (
-                        <option key={batch} value={batch}>{batch}</option>
+                        <option key={batch} value={batch}>
+                          {batch}
+                        </option>
                       ))}
                     </select>
-                    {errors.academicYear && <span className="text-red-500 text-xs">{errors.academicYear}</span>}
+                    {errors.academicYear && (
+                      <span className="text-red-500 text-xs">
+                        {errors.academicYear}
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* Assigned Modules (Lecturer only) */}
+                {isLecturer && (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[#334155] font-semibold text-xs uppercase tracking-wide">
+                      Assigned Modules
+                    </label>
+                    <div className="flex flex-col gap-2">
+                      {currentFormModules.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 p-2 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl">
+                          {currentFormModules.map((modId) => {
+                            const modObj = availableModules.find(
+                              (m) => m.module_id === modId
+                            );
+                            return (
+                              <span
+                                key={modId}
+                                className="inline-flex items-center gap-1.5 bg-[#1e3b8a] text-white text-xs px-2.5 py-1 rounded-lg shadow-sm"
+                              >
+                                <BookOpen size={12} />
+                                <span>
+                                  {modId} {modObj ? `(${modObj.name})` : ""}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveModule(modId)}
+                                  className="hover:text-red-300 transition-colors ml-0.5"
+                                >
+                                  <X size={13} />
+                                </button>
+                              </span>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      <select
+                        id="edit-user-module-picker"
+                        disabled={isSaving || isLoadingModules}
+                        className={`${inputCls} disabled:opacity-60 disabled:cursor-not-allowed`}
+                        value=""
+                        onChange={(e) => handleAddModule(e.target.value)}
+                      >
+                        <option value="" disabled>
+                          {isLoadingModules
+                            ? "Loading modules..."
+                            : unselectedModules.length === 0
+                            ? "No more modules available"
+                            : "Select module to assign..."}
+                        </option>
+                        {unselectedModules.map((m) => (
+                          <option key={m.module_id} value={m.module_id}>
+                            {m.module_id} — {m.name} ({m.semester})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 )}
               </div>
@@ -273,8 +409,12 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
                     <User size={24} strokeWidth={1.5} />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[#0f172a] font-bold text-base">{user.name}</span>
-                    <span className="text-[#94a3b8] text-xs font-semibold uppercase tracking-wider">{user.role}</span>
+                    <span className="text-[#0f172a] font-bold text-base">
+                      {user.name}
+                    </span>
+                    <span className="text-[#94a3b8] text-xs font-semibold uppercase tracking-wider">
+                      {user.role}
+                    </span>
                   </div>
                 </div>
 
@@ -282,13 +422,62 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <DetailRow icon={Mail} label="Email" value={user.email} />
-                  <DetailRow icon={BookOpen} label="Faculty" value={user.faculty} />
-                  <DetailRow icon={Layers} label="Department" value={user.department} />
+                  <DetailRow
+                    icon={BookOpen}
+                    label="Faculty"
+                    value={user.faculty}
+                  />
+                  <DetailRow
+                    icon={Layers}
+                    label="Department"
+                    value={user.department}
+                  />
                   {isStudent && (
-                    <DetailRow icon={Award} label="Academic Year" value={user.academicYear} />
+                    <DetailRow
+                      icon={Award}
+                      label="Academic Year"
+                      value={user.academicYear}
+                    />
                   )}
-                  <DetailRow icon={ShieldAlert} label={idLabel} value={user.universityId} />
+                  <DetailRow
+                    icon={ShieldAlert}
+                    label={idLabel}
+                    value={user.universityId}
+                  />
                 </div>
+
+                {/* Assigned Modules section for Lecturer */}
+                {isLecturer && (
+                  <div className="mt-2 flex flex-col gap-1.5 border-t border-[#e2e8f0] pt-3">
+                    <span className="text-[#94a3b8] text-xs font-semibold uppercase tracking-wide">
+                      Assigned Modules
+                    </span>
+                    {user.modules && user.modules.length > 0 ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {user.modules.map((modId) => {
+                          const modObj = availableModules.find(
+                            (m) => m.module_id === modId
+                          );
+                          return (
+                            <span
+                              key={modId}
+                              className="inline-flex items-center gap-1.5 bg-[#1e3b8a]/10 text-[#1e3b8a] text-xs font-semibold px-2.5 py-1 rounded-lg border border-[#1e3b8a]/20"
+                            >
+                              <BookOpen size={12} />
+                              <span>
+                                {modId} {modObj ? `— ${modObj.name}` : ""}
+                              </span>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <span className="text-[#94a3b8] text-sm italic">
+                        No modules assigned yet.
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>

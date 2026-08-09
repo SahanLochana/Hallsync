@@ -9,6 +9,33 @@ import * as XLSX from "xlsx";
 // ── Data Fetching ──────────────────────────────────────────────────────────────
 
 /**
+ * Fetches available modules from the backend.
+ * @returns {Promise<Array<{ module_id: string, name: string, semester: string }>>}
+ */
+export async function fetchModules() {
+  try {
+    const response = await fetch("http://localhost:8000/api/modules");
+    if (!response.ok) return [];
+    const data = await response.json();
+    const semesters = data.response || [];
+    const modulesList = [];
+    semesters.forEach((sem) => {
+      (sem.modules || []).forEach((m) => {
+        modulesList.push({
+          module_id: m.module_id,
+          name: m.name,
+          semester: sem.semester,
+        });
+      });
+    });
+    return modulesList;
+  } catch (err) {
+    console.error("Failed to fetch modules:", err);
+    return [];
+  }
+}
+
+/**
  * Fetches the list of users from the backend.
  * @param {Function} setUsers     — React state setter
  * @param {Function} setIsLoading — React state setter
@@ -35,6 +62,7 @@ export async function fetchUsers(setUsers, setIsLoading, setError) {
       department: u.department || "",
       faculty: u.faculty || "",
       academicYear: u.academicYear || "",
+      modules: u.modules || [],
     }));
     setUsers(mappedUsers);
   } catch (err) {
@@ -72,7 +100,7 @@ export function filterUsers(users, search, role, year, dept) {
 
 /**
  * Validates a user form object.
- * @param {Object} form — { universityId, name, email, role, department, faculty, academicYear }
+ * @param {Object} form — { universityId, name, email, role, department, faculty, academicYear, modules }
  * @returns {Object} error map (empty = valid)
  */
 export function validateUserForm(form) {
@@ -107,7 +135,7 @@ export function validateUserForm(form) {
 /**
  * Adds a single new user. universityId is the primary identifier.
  * @param {Array}    users    — current user list from state
- * @param {Object}   form     — { universityId, name, email, role, department, faculty, academicYear }
+ * @param {Object}   form     — { universityId, name, email, role, department, faculty, academicYear, modules }
  * @param {Function} setUsers — React state setter
  */
 export async function addUser(users, form, setUsers) {
@@ -119,6 +147,7 @@ export async function addUser(users, form, setUsers) {
     department: form.department,
     faculty: form.faculty,
     academicYear: form.role === "Student" ? form.academicYear : null,
+    modules: form.role === "Lecturer" ? (form.modules || []) : [],
   };
 
   try {
@@ -143,6 +172,7 @@ export async function addUser(users, form, setUsers) {
       department: created.department,
       faculty: created.faculty,
       academicYear: created.academicYear || "",
+      modules: created.modules || [],
     };
 
     setUsers([frontendUser, ...users]);
@@ -173,6 +203,7 @@ export async function editUser(users, updatedUser, setUsers) {
     department: cleanUser.department,
     faculty: cleanUser.faculty,
     academicYear: cleanUser.academicYear || null,
+    modules: cleanUser.role === "Lecturer" ? (cleanUser.modules || []) : [],
   };
 
   try {
@@ -200,6 +231,7 @@ export async function editUser(users, updatedUser, setUsers) {
       department: updated.department,
       faculty: updated.faculty,
       academicYear: updated.academicYear || "",
+      modules: updated.modules || [],
     };
 
     setUsers(
@@ -212,6 +244,7 @@ export async function editUser(users, updatedUser, setUsers) {
     throw err;
   }
 }
+
 
 // ── Spreadsheet Import ────────────────────────────────────────────────────────
 

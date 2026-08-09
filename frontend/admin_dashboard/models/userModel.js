@@ -16,6 +16,7 @@
  *   department:   string  — e.g. "Software Engineering"
  *   faculty:      string  — e.g. "Computing"
  *   academicYear: string  — e.g. "3rd Year" (only for Student)
+ *   modules:      string[] — list of module_ids (assigned for Lecturer)
  * }
  */
 

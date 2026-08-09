@@ -4,6 +4,7 @@ from app.services.user_service import UserService
 from app.services.hall_service import HallService
 from app.services.timetable_service import TimetableService
 from app.services.notification_service import NotificationService
+from app.services.module_service import ModuleService
 from app.repositories.user_repo import UserRepo
 
 
@@ -29,3 +30,8 @@ def get_timetable_service(db: Database = Depends(get_db)) -> TimetableService:
 
 def get_notification_service(db: Database = Depends(get_db)) -> NotificationService:
     return NotificationService(db)
+
+
+def get_module_service(db: Database = Depends(get_db)) -> ModuleService:
+    return ModuleService(db)
+

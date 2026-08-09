@@ -14,7 +14,7 @@ router = APIRouter()
 # ── Collection endpoints ───────────────────────────────────────────────────────
 
 
-@router.get("", response_model=HallsResponse)
+@router.get("/", response_model=HallsResponse)
 async def get_halls(hall_service: HallService = Depends(get_hall_service)):
     try:
         halls = await hall_service.get_halls()
