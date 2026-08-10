@@ -254,9 +254,20 @@ class _HomeScreenState extends State<LecturerDashboard> {
     );
   }
 
+  List<Lecture> get _todaysLectures {
+    final now = DateTime.now();
+    return _lectures
+        .where((l) =>
+            l.date.year == now.year &&
+            l.date.month == now.month &&
+            l.date.day == now.day)
+        .toList();
+  }
+
   // ── Today's Lectures ──────────────────────────
 
   Widget _buildTodaysLectures() {
+    final todaysList = _todaysLectures;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -304,7 +315,7 @@ class _HomeScreenState extends State<LecturerDashboard> {
               child: CircularProgressIndicator(color: Color(0xFF283593)),
             ),
           )
-        else if (_lectures.isEmpty)
+        else if (todaysList.isEmpty)
           Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 32),
@@ -325,7 +336,7 @@ class _HomeScreenState extends State<LecturerDashboard> {
             ),
           )
         else
-          ..._lectures.map(
+          ...todaysList.map(
             (l) => Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: _buildLectureCard(l),

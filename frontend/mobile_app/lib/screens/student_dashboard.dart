@@ -83,6 +83,16 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  List<Lecture> get _todaysLectures {
+    final now = DateTime.now();
+    return _lectures
+        .where((l) =>
+            l.date.year == now.year &&
+            l.date.month == now.month &&
+            l.date.day == now.day)
+        .toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -115,6 +125,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildDashboardContent() {
+    final todays = _todaysLectures;
     return SafeArea(
       child: Column(
         children: [
@@ -134,10 +145,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 12),
                   if (_isLoading)
                     const Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator()))
-                  else if (_lectures.isEmpty)
+                  else if (todays.isEmpty)
                     _buildEmptyLectures()
                   else
-                    ..._lectures.map((l) => LectureCard(lecture: l)),
+                    ...todays.map((l) => LectureCard(lecture: l)),
                   const SizedBox(height: 20),
                 ],
               ),

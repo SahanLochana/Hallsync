@@ -35,3 +35,9 @@ def get_notification_service(db: Database = Depends(get_db)) -> NotificationServ
 def get_module_service(db: Database = Depends(get_db)) -> ModuleService:
     return ModuleService(db)
 
+
+def get_department_service(db: Database = Depends(get_db)) -> DepartmentService:
+    from app.services.department_service import DepartmentService
+    return DepartmentService(db)
+
+
