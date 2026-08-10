@@ -5,6 +5,6 @@ export const metadata = {
   description: "Overview and quick-access management dashboard for HallSync.",
 };
 
-export default function Home() {
+export default function DashboardRoute() {
   return <HomePage />;
 }
