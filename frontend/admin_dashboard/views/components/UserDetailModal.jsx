@@ -7,12 +7,6 @@
  * Shows user details, and has an Edit button.
  * Edit mode shows inline form fields.
  * Saving edits triggers a ConfirmModal.
- *
- * Props:
- *   isOpen       {boolean}  — show/hide
- *   user         {Object}   — the user object to display
- *   onClose      {Function}
- *   onSaveEdit   {Function} — (editedUser) => void
  */
 
 import { useState, useEffect } from "react";
@@ -28,6 +22,7 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import ConfirmModal from "./ConfirmModal";
+import LectureAssigner from "./LectureAssigner";
 import { ROLE_FORM_OPTIONS } from "@/models/userModel";
 import { validateUserForm, fetchModules } from "@/controllers/userController";
 
@@ -57,7 +52,7 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
   // Sync form & fetch available modules when user changes or modal opens
   useEffect(() => {
     if (isOpen && user) {
-      setForm({ ...user, modules: user.modules || [] });
+      setForm({ ...user, faculty: user.faculty || "Computing", modules: user.modules || [] });
       setIsEditing(false);
       setErrors({});
       setIsSaving(false);
@@ -108,7 +103,7 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
     setIsSaving(true);
     setModalError(null);
     try {
-      await onSaveEdit({ ...form });
+      await onSaveEdit({ ...form, faculty: "Computing" });
       setIsEditing(false);
     } catch (err) {
       setModalError(err.message || "Failed to update user.");
@@ -127,9 +122,6 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
   const idPlaceholder = isStudent ? "e.g. SE/2021/001" : "e.g. LEC/001";
 
   const currentFormModules = form.modules || [];
-  const unselectedModules = availableModules.filter(
-    (m) => !currentFormModules.includes(m.module_id)
-  );
 
   // ── View mode row component ──────────────────────────────────────────────────
   const DetailRow = ({ icon: Icon, label, value }) => (
@@ -176,7 +168,7 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
           </div>
 
           {/* Body */}
-          <div className="p-6 flex flex-col gap-5 overflow-y-auto max-h-[60vh]">
+          <div className="p-6 flex flex-col gap-5 overflow-y-auto max-h-[65vh]">
             {modalError && (
               <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 flex items-center gap-2">
                 <span className="text-red-600 text-xs font-medium">
@@ -264,26 +256,6 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
                   )}
                 </div>
 
-                {/* Faculty */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[#334155] font-semibold text-xs uppercase tracking-wide">
-                    Faculty
-                  </label>
-                  <input
-                    id="edit-user-faculty"
-                    disabled={isSaving}
-                    className={`${inputCls} ${errors.faculty ? "border-red-400" : ""} disabled:opacity-60 disabled:cursor-not-allowed`}
-                    placeholder="e.g. Computing"
-                    value={form.faculty || ""}
-                    onChange={(e) => set("faculty", e.target.value)}
-                  />
-                  {errors.faculty && (
-                    <span className="text-red-500 text-xs">
-                      {errors.faculty}
-                    </span>
-                  )}
-                </div>
-
                 {/* Department */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[#334155] font-semibold text-xs uppercase tracking-wide">
@@ -342,62 +314,20 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
                   </div>
                 )}
 
-                {/* Assigned Modules (Lecturer only) */}
+                {/* Assigned Modules (Lecturer only with Search) */}
                 {isLecturer && (
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[#334155] font-semibold text-xs uppercase tracking-wide">
-                      Assigned Modules
+                      Assigned Lectures
                     </label>
-                    <div className="flex flex-col gap-2">
-                      {currentFormModules.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 p-2 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl">
-                          {currentFormModules.map((modId) => {
-                            const modObj = availableModules.find(
-                              (m) => m.module_id === modId
-                            );
-                            return (
-                              <span
-                                key={modId}
-                                className="inline-flex items-center gap-1.5 bg-[#1e3b8a] text-white text-xs px-2.5 py-1 rounded-lg shadow-sm"
-                              >
-                                <BookOpen size={12} />
-                                <span>
-                                  {modId} {modObj ? `(${modObj.name})` : ""}
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => handleRemoveModule(modId)}
-                                  className="hover:text-red-300 transition-colors ml-0.5"
-                                >
-                                  <X size={13} />
-                                </button>
-                              </span>
-                            );
-                          })}
-                        </div>
-                      )}
-
-                      <select
-                        id="edit-user-module-picker"
-                        disabled={isSaving || isLoadingModules}
-                        className={`${inputCls} disabled:opacity-60 disabled:cursor-not-allowed`}
-                        value=""
-                        onChange={(e) => handleAddModule(e.target.value)}
-                      >
-                        <option value="" disabled>
-                          {isLoadingModules
-                            ? "Loading modules..."
-                            : unselectedModules.length === 0
-                            ? "No more modules available"
-                            : "Select module to assign..."}
-                        </option>
-                        {unselectedModules.map((m) => (
-                          <option key={m.module_id} value={m.module_id}>
-                            {m.module_id} — {m.name} ({m.semester})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    <LectureAssigner
+                      assignedModuleIds={currentFormModules}
+                      availableModules={availableModules}
+                      onAddModule={handleAddModule}
+                      onRemoveModule={handleRemoveModule}
+                      disabled={isSaving}
+                      isLoading={isLoadingModules}
+                    />
                   </div>
                 )}
               </div>
@@ -423,11 +353,6 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <DetailRow icon={Mail} label="Email" value={user.email} />
                   <DetailRow
-                    icon={BookOpen}
-                    label="Faculty"
-                    value={user.faculty}
-                  />
-                  <DetailRow
                     icon={Layers}
                     label="Department"
                     value={user.department}
@@ -450,30 +375,31 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
                 {isLecturer && (
                   <div className="mt-2 flex flex-col gap-1.5 border-t border-[#e2e8f0] pt-3">
                     <span className="text-[#94a3b8] text-xs font-semibold uppercase tracking-wide">
-                      Assigned Modules
+                      Assigned Lectures
                     </span>
                     {user.modules && user.modules.length > 0 ? (
-                      <div className="flex flex-wrap gap-1.5">
+                      <div className="flex flex-col gap-1.5">
                         {user.modules.map((modId) => {
                           const modObj = availableModules.find(
                             (m) => m.module_id === modId
                           );
+                          const label = modObj
+                            ? `${modObj.module_id} - ${modObj.name} (${modObj.semester})`
+                            : modId;
                           return (
                             <span
                               key={modId}
-                              className="inline-flex items-center gap-1.5 bg-[#1e3b8a]/10 text-[#1e3b8a] text-xs font-semibold px-2.5 py-1 rounded-lg border border-[#1e3b8a]/20"
+                              className="inline-flex items-center gap-1.5 bg-[#1e3b8a]/10 text-[#1e3b8a] text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-[#1e3b8a]/20"
                             >
-                              <BookOpen size={12} />
-                              <span>
-                                {modId} {modObj ? `— ${modObj.name}` : ""}
-                              </span>
+                              <BookOpen size={13} className="shrink-0" />
+                              <span>{label}</span>
                             </span>
                           );
                         })}
                       </div>
                     ) : (
                       <span className="text-[#94a3b8] text-sm italic">
-                        No modules assigned yet.
+                        No lectures assigned yet.
                       </span>
                     )}
                   </div>

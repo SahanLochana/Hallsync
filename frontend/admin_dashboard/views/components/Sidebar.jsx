@@ -15,6 +15,7 @@ import {
   Users,
   Settings,
   LogOut,
+  GraduationCap,
 } from "lucide-react";
 
 // ── Navigation items — extend this array for new pages ──────────────────────
@@ -22,6 +23,7 @@ const NAV_ITEMS = [
   { label: "Dashboard",  href: "/dashboard",  icon: LayoutDashboard },
   { label: "Timetable",  href: "/timetable",  icon: CalendarDays },
   { label: "Halls",      href: "/halls",       icon: DoorOpen },
+  { label: "Department", href: "/department",  icon: GraduationCap },
   { label: "Users",      href: "/users",       icon: Users },
   { label: "Settings",   href: "/settings",    icon: Settings },
 ];

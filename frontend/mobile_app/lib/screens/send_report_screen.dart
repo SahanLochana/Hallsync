@@ -86,6 +86,7 @@ class _SendReportScreenState extends State<SendReportScreen> {
                 
                 // Type Dropdown
                 DropdownButtonFormField<String>(
+                  isExpanded: true,
                   value: _selectedType,
                   decoration: InputDecoration(
                     labelText: 'Report Type',
@@ -99,7 +100,10 @@ class _SendReportScreenState extends State<SendReportScreen> {
                   items: _reportTypes.map((String type) {
                     return DropdownMenuItem<String>(
                       value: type,
-                      child: Text(type[0].toUpperCase() + type.substring(1)),
+                      child: Text(
+                        type[0].toUpperCase() + type.substring(1),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     );
                   }).toList(),
                   onChanged: (String? newValue) {
