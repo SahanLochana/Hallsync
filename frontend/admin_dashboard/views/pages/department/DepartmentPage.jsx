@@ -7,29 +7,22 @@
 
 import { useState, useEffect } from "react";
 import {
-  GraduationCap,
-  BookOpen,
   Building2,
-  Award,
   Search,
   ChevronDown,
   ChevronUp,
   X,
-  Layers,
-  Sparkles,
-  CheckCircle2,
-  BookCheck,
 } from "lucide-react";
 
 import TopHeader from "@/views/components/TopHeader";
 import Sidebar from "@/views/components/Sidebar";
-import LoadingSpinner from "@/views/components/LoadingSpinner";
+import PageHeader from "@/views/components/PageHeader";
+import { TableSkeleton } from "@/views/components/SkeletonLoader";
 
 import { SEMESTER_OPTIONS, TYPE_OPTIONS } from "@/models/departmentModel";
 import {
   fetchDepartments,
   filterLectures,
-  getDepartmentStats,
 } from "@/controllers/departmentController";
 
 // ── Department Code Color Badges ──────────────────────────────────────────────
@@ -58,28 +51,6 @@ const DEPT_THEMES = {
 
 function getDeptTheme(code) {
   return DEPT_THEMES[code] || DEPT_THEMES.DEFAULT;
-}
-
-// ── KPI Summary Card ─────────────────────────────────────────────────────────
-function StatCard({ icon: Icon, label, value, subtext, color }) {
-  return (
-    <div className="bg-white rounded-2xl p-5 shadow-[0_8px_25px_rgba(226,232,240,0.75)] border border-[#e2e8f0]/60 flex items-center gap-4 transition-all hover:shadow-[0_12px_30px_rgba(226,232,240,0.9)]">
-      <div
-        className={`w-12 h-12 rounded-xl flex items-center justify-center ${color}`}
-      >
-        <Icon size={24} strokeWidth={2} />
-      </div>
-      <div className="flex flex-col">
-        <span className="text-[#64748b] text-xs font-semibold uppercase tracking-wider">
-          {label}
-        </span>
-        <span className="text-[#0f172a] text-2xl font-bold tracking-tight">
-          {value}
-        </span>
-        {subtext && <span className="text-[#94a3b8] text-xs mt-0.5">{subtext}</span>}
-      </div>
-    </div>
-  );
 }
 
 // ── Semester Section Component ───────────────────────────────────────────────
@@ -232,8 +203,6 @@ export default function DepartmentPage() {
     fetchDepartments(setDepartments, setIsLoading, setError);
   }, []);
 
-  const stats = getDepartmentStats(departments);
-
   // Active department or all
   const activeDepartments =
     selectedDeptCode === "All"
@@ -294,42 +263,11 @@ export default function DepartmentPage() {
         {/* Content Area */}
         <main className="flex-1 p-6 flex flex-col gap-6 overflow-auto">
           {/* Header Title */}
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2">
-              <Building2 className="text-[#1e3b8a]" size={24} />
-              <h1 className="text-[#0f172a] font-bold text-2xl tracking-tight">
-                Academic Departments
-              </h1>
-            </div>
-            <p className="text-[#64748b] text-sm">
-              Explore departments, degree programs, and curriculum lectures divided by semester
-            </p>
-          </div>
-
-          {/* Stats Bar */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <StatCard
-              icon={Building2}
-              label="Departments"
-              value={stats.totalDepartments}
-              subtext="Faculty academic units"
-              color="bg-blue-50 text-blue-600"
-            />
-            <StatCard
-              icon={Award}
-              label="Degree Programs"
-              value={stats.totalPrograms}
-              subtext="Honours degree tracks"
-              color="bg-emerald-50 text-emerald-600"
-            />
-            <StatCard
-              icon={BookOpen}
-              label="Total Modules/Lectures"
-              value={stats.totalLectures}
-              subtext="Across all semesters"
-              color="bg-purple-50 text-purple-600"
-            />
-          </div>
+          <PageHeader
+            icon={Building2}
+            title="Academic Departments"
+            subtitle="Explore departments, degree programs, and curriculum lectures divided by semester"
+          />
 
           {/* Error Banner */}
           {error && (
@@ -346,72 +284,12 @@ export default function DepartmentPage() {
 
           {/* Loading state */}
           {isLoading ? (
-            <div className="bg-white rounded-2xl p-12 shadow-[0_8px_25px_rgba(226,232,240,0.75)] flex flex-col items-center justify-center">
-              <LoadingSpinner text="Fetching departments from MongoDB..." />
+            <div className="bg-white rounded-2xl p-6 shadow-[0_8px_25px_rgba(226,232,240,0.75)]">
+              <TableSkeleton columns={6} rows={5} />
             </div>
           ) : (
             <>
-              {/* Department Overview Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {departments.map((dept) => {
-                  const theme = getDeptTheme(dept.departmentCode);
-                  const isSelected = selectedDeptCode === dept.departmentCode;
-
-                  return (
-                    <div
-                      key={dept.departmentCode}
-                      onClick={() =>
-                        setSelectedDeptCode(
-                          isSelected ? "All" : dept.departmentCode
-                        )
-                      }
-                      className={`bg-white rounded-2xl p-5 shadow-[0_8px_25px_rgba(226,232,240,0.75)] border-2 cursor-pointer transition-all duration-200 flex flex-col justify-between gap-4 ${
-                        isSelected
-                          ? "border-[#1e3b8a] ring-2 ring-[#1e3b8a]/20 shadow-lg scale-[1.01]"
-                          : "border-transparent hover:border-slate-200"
-                      }`}
-                    >
-                      <div className="flex flex-col gap-2">
-                        <div className="flex items-center justify-between">
-                          <span
-                            className={`px-3 py-1 rounded-lg text-xs font-bold border ${theme.bg}`}
-                          >
-                            {dept.departmentCode}
-                          </span>
-                          <span className="text-xs text-[#94a3b8] font-medium flex items-center gap-1">
-                            <BookCheck size={14} />
-                            {dept.lectures?.length || 0} Lectures
-                          </span>
-                        </div>
-                        <h3 className="text-[#0f172a] font-bold text-base line-clamp-2">
-                          {dept.departmentName}
-                        </h3>
-                      </div>
-
-                      {/* Degree programs */}
-                      <div className="border-t border-[#f1f5f9] pt-3 flex flex-col gap-1.5">
-                        <span className="text-[#94a3b8] text-[11px] uppercase font-bold tracking-wider">
-                          Degree Programs ({dept.degreePrograms?.length || 0})
-                        </span>
-                        <div className="flex flex-col gap-1">
-                          {dept.degreePrograms?.map((prog, idx) => (
-                            <div
-                              key={idx}
-                              className="text-xs text-[#334155] font-medium flex items-start gap-1.5"
-                            >
-                              <Sparkles
-                                size={12}
-                                className="text-amber-500 mt-0.5 shrink-0"
-                              />
-                              <span className="line-clamp-2">{prog}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              {/* Department Filter Tabs & Search Bar */}
 
               {/* Department Filter Tabs & Search Bar */}
               <div className="bg-white rounded-2xl shadow-[0_8px_25px_rgba(226,232,240,0.75)] p-5 flex flex-col gap-5">
