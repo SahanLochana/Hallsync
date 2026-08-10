@@ -55,7 +55,7 @@ function getDeptTheme(code) {
 
 // ── Semester Section Component ───────────────────────────────────────────────
 function SemesterSection({ semesterNum, lectures }) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
 
   const totalCredits = lectures.reduce(
     (sum, l) => sum + (l.credits || 0),
