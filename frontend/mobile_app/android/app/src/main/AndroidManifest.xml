@@ -6,7 +6,7 @@
         android:usesCleartextTraffic="true">
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value= "${GOOGLE_MAPS_API_KEY}"/>
+            android:value="AIzaSyDXQ9CZMb82axRCWeizRVICtOafcLMpZqM" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

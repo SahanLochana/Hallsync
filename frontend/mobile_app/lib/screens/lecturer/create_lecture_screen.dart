@@ -58,10 +58,14 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
   String? _selectedDepartment;
   String? _selectedSemester;
   String? _selectedModule;
+  String? _selectedBatch; // අලුතින් එකතු කරපු variable එක
   String? _selectedVenue;
   DateTime? _selectedDate;
   TimeOfDay? _startTime;
   TimeOfDay? _endTime;
+  
+  // විශ්වවිද්‍යාලයේ සාමාන්‍ය Batches ටික
+  final List<String> _batches = ['1st Year', '2nd Year', '3rd Year', '4th Year'];
 
   bool _isSubmitting = false;
   bool _isCheckingAvailability = false;
@@ -394,6 +398,7 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
     if (_selectedDepartment == null ||
         _selectedSemester == null ||
         _selectedModule == null ||
+        _selectedBatch == null || // Batch Validation එක එකතු කරා
         _selectedDate == null ||
         _startTime == null ||
         _endTime == null ||
@@ -465,6 +470,7 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
         lecturerId: lecturerEmail,
         hallId: _selectedVenue!,
         department: _selectedDepartment,
+        batch: _selectedBatch, // Batch parameter එක යවනවා
         startTime: startDateTime,
         endTime: endDateTime,
         capacity: 30,
@@ -624,6 +630,7 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
                                 _selectedDepartment = item.departmentKey;
                                 _selectedSemester = item.semesterKey;
                                 _selectedModule = item.courseTitle;
+                                _selectedBatch = null; // Reset the batch on new module selection
                                 _checkConflict();
                               });
                             }
@@ -669,6 +676,7 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
                             _selectedDepartment = v;
                             _selectedSemester = null;
                             _selectedModule = null;
+                            _selectedBatch = null;
                             _selectedAssignedLecture = null;
                             _checkConflict();
                           });
@@ -687,6 +695,7 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
                             setState(() {
                               _selectedSemester = v;
                               _selectedModule = null;
+                              _selectedBatch = null;
                               _selectedAssignedLecture = null;
                               _checkConflict();
                             });
@@ -706,6 +715,22 @@ class _CreateLectureScreenState extends State<CreateLectureScreen> {
                             setState(() {
                               _selectedModule = v;
                               _checkConflict();
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 20),
+                      ],
+                      
+                      // Batch Dropdown අලුතින් දැම්මා
+                      if (_selectedModule != null) ...[
+                        _buildLabel('Batch'),
+                        _buildDropdown(
+                          hint: 'Select Batch',
+                          value: _selectedBatch,
+                          items: _batches,
+                          onChanged: (v) {
+                            setState(() {
+                              _selectedBatch = v;
                             });
                           },
                         ),

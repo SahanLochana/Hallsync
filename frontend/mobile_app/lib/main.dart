@@ -45,6 +45,8 @@ class HallSyncApp extends StatelessWidget {
         '/': (context) => const LoginScreen(),
         '/student-dashboard': (context) => const HomeScreen(),
         '/lecturer-dashboard': (context) => const LecturerDashboard(),
+        '/campus-map': (context) => const CampusMapScreen(),
+        '/change-password': (context) => const ChangePasswordScreen(),
       },
     );
   }

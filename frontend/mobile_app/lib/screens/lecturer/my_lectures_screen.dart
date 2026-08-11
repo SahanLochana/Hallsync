@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/lecture_model.dart';
 import '../../services/lecture_service.dart';
 import 'lecture_detail_screen.dart';
+import '../campus_map_screen.dart';
 
 import 'timetable_screen.dart';
 
@@ -335,11 +336,23 @@ class _MyLecturesScreenState extends State<MyLecturesScreen> {
           ),
           const SizedBox(height: 12),
           
-          // Details
+          
           _buildInfoRow(Icons.people_alt_outlined, 'Batch: $batchName'),
           const SizedBox(height: 8),
-          _buildInfoRow(Icons.location_on_outlined, 'Hall: ${lecture.venue}'),
-          const SizedBox(height: 8),
+
+          _buildInfoRow(
+            Icons.location_on_outlined, 
+            'Hall: ${lecture.venue}',
+            isLink: true, 
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CampusMapScreen(selectedHallName: lecture.venue),
+                ),
+              );
+            },
+          ),
           _buildInfoRow(Icons.calendar_today_outlined, _formatShortDate(lecture.date)),
           
           const SizedBox(height: 20),
@@ -400,19 +413,25 @@ class _MyLecturesScreenState extends State<MyLecturesScreen> {
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String text) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: const Color(0xFF6B7280)),
-        const SizedBox(width: 8),
-        Text(
-          text,
-          style: const TextStyle(
-            fontSize: 14,
-            color: Color(0xFF4B5563),
+
+  Widget _buildInfoRow(IconData icon, String text, {VoidCallback? onTap, bool isLink = false}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: isLink ? const Color(0xFF1E3A8A) : const Color(0xFF6B7280)),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 14,
+              color: isLink ? const Color(0xFF1E3A8A) : const Color(0xFF4B5563),
+              fontWeight: isLink ? FontWeight.w600 : FontWeight.normal,
+              decoration: isLink ? TextDecoration.underline : TextDecoration.none, // Link එකක් වගේ පේන්න ඉරක් අඳිනවා
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

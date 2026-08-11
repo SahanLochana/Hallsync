@@ -6,6 +6,7 @@ from app.services.timetable_service import TimetableService
 from app.services.notification_service import NotificationService
 from app.services.module_service import ModuleService
 from app.repositories.user_repo import UserRepo
+from app.services.department_service import DepartmentService
 
 
 def get_database() -> Database:
