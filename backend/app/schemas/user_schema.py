@@ -10,6 +10,7 @@ class User(BaseModel):
     faculty: str
     role: Literal["student", "lecturer", "admin"]
     academicYear: Optional[str] = None
+    modules: Optional[list[str]] = []
 
 
 class UsersResponse(BaseModel):
@@ -24,6 +25,8 @@ class UserUpdate(BaseModel):
     faculty: Optional[str] = None
     role: Optional[Literal["student", "lecturer", "admin"]] = None
     academicYear: Optional[str] = None
+    modules: Optional[list[str]] = None
+
 
 
 class LoginRequest(BaseModel):
@@ -33,11 +36,6 @@ class LoginRequest(BaseModel):
 
 class LoginResponse(BaseModel):
     status: str
-    username: str
-    email: str
-    department: str
-    batch: str
-    role: str
     token: str
     isFirstLogin: bool
 

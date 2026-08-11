@@ -9,12 +9,12 @@ import 'package:mobile_app/services/auth_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  await dotenv.load(fileName: ".env"); 
+
+  await dotenv.load(fileName: ".env");
 
   final token = await AuthService.getToken();
   final role = await AuthService.getRole();
-  
+
   String initialRoute = '/';
   if (token != null && role != null) {
     if (role == 'lecturer') {
@@ -45,6 +45,8 @@ class HallSyncApp extends StatelessWidget {
         '/': (context) => const LoginScreen(),
         '/student-dashboard': (context) => const HomeScreen(),
         '/lecturer-dashboard': (context) => const LecturerDashboard(),
+        '/campus-map': (context) => const CampusMapScreen(),
+        '/change-password': (context) => const ChangePasswordScreen(),
       },
     );
   }

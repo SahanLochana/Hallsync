@@ -15,10 +15,12 @@
  */
 
 import { useState, useEffect, useMemo, memo } from "react";
-import { Plus, Upload, Search, X, Eye, ChevronDown, UserX } from "lucide-react";
+import { Plus, Upload, Search, X, Eye, Users, UserX } from "lucide-react";
 
 import TopHeader from "@/views/components/TopHeader";
 import Sidebar from "@/views/components/Sidebar";
+import PageHeader from "@/views/components/PageHeader";
+import { TableSkeleton } from "@/views/components/SkeletonLoader";
 import AddUserModal from "@/views/components/AddUserModal";
 import UserDetailModal from "@/views/components/UserDetailModal";
 import ImportCsvModal from "@/views/components/ImportCsvModal";
@@ -264,9 +266,16 @@ export default function UsersPage() {
         <Sidebar />
 
         {/* Main content */}
-        <main className="flex-1 p-5 flex flex-col gap-5 overflow-hidden">
+        <main className="flex-1 p-6 flex flex-col gap-6 overflow-hidden">
+          {/* ── Page heading ─────────────────────────────────────────────── */}
+          <PageHeader
+            icon={Users}
+            title="User Management"
+            subtitle="Manage admin, lecturer, and student accounts"
+          />
+
           {/* ── SEARCH & FILTER BAR ──────────────────────────────────────────── */}
-          <div className="bg-white rounded-xl shadow-[0_8px_25px_rgba(226,232,240,0.75)] px-5 py-3 flex items-center justify-between gap-4 flex-wrap">
+          <div className="bg-white rounded-2xl shadow-[0_8px_25px_rgba(226,232,240,0.75)] px-5 py-3 flex items-center justify-between gap-4 flex-wrap">
             <form
               onSubmit={handleSearchApply}
               className="flex items-center gap-3 flex-wrap flex-1 max-w-4xl"
@@ -283,9 +292,9 @@ export default function UsersPage() {
                   placeholder="Search by ID or name..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-9 pr-8 py-2.5 rounded-xl bg-[#f1f5f9] text-sm text-[#0f172a]
+                  className="w-full pl-9 pr-8 py-2 rounded-xl bg-[#f1f5f9] text-xs text-[#0f172a]
                              placeholder:text-[#94a3b8] border border-transparent focus:outline-none focus:ring-2
-                             focus:ring-[#1e3b8a]/20 focus:border-[#1e3b8a] transition"
+                             focus:ring-[#1e3b8a]/30 transition"
                 />
                 {search && (
                   <button
@@ -333,7 +342,7 @@ export default function UsersPage() {
               <button
                 type="submit"
                 id="btn-search-users-submit"
-                className="bg-[#1e3b8a] text-white font-semibold text-sm flex items-center gap-1.5 px-4.5 py-2.5 rounded-xl hover:bg-[#162d6b] active:scale-[0.98] transition-all shadow-[0_4px_12px_rgba(30,59,138,0.2)] cursor-pointer"
+                className="bg-[#1e3b8a] text-white font-semibold text-xs flex items-center gap-1.5 px-4 py-2 rounded-xl hover:bg-[#162d6b] active:scale-[0.98] transition-all shadow-[0_4px_12px_rgba(30,59,138,0.2)] cursor-pointer"
               >
                 <Search size={14} strokeWidth={2.5} />
                 Search
@@ -348,7 +357,7 @@ export default function UsersPage() {
           </div>
 
           {/* ── USER TABLE ───────────────────────────────────────────────────── */}
-          <div className="bg-white flex-1 rounded-xl shadow-[0_8px_25px_rgba(226,232,240,0.75)] overflow-auto">
+          <div className="bg-white flex-1 rounded-2xl shadow-[0_8px_25px_rgba(226,232,240,0.75)] overflow-auto">
             {/* Error state */}
             {error && (
               <div className="p-4 text-red-600 text-sm bg-red-50 border-b border-red-100">
@@ -356,71 +365,71 @@ export default function UsersPage() {
               </div>
             )}
 
-            <table className="w-full text-left border-collapse">
-              {/* Table header */}
-              <thead className="sticky top-0 bg-white z-10">
-                <tr className="border-b border-[#94a3b8]/20">
-                  <th className="py-3 pl-5 pr-3 text-[rgba(0,0,0,0.5)] font-semibold text-xs uppercase tracking-wide whitespace-nowrap">
-                    University ID
-                  </th>
-                  <th className="py-3 px-3 text-[rgba(0,0,0,0.5)] font-semibold text-xs uppercase tracking-wide">
-                    Name
-                  </th>
-                  <th className="py-3 px-3 text-[rgba(0,0,0,0.5)] font-semibold text-xs uppercase tracking-wide">
-                    Role
-                  </th>
-                  <th className="py-3 pl-3 pr-5 text-[rgba(0,0,0,0.5)] font-semibold text-xs uppercase tracking-wide text-right">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-
-              {/* Table body */}
-              <tbody>
-                {isLoading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <SkeletonRow key={`skeleton-${i}`} />
-                  ))
-                ) : paginatedUsers.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={4}
-                      className="py-16 text-center text-[#94a3b8] text-sm"
-                    >
-                      <div className="flex flex-col items-center justify-center gap-3">
-                        <UserX
-                          size={36}
-                          className="text-[#cbd5e1] animate-bounce"
-                        />
-                        <span className="font-semibold text-slate-700">
-                          No users match your search
-                        </span>
-                        <span className="text-xs text-slate-400 max-w-[240px] leading-relaxed mx-auto">
-                          Try adjusting your search keywords, role filters, or
-                          department filters to see matches.
-                        </span>
-                        {(activeSearch ||
-                          activeRole !== "All" ||
-                          activeYear !== "All" ||
-                          activeDept !== "All") && (
-                          <button
-                            onClick={handleResetFilters}
-                            type="button"
-                            className="mt-2 px-4 py-2 rounded-xl bg-[#1e3b8a] hover:bg-[#162d6b] text-white text-xs font-semibold transition-all shadow-[0_4px_12px_rgba(30,59,138,0.2)] cursor-pointer"
-                          >
-                            Reset Filters
-                          </button>
-                        )}
-                      </div>
-                    </td>
+            {isLoading ? (
+              <TableSkeleton columns={4} rows={5} />
+            ) : (
+              <table className="w-full text-left border-collapse">
+                {/* Table header */}
+                <thead className="sticky top-0 bg-white z-10">
+                  <tr className="border-b border-[#94a3b8]/20">
+                    <th className="py-3 pl-5 pr-3 text-[#94a3b8] text-[11px] font-bold uppercase tracking-wider whitespace-nowrap">
+                      University ID
+                    </th>
+                    <th className="py-3 px-3 text-[#94a3b8] text-[11px] font-bold uppercase tracking-wider">
+                      Name
+                    </th>
+                    <th className="py-3 px-3 text-[#94a3b8] text-[11px] font-bold uppercase tracking-wider">
+                      Role
+                    </th>
+                    <th className="py-3 pl-3 pr-5 text-[#94a3b8] text-[11px] font-bold uppercase tracking-wider text-right">
+                      Actions
+                    </th>
                   </tr>
-                ) : (
-                  paginatedUsers.map((user) => (
-                    <UserRow key={user.id} user={user} onView={setViewTarget} />
-                  ))
-                )}
-              </tbody>
-            </table>
+                </thead>
+
+                {/* Table body */}
+                <tbody>
+                  {paginatedUsers.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={4}
+                        className="py-16 text-center text-[#94a3b8] text-sm"
+                      >
+                        <div className="flex flex-col items-center justify-center gap-3">
+                          <UserX
+                            size={36}
+                            className="text-[#cbd5e1] animate-bounce"
+                          />
+                          <span className="font-semibold text-slate-700">
+                            No users match your search
+                          </span>
+                          <span className="text-xs text-slate-400 max-w-[240px] leading-relaxed mx-auto">
+                            Try adjusting your search keywords, role filters, or
+                            department filters to see matches.
+                          </span>
+                          {(activeSearch ||
+                            activeRole !== "All" ||
+                            activeYear !== "All" ||
+                            activeDept !== "All") && (
+                            <button
+                              onClick={handleResetFilters}
+                              type="button"
+                              className="mt-2 px-4 py-2 rounded-xl bg-[#1e3b8a] hover:bg-[#162d6b] text-white text-xs font-semibold transition-all shadow-[0_4px_12px_rgba(30,59,138,0.2)] cursor-pointer"
+                            >
+                              Reset Filters
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    paginatedUsers.map((user) => (
+                      <UserRow key={user.id} user={user} onView={setViewTarget} />
+                    ))
+                  )}
+                </tbody>
+              </table>
+            )}
           </div>
 
           {/* ── PAGINATION BAR ──────────────────────────────────────────────── */}

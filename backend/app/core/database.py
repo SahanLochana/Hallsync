@@ -20,6 +20,9 @@ class Database:
         timetables_collection = self.database.get_collection("timetables")
         await timetables_collection.create_index("timetable_id", unique=True)
 
+        modules_collection = self.database.get_collection("modules")
+        await modules_collection.create_index("semester", unique=True)
+
     def get_collection(self, name: str):
         return self.database[name]
 
@@ -27,9 +30,12 @@ class Database:
         await self.client.close()
 
 
-# Global instances for legacy routes
-db = Database()
-lectures_collection = db.get_collection("lectures")
-reports_collection = db.get_collection("reports")
-timetables_collection = db.get_collection("timetables")
-notifications_collection = db.get_collection("notifications")
+_db_instance: Database | None = None
+
+
+def get_db() -> Database:
+    global _db_instance
+    if _db_instance is None:
+        _db_instance = Database()
+    return _db_instance
+

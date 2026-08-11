@@ -1,96 +1,118 @@
 import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 
 class AuthService {
   //use 10.0.2.2 rather than localhost for Android emulator. For iOS simulator, you can use localhost.
   static const String baseUrl = 'http://10.0.2.2:8000';
+  static const _storage = FlutterSecureStorage();
 
-  /// Returns true if login is successful, false otherwise.
-  static Future<bool> login(String email, String password) async {
+  /// Logs in the user, decodes the returned JWT token, and saves credentials to secure storage.
+  /// Returns a map with success, isFirstLogin, role, and optional message.
+  static Future<Map<String, dynamic>> login(
+      String username, String password) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/api/auth/login'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'username': email, 'password': password}),
+        body: jsonEncode({'username': username, 'password': password}),
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if (data['status'] == 'success') {
-          // Save token, role, and email
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('jwt_token', data['token']);
-          await prefs.setString('user_role', data['role']);
-          await prefs.setString('user_email', data['email']);
-          await prefs.setString('user_name', data['username'] ?? 'User');
-          await prefs.setString(
-            'user_department',
-            data['department'] ?? 'Unknown',
-          );
-          await prefs.setString('user_batch', data['batch'] ?? 'Unknown');
-          return true;
+        if (data['status'] == 'success' && data['token'] != null) {
+          final String token = data['token'];
+          final bool isFirstLogin =
+              data['isFirstLogin'] ?? data['is_first_login'] ?? false;
+
+          // Decode JWT token using JwtDecoder
+          final Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+
+          final String role = decodedToken['role'] ?? '';
+          final String email = decodedToken['email'] ?? '';
+          final String name = decodedToken['sub'] ?? 'User';
+          final String department = decodedToken['department'] ?? '';
+          final String batch = decodedToken['batch'] ?? '';
+
+          // Save token, role, and user info to FlutterSecureStorage
+          await _storage.write(key: 'jwt_token', value: token);
+          await _storage.write(key: 'user_role', value: role);
+          await _storage.write(key: 'user_email', value: email);
+          await _storage.write(key: 'user_name', value: name);
+          await _storage.write(key: 'user_department', value: department);
+          await _storage.write(key: 'user_batch', value: batch);
+
+          return {
+            'success': true,
+            'isFirstLogin': isFirstLogin,
+            'role': role,
+            'token': token,
+          };
         }
       }
-      return false;
+
+      try {
+        final errorData = jsonDecode(response.body);
+        return {
+          'success': false,
+          'message': errorData['detail'] ?? 'Invalid credentials',
+        };
+      } catch (_) {
+        return {
+          'success': false,
+          'message': 'Login failed (${response.statusCode})',
+        };
+      }
     } catch (e) {
       print('Login error: $e');
-      return false;
+      return {
+        'success': false,
+        'message': 'Cannot connect to HallSync Server',
+      };
     }
   }
 
   /// Clears stored authentication data.
   static Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('jwt_token');
-    await prefs.remove('user_role');
-    await prefs.remove('user_email');
-    await prefs.remove('user_name');
-    await prefs.remove('user_department');
-    await prefs.remove('user_batch');
+    await _storage.deleteAll();
   }
 
   /// Gets the stored JWT token.
   static Future<String?> getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('jwt_token');
+    return await _storage.read(key: 'jwt_token');
   }
 
   /// Gets the stored user role.
   static Future<String?> getRole() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('user_role');
+    return await _storage.read(key: 'user_role');
   }
 
   /// Gets the stored user email.
   static Future<String?> getEmail() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('user_email');
+    return await _storage.read(key: 'user_email');
   }
 
   /// Gets the stored user name.
   static Future<String?> getUsername() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('user_name');
+    return await _storage.read(key: 'user_name');
   }
 
   /// Gets the stored user department.
   static Future<String?> getDepartment() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('user_department');
+    return await _storage.read(key: 'user_department');
   }
 
   /// Gets the stored user batch.
   static Future<String?> getBatch() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('user_batch');
+    return await _storage.read(key: 'user_batch');
   }
 
   /// Requests a password reset OTP for the given email
   Future<Map<String, dynamic>> requestPasswordReset(String email) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/auth/forgot-password'),
+        Uri.parse('$baseUrl/api/auth/forgot-password'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email}),
       );
@@ -113,7 +135,7 @@ class AuthService {
   Future<Map<String, dynamic>> verifyOTP(String email, String otp) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/auth/verify-otp'),
+        Uri.parse('$baseUrl/api/auth/verify-otp'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'otp': otp}),
       );
@@ -142,7 +164,7 @@ class AuthService {
   ) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/auth/reset-password'),
+        Uri.parse('$baseUrl/api/auth/reset-password'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': email,

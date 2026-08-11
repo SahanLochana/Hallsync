@@ -4,7 +4,7 @@ import { ChevronDown } from "lucide-react";
 
 /**
  * FilterDropdown — views/components/FilterDropdown.jsx
- * A reusable select dropdown with standardized styles for filters.
+ * Standardized filter select dropdown matching the app design system.
  *
  * Props:
  *   id                 {string}   — select element ID
@@ -12,6 +12,7 @@ import { ChevronDown } from "lucide-react";
  *   onChange           {Function} — callback called with selected option value
  *   options            {Array}    — option elements (array of strings or {value, label} objects)
  *   defaultOptionLabel {string}   — optional label for "All" option (defaults to value "All")
+ *   disabled           {boolean}  — optional disabled state
  */
 export default function FilterDropdown({
   id,
@@ -28,10 +29,10 @@ export default function FilterDropdown({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
-        className="appearance-none bg-[#f1f5f9] border border-[#e2e8f0] text-[#475569] font-medium text-sm
-                   pl-3 pr-8 py-2.5 rounded-xl cursor-pointer focus:outline-none focus:ring-2
-                   focus:ring-[#1e3b8a]/20 focus:border-[#1e3b8a] transition-all hover:bg-[#e2e8f0]/40
-                   disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-100"
+        className="appearance-none bg-[#f1f5f9] text-[#64748b] font-semibold text-xs
+                   pl-3 pr-8 py-2 rounded-xl border border-transparent cursor-pointer
+                   focus:outline-none focus:ring-2 focus:ring-[#1e3b8a]/30 transition-colors
+                   hover:bg-[#e2e8f0] disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {defaultOptionLabel && (
           <option value="All">{defaultOptionLabel}</option>

@@ -43,7 +43,44 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _fetchLectures() async {
+   
     try {
+      // අපි තාවකාලිකව department සහ batch filter කරන එක අයින් කරමු
+      // එතකොට ඔක්කොම lectures ටික ළමයාට එන්න ඕනේ
+      final data = await LectureService.getLectures(); 
+      
+      if (mounted) {
+        setState(() {
+          _lectures = data.map<Lecture>((json) {
+            return Lecture(
+              id: json['_id'] ?? '',
+              title: json['title'] ?? '',
+              subject: json['department'] ?? 'Unknown',
+              venue: json['hall_id'] ?? '',
+              date: DateTime.parse(json['start_time']),
+              startTime: TimeOfDay.fromDateTime(DateTime.parse(json['start_time'])),
+              endTime: TimeOfDay.fromDateTime(DateTime.parse(json['end_time'])),
+              description: json['description'] ?? '',
+              lecturerId: json['lecturer_id'] ?? '',
+              tags: [],
+            );
+          }).toList();
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load lectures: $e')),
+        );
+      }
+    }
+  }
+
+      /*
       final department = await AuthService.getDepartment();
       final batch = await AuthService.getBatch();
       
@@ -82,6 +119,16 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
   }
+*/
+  List<Lecture> get _todaysLectures {
+    final now = DateTime.now();
+    return _lectures
+        .where((l) =>
+            l.date.year == now.year &&
+            l.date.month == now.month &&
+            l.date.day == now.day)
+        .toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -115,6 +162,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildDashboardContent() {
+    final todays = _todaysLectures;
     return SafeArea(
       child: Column(
         children: [
@@ -134,10 +182,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 12),
                   if (_isLoading)
                     const Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator()))
-                  else if (_lectures.isEmpty)
+                  else if (todays.isEmpty)
                     _buildEmptyLectures()
                   else
-                    ..._lectures.map((l) => LectureCard(lecture: l)),
+                    ...todays.map((l) => LectureCard(lecture: l)),
                   const SizedBox(height: 20),
                 ],
               ),

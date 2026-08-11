@@ -1,23 +1,27 @@
 # pyrefly: ignore [missing-import]
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from typing import Optional
 from datetime import datetime
 
 # pyrefly: ignore [missing-import]
 from bson import ObjectId
-from app.core.database import lectures_collection
+from app.core.database import Database
 from app.schemas.lecture_schema import LectureCreate, AvailabilityCheck
 from app.services.notification_service import NotificationService
 from app.repositories.user_repo import UserRepo
+from app.dependencies.db import get_database, get_notification_service, get_user_repo
 
 router = APIRouter()
 
-notification_service = NotificationService()
-user_repo = UserRepo()
-
 
 @router.post("")
-async def create_lecture(lecture: LectureCreate):
+async def create_lecture(
+    lecture: LectureCreate,
+    db: Database = Depends(get_database),
+    notification_service: NotificationService = Depends(get_notification_service),
+    user_repo: UserRepo = Depends(get_user_repo),
+):
+    lectures_collection = db.get_collection("lectures")
 
     # Validate dates
     if lecture.end_time <= lecture.start_time:
@@ -38,7 +42,6 @@ async def create_lecture(lecture: LectureCreate):
         # Try to resolve lecturer name
         try:
             # lecturer_id contains the email of the lecturer based on frontend
-            # Wait, get_users returns a list. If we don't have get_user_by_email exposed, we can do:
             cursor = user_repo.user_collection.find({"email": lecture.lecturer_id})
             users = await cursor.to_list(length=1)
             if users and users[0].get("name"):
@@ -62,7 +65,9 @@ async def get_lectures(
     lecturer_id: Optional[str] = None,
     department: Optional[str] = None,
     batch: Optional[str] = None,
+    db: Database = Depends(get_database),
 ):
+    lectures_collection = db.get_collection("lectures")
     query = {}
     if lecturer_id:
         query["lecturer_id"] = lecturer_id
@@ -83,7 +88,11 @@ async def get_lectures(
 
 
 @router.post("/check-availability")
-async def check_availability(check: AvailabilityCheck):
+async def check_availability(
+    check: AvailabilityCheck,
+    db: Database = Depends(get_database),
+):
+    lectures_collection = db.get_collection("lectures")
     # Find any lecture in the same hall that overlaps with the given time period
     overlap_query = {
         "hall_id": check.hall_id,
@@ -114,7 +123,12 @@ async def check_availability(check: AvailabilityCheck):
 
 
 @router.put("/{lecture_id}")
-async def update_lecture(lecture_id: str, lecture: LectureCreate):
+async def update_lecture(
+    lecture_id: str,
+    lecture: LectureCreate,
+    db: Database = Depends(get_database),
+):
+    lectures_collection = db.get_collection("lectures")
     if lecture.end_time <= lecture.start_time:
         raise HTTPException(status_code=400, detail="End time must be after start time")
 
@@ -137,7 +151,11 @@ async def update_lecture(lecture_id: str, lecture: LectureCreate):
 
 
 @router.delete("/{lecture_id}")
-async def delete_lecture(lecture_id: str):
+async def delete_lecture(
+    lecture_id: str,
+    db: Database = Depends(get_database),
+):
+    lectures_collection = db.get_collection("lectures")
     try:
         obj_id = ObjectId(lecture_id)
     except Exception:
@@ -149,3 +167,4 @@ async def delete_lecture(lecture_id: str):
         raise HTTPException(status_code=404, detail="Lecture not found")
 
     return {"message": "Lecture deleted successfully"}
+

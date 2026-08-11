@@ -1,8 +1,15 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 
 class HallService {
-  static const String baseUrl = 'http://localhost:8000/api';
+  static String get baseUrl {
+    if (Platform.isAndroid) {
+      return 'http://10.0.2.2:8000/api';
+    } else {
+      return 'http://localhost:8000/api';
+    }
+  }
 
   static Future<List<Map<String, dynamic>>> getHalls() async {
     try {

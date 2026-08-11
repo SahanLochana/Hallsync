@@ -14,7 +14,8 @@
 import { useState, useEffect } from "react";
 import { X, UserPlus } from "lucide-react";
 import { ROLE_FORM_OPTIONS } from "@/models/userModel";
-import { validateUserForm } from "@/controllers/userController";
+import { validateUserForm, fetchModules } from "@/controllers/userController";
+import LectureAssigner from "@/views/components/LectureAssigner";
 
 const EMPTY_FORM = {
   universityId: "",
@@ -22,8 +23,9 @@ const EMPTY_FORM = {
   email: "",
   role: "Student",
   department: "",
-  faculty: "",
+  faculty: "Computing",
   academicYear: "",
+  modules: [],
 };
 
 const DEPARTMENT_OPTIONS = [
@@ -39,7 +41,7 @@ const BATCH_OPTIONS = [
   "4th Year",
 ];
 
-// ── Field wrapper — defined at module level to avoid React re-mount on rerender ─
+// ── Field wrapper ──────────────────────────────────────────────────────────────
 function Field({ label, error, children }) {
   return (
     <div className="flex flex-col gap-1.5">
@@ -54,18 +56,26 @@ function Field({ label, error, children }) {
 
 // ── Modal ──────────────────────────────────────────────────────────────────────
 export default function AddUserModal({ isOpen, onClose, onConfirm }) {
-  const [form, setForm]     = useState(EMPTY_FORM);
-  const [errors, setErrors] = useState({});
+  const [form, setForm]                 = useState(EMPTY_FORM);
+  const [errors, setErrors]             = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [modalError, setModalError] = useState(null);
+  const [modalError, setModalError]     = useState(null);
+  const [availableModules, setAvailableModules] = useState([]);
+  const [isLoadingModules, setIsLoadingModules] = useState(false);
 
-  // Reset whenever modal opens
+  // Fetch modules & reset form whenever modal opens
   useEffect(() => {
     if (isOpen) {
       setForm(EMPTY_FORM);
       setErrors({});
       setIsSubmitting(false);
       setModalError(null);
+
+      setIsLoadingModules(true);
+      fetchModules().then((mods) => {
+        setAvailableModules(mods);
+        setIsLoadingModules(false);
+      });
     }
   }, [isOpen]);
 
@@ -76,13 +86,30 @@ export default function AddUserModal({ isOpen, onClose, onConfirm }) {
     setErrors((prev) => ({ ...prev, [field]: undefined }));
   }
 
+  function handleAddModule(moduleId) {
+    if (!moduleId) return;
+    if (!form.modules.includes(moduleId)) {
+      set("modules", [...form.modules, moduleId]);
+    }
+  }
+
+  function handleRemoveModule(moduleId) {
+    set(
+      "modules",
+      form.modules.filter((m) => m !== moduleId)
+    );
+  }
+
   async function handleSubmit() {
     const e = validateUserForm(form);
-    if (Object.keys(e).length > 0) { setErrors(e); return; }
+    if (Object.keys(e).length > 0) {
+      setErrors(e);
+      return;
+    }
     setIsSubmitting(true);
     setModalError(null);
     try {
-      await onConfirm({ ...form });
+      await onConfirm({ ...form, faculty: "Computing" });
     } catch (err) {
       setModalError(err.message || "Failed to add user.");
     } finally {
@@ -95,6 +122,7 @@ export default function AddUserModal({ isOpen, onClose, onConfirm }) {
     "focus:outline-none focus:ring-2 focus:ring-[#1e3b8a]/30 focus:border-[#1e3b8a] transition w-full";
 
   const isStudent = form.role === "Student";
+  const isLecturer = form.role === "Lecturer";
   const idLabel = isStudent ? "University ID" : "Lecturer ID";
   const idPlaceholder = isStudent ? "e.g. SE/2021/001" : "e.g. LEC/001";
 
@@ -129,10 +157,12 @@ export default function AddUserModal({ isOpen, onClose, onConfirm }) {
           </div>
 
           {/* Body */}
-          <div className="p-6 flex flex-col gap-4 overflow-y-auto max-h-[70vh]">
+          <div className="p-6 flex flex-col gap-4 overflow-y-auto max-h-[75vh]">
             {modalError && (
               <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 flex items-center gap-2">
-                <span className="text-red-600 text-xs font-medium">{modalError}</span>
+                <span className="text-red-600 text-xs font-medium">
+                  {modalError}
+                </span>
               </div>
             )}
 
@@ -146,7 +176,9 @@ export default function AddUserModal({ isOpen, onClose, onConfirm }) {
                 onChange={(e) => set("role", e.target.value)}
               >
                 {ROLE_FORM_OPTIONS.map((r) => (
-                  <option key={r} value={r}>{r}</option>
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
                 ))}
               </select>
             </Field>
@@ -188,18 +220,6 @@ export default function AddUserModal({ isOpen, onClose, onConfirm }) {
               />
             </Field>
 
-            {/* Faculty */}
-            <Field label="Faculty" error={errors.faculty}>
-              <input
-                id="add-user-faculty"
-                disabled={isSubmitting}
-                className={`${inputCls} ${errors.faculty ? "border-red-400" : "border-[#e2e8f0]"} disabled:opacity-60 disabled:cursor-not-allowed`}
-                placeholder="e.g. Computing"
-                value={form.faculty}
-                onChange={(e) => set("faculty", e.target.value)}
-              />
-            </Field>
-
             {/* Department */}
             <Field label="Department" error={errors.department}>
               <select
@@ -209,9 +229,13 @@ export default function AddUserModal({ isOpen, onClose, onConfirm }) {
                 value={form.department}
                 onChange={(e) => set("department", e.target.value)}
               >
-                <option value="" disabled>Select Department</option>
+                <option value="" disabled>
+                  Select Department
+                </option>
                 {DEPARTMENT_OPTIONS.map((dept) => (
-                  <option key={dept} value={dept}>{dept}</option>
+                  <option key={dept} value={dept}>
+                    {dept}
+                  </option>
                 ))}
               </select>
             </Field>
@@ -226,15 +250,31 @@ export default function AddUserModal({ isOpen, onClose, onConfirm }) {
                   value={form.academicYear}
                   onChange={(e) => set("academicYear", e.target.value)}
                 >
-                  <option value="" disabled>Select Academic Year</option>
+                  <option value="" disabled>
+                    Select Academic Year
+                  </option>
                   {BATCH_OPTIONS.map((batch) => (
-                    <option key={batch} value={batch}>{batch}</option>
+                    <option key={batch} value={batch}>
+                      {batch}
+                    </option>
                   ))}
                 </select>
               </Field>
             )}
 
-
+            {/* Assigned Modules (Lecturer only with Search) */}
+            {isLecturer && (
+              <Field label="Assigned Lectures" error={errors.modules}>
+                <LectureAssigner
+                  assignedModuleIds={form.modules}
+                  availableModules={availableModules}
+                  onAddModule={handleAddModule}
+                  onRemoveModule={handleRemoveModule}
+                  disabled={isSubmitting}
+                  isLoading={isLoadingModules}
+                />
+              </Field>
+            )}
           </div>
 
           {/* Footer */}
