@@ -1,3 +1,4 @@
+from app.services.department_service import DepartmentService
 from fastapi import Depends
 from app.core.database import Database, get_db
 from app.services.user_service import UserService
@@ -38,7 +39,6 @@ def get_module_service(db: Database = Depends(get_db)) -> ModuleService:
 
 
 def get_department_service(db: Database = Depends(get_db)) -> DepartmentService:
-    from app.services.department_service import DepartmentService
     return DepartmentService(db)
 
 

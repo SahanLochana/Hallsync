@@ -9,18 +9,33 @@
  * Reusable components used:
  *   - TopHeader        (views/components/TopHeader.jsx)
  *   - Sidebar          (views/components/Sidebar.jsx)
+ *   - PageHeader       (views/components/PageHeader.jsx)
+ *   - TableSkeleton    (views/components/SkeletonLoader.jsx)
+ *   - FilterDropdown   (views/components/FilterDropdown.jsx)
  *   - AddHallModal     (views/components/AddHallModal.jsx)
  *   - ManageHallModal  (views/components/ManageHallModal.jsx)
  */
 
 import { useState, useEffect } from "react";
-import { Plus, Search, X, ChevronDown, Settings2, MapPin, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import {
+  Plus,
+  Search,
+  X,
+  Settings2,
+  MapPin,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  DoorOpen,
+} from "lucide-react";
 
-import TopHeader       from "@/views/components/TopHeader";
-import Sidebar         from "@/views/components/Sidebar";
-import AddHallModal     from "@/views/components/AddHallModal";
-import ManageHallModal  from "@/views/components/ManageHallModal";
-import LoadingSpinner  from "@/views/components/LoadingSpinner";
+import TopHeader from "@/views/components/TopHeader";
+import Sidebar from "@/views/components/Sidebar";
+import PageHeader from "@/views/components/PageHeader";
+import { TableSkeleton } from "@/views/components/SkeletonLoader";
+import FilterDropdown from "@/views/components/FilterDropdown";
+import AddHallModal from "@/views/components/AddHallModal";
+import ManageHallModal from "@/views/components/ManageHallModal";
 
 import { AVAILABILITY_OPTIONS } from "@/models/hallModel";
 import {
@@ -49,8 +64,10 @@ function AvailabilityBadge({ available }) {
 // ── Location status badge ──────────────────────────────────────────────────────
 function LocationBadge({ latitude, longitude }) {
   const configured =
-    latitude !== null && latitude !== undefined &&
-    longitude !== null && longitude !== undefined;
+    latitude !== null &&
+    latitude !== undefined &&
+    longitude !== null &&
+    longitude !== undefined;
 
   return configured ? (
     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-100 text-sky-700">
@@ -114,32 +131,6 @@ function HallRow({ hall, onManage }) {
   );
 }
 
-// ── Availability filter dropdown ───────────────────────────────────────────────
-function AvailabilityDropdown({ value, onChange }) {
-  return (
-    <div className="relative">
-      <select
-        id="filter-hall-availability"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="appearance-none bg-[#f1f1f1] text-[#64748b] font-semibold text-sm
-                   pl-3 pr-8 py-2.5 rounded-lg cursor-pointer focus:outline-none
-                   hover:bg-[#e8eaed] transition-colors"
-      >
-        {AVAILABILITY_OPTIONS.map((opt) => (
-          <option key={opt} value={opt}>
-            {opt === "All" ? "All Halls" : opt}
-          </option>
-        ))}
-      </select>
-      <ChevronDown
-        size={16}
-        className="absolute right-2 top-1/2 -translate-y-1/2 text-[#64748b] pointer-events-none"
-      />
-    </div>
-  );
-}
-
 // ── Empty state ────────────────────────────────────────────────────────────────
 function EmptyState({ isFiltered }) {
   return (
@@ -168,14 +159,14 @@ function EmptyState({ isFiltered }) {
 // ── Main View ─────────────────────────────────────────────────────────────────
 export default function HallsPage() {
   // ── State ────────────────────────────────────────────────────────────────
-  const [halls, setHalls]           = useState([]);
-  const [isLoading, setIsLoading]   = useState(false);
-  const [error, setError]           = useState(null);
-  const [search, setSearch]         = useState("");
+  const [halls, setHalls] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [search, setSearch] = useState("");
   const [availability, setAvailability] = useState("All");
 
   // Modals
-  const [showAdd, setShowAdd]           = useState(false);
+  const [showAdd, setShowAdd] = useState(false);
   const [manageTarget, setManageTarget] = useState(null); // hall object
 
   // Action feedback
@@ -198,7 +189,6 @@ export default function HallsPage() {
       await addHall(halls, form, setHalls);
       setShowAdd(false);
     } catch (err) {
-      // Don't set action error here, let the modal handle it
       throw err;
     }
   }
@@ -207,10 +197,9 @@ export default function HallsPage() {
     setActionError(null);
     try {
       const updated = await editHall(halls, hallId, updateForm, setHalls);
-      // Sync manageTarget with fresh data so modal shows updated values
       setManageTarget(updated);
     } catch (err) {
-      throw err; // re-throw so modal can handle it and reset isSaving
+      throw err;
     }
   }
 
@@ -232,14 +221,16 @@ export default function HallsPage() {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="h-screen flex flex-col bg-[#f8fafc]">
-
       {/* ── TOP HEADER ──────────────────────────────────────────────────── */}
       <TopHeader
         title="Hall Management"
         actions={
           <button
             id="btn-add-hall"
-            onClick={() => { setActionError(null); setShowAdd(true); }}
+            onClick={() => {
+              setActionError(null);
+              setShowAdd(true);
+            }}
             className="bg-[#1e3b8a] text-white font-semibold text-sm
                        flex items-center gap-1.5 px-4 h-10 rounded-2xl
                        hover:bg-[#162d6b] active:scale-[0.98] transition-all
@@ -253,32 +244,33 @@ export default function HallsPage() {
 
       {/* ── BODY — SIDEBAR + CONTENT ─────────────────────────────────────── */}
       <div className="flex flex-1 overflow-hidden">
-
         {/* Sidebar */}
         <Sidebar />
 
         {/* Main content */}
-        <main className="flex-1 p-5 flex flex-col gap-5 overflow-hidden">
-
+        <main className="flex-1 p-6 flex flex-col gap-6 overflow-hidden">
           {/* ── Page heading ─────────────────────────────────────────────── */}
-          <div className="flex flex-col gap-0.5">
-            <h1 className="text-[#0f172a] font-bold text-xl tracking-tight">Hall Management</h1>
-            <p className="text-[#64748b] text-sm">Manage lecture halls and location information</p>
-          </div>
+          <PageHeader
+            icon={DoorOpen}
+            title="Hall Management"
+            subtitle="Manage lecture halls and location information"
+          />
 
           {/* ── Action error banner ───────────────────────────────────────── */}
           {actionError && (
             <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-600 text-sm flex items-center justify-between gap-3">
               <span>{actionError}</span>
-              <button onClick={() => setActionError(null)} className="text-red-400 hover:text-red-600">
+              <button
+                onClick={() => setActionError(null)}
+                className="text-red-400 hover:text-red-600"
+              >
                 <X size={14} />
               </button>
             </div>
           )}
 
           {/* ── SEARCH & FILTER BAR ───────────────────────────────────────── */}
-          <div className="bg-white rounded-xl shadow-[0_8px_25px_rgba(226,232,240,0.75)] px-5 py-3 flex items-center gap-4">
-
+          <div className="bg-white rounded-2xl shadow-[0_8px_25px_rgba(226,232,240,0.75)] px-5 py-3 flex items-center gap-4">
             {/* Search input */}
             <div className="relative flex-1 max-w-sm">
               <Search
@@ -291,7 +283,7 @@ export default function HallsPage() {
                 placeholder="Search by Hall ID or Hall Name…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-8 py-2.5 rounded-lg bg-[#f1f5f9] text-sm text-[#0f172a]
+                className="w-full pl-9 pr-8 py-2 rounded-xl bg-[#f1f5f9] text-xs text-[#0f172a]
                            placeholder:text-[#94a3b8] focus:outline-none focus:ring-2
                            focus:ring-[#1e3b8a]/30 transition"
               />
@@ -306,14 +298,20 @@ export default function HallsPage() {
             </div>
 
             {/* Availability filter */}
-            <AvailabilityDropdown value={availability} onChange={setAvailability} />
+            <FilterDropdown
+              id="filter-hall-availability"
+              value={availability}
+              onChange={setAvailability}
+              options={AVAILABILITY_OPTIONS}
+              defaultOptionLabel="All Halls"
+            />
 
             {/* Clear filters */}
             {isFiltered && (
               <button
                 id="btn-clear-hall-filters"
                 onClick={handleClearFilters}
-                className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-[#64748b] text-sm font-semibold
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[#64748b] text-xs font-semibold
                            hover:bg-[#f1f5f9] hover:text-[#334155] transition-colors"
               >
                 <X size={14} strokeWidth={2.5} />
@@ -323,13 +321,13 @@ export default function HallsPage() {
 
             {/* Result count */}
             <span className="ml-auto text-[#94a3b8] text-xs font-medium hidden sm:block whitespace-nowrap">
-              {filteredHalls.length} hall{filteredHalls.length !== 1 ? "s" : ""} found
+              {filteredHalls.length} hall{filteredHalls.length !== 1 ? "s" : ""}{" "}
+              found
             </span>
           </div>
 
           {/* ── HALL TABLE ────────────────────────────────────────────────── */}
-          <div className="bg-white flex-1 rounded-xl shadow-[0_8px_25px_rgba(226,232,240,0.75)] overflow-auto">
-
+          <div className="bg-white flex-1 rounded-2xl shadow-[0_8px_25px_rgba(226,232,240,0.75)] overflow-auto">
             {/* Load error */}
             {error && (
               <div className="p-4 text-red-600 text-sm bg-red-50 border-b border-red-100">
@@ -339,28 +337,28 @@ export default function HallsPage() {
 
             {/* Loading state */}
             {isLoading ? (
-              <LoadingSpinner text="Loading halls…" />
+              <TableSkeleton columns={6} rows={5} />
             ) : (
               <table className="w-full text-left border-collapse">
                 {/* Table header */}
                 <thead className="sticky top-0 bg-white z-10">
                   <tr className="border-b border-[#94a3b8]/20">
-                    <th className="py-3 pl-5 pr-3 text-[rgba(0,0,0,0.5)] font-semibold text-xs uppercase tracking-wide whitespace-nowrap">
+                    <th className="py-3 pl-5 pr-3 text-[#94a3b8] text-[11px] font-bold uppercase tracking-wider whitespace-nowrap">
                       Hall ID
                     </th>
-                    <th className="py-3 px-3 text-[rgba(0,0,0,0.5)] font-semibold text-xs uppercase tracking-wide">
+                    <th className="py-3 px-3 text-[#94a3b8] text-[11px] font-bold uppercase tracking-wider">
                       Hall Name
                     </th>
-                    <th className="py-3 px-3 text-[rgba(0,0,0,0.5)] font-semibold text-xs uppercase tracking-wide">
+                    <th className="py-3 px-3 text-[#94a3b8] text-[11px] font-bold uppercase tracking-wider">
                       Availability
                     </th>
-                    <th className="py-3 px-3 text-[rgba(0,0,0,0.5)] font-semibold text-xs uppercase tracking-wide">
+                    <th className="py-3 px-3 text-[#94a3b8] text-[11px] font-bold uppercase tracking-wider">
                       Capacity
                     </th>
-                    <th className="py-3 px-3 text-[rgba(0,0,0,0.5)] font-semibold text-xs uppercase tracking-wide">
+                    <th className="py-3 px-3 text-[#94a3b8] text-[11px] font-bold uppercase tracking-wider">
                       Location Status
                     </th>
-                    <th className="py-3 pl-3 pr-5 text-[rgba(0,0,0,0.5)] font-semibold text-xs uppercase tracking-wide text-right">
+                    <th className="py-3 pl-3 pr-5 text-[#94a3b8] text-[11px] font-bold uppercase tracking-wider text-right">
                       Actions
                     </th>
                   </tr>
