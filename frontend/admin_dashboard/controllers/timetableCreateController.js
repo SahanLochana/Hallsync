@@ -6,8 +6,7 @@
  */
 
 import { generateId } from "../models/timetableCreateModel";
-
-const BASE_URL = "http://localhost:8000/api/timetables";
+import apiService from "../services/apiService";
 
 // ── Draft lecture management ──────────────────────────────────────────────────
 
@@ -68,17 +67,7 @@ export async function handleSaveTimetable(meta, lectures, router) {
   };
 
   try {
-    const response = await fetch(`${BASE_URL}/`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.detail || "Failed to create timetable.");
-    }
-
+    await apiService.timetables.create(payload);
     router.push("/timetable");
     return { ok: true };
   } catch (err) {

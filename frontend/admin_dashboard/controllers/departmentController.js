@@ -3,7 +3,7 @@
  * Business logic for fetching and filtering department data.
  */
 
-const BASE_URL = "http://localhost:8000/api/departments";
+import apiService from "../services/apiService";
 
 /**
  * Normalizes and formats a department object from backend response.
@@ -31,11 +31,7 @@ export async function fetchDepartments(setDepartments, setIsLoading, setError) {
   setIsLoading(true);
   setError(null);
   try {
-    const response = await fetch(`${BASE_URL}/`);
-    if (!response.ok) {
-      throw new Error(`Error: ${response.status} ${response.statusText}`);
-    }
-    const data = await response.json();
+    const data = await apiService.departments.getAll();
     const rawList = data.response || [];
     setDepartments(rawList.map(mapDepartment));
   } catch (err) {

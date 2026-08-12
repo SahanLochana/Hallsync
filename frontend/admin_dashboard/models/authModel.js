@@ -1,13 +1,11 @@
 /**
  * Auth Model — LOGIN
- * Defines the shape of the login form state and any
- * data-related helpers (validation rules, initial state).
- * No API calls live here — that belongs in the controller.
+ * Defines the shape of the login form state and validation rules.
  */
 
 /** Initial state for the login form */
 export const initialLoginState = {
-  email: "",
+  adminId: "",
   password: "",
   showPassword: false,
   isLoading: false,
@@ -15,18 +13,17 @@ export const initialLoginState = {
 };
 
 /**
- * Simple client-side validation for login fields.
- * Returns an error string if invalid, or null if valid.
- * @param {string} email
+ * Client-side validation for admin login fields.
+ * @param {string} adminId
  * @param {string} password
  * @returns {string|null}
  */
-export function validateLoginForm(email, password) {
-  if (!email || !email.includes("@")) {
-    return "Please enter a valid email address.";
+export function validateLoginForm(adminId, password) {
+  if (!adminId || !adminId.trim()) {
+    return "Please enter your Admin ID.";
   }
-  if (!password || password.length < 6) {
-    return "Password must be at least 6 characters.";
+  if (!password || !password.trim()) {
+    return "Please enter your Password.";
   }
   return null;
 }

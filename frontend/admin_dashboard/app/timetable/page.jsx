@@ -1,15 +1,12 @@
-/**
- * Next.js Route — /timetable
- * Thin route file — only imports and renders the TimetablePage view.
- *
- * MVC separation:
- *   Model      →  models/timetableModel.js
- *   Controller →  controllers/timetableController.js
- *   View       →  views/pages/timetable/TimetablePage.jsx  ← rendered here
- */
+"use client";
 
 import TimetablePage from "@/views/pages/timetable/TimetablePage";
+import AuthGuard from "@/views/components/AuthGuard";
 
 export default function TimetableRoute() {
-  return <TimetablePage />;
+  return (
+    <AuthGuard>
+      <TimetablePage />
+    </AuthGuard>
+  );
 }

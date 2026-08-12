@@ -2,7 +2,7 @@
 
 /**
  * SkeletonLoader — views/components/SkeletonLoader.jsx
- * Reusable animated pulse skeleton loading placeholders for tables and cards.
+ * Reusable animated pulse skeleton loading placeholders for tables, cards, and pages.
  */
 
 /**
@@ -54,6 +54,71 @@ export function CardSkeleton({ count = 3 }) {
           <div className="h-12 bg-slate-100 rounded-xl mt-2" />
         </div>
       ))}
+    </div>
+  );
+}
+
+/**
+ * TimetableGridSkeleton — Renders animated skeleton for the timetable calendar grid.
+ */
+export function TimetableGridSkeleton() {
+  return (
+    <div className="w-full h-full p-4 grid grid-cols-5 gap-3 animate-pulse">
+      {Array.from({ length: 5 }).map((_, dIdx) => (
+        <div key={`skel-day-${dIdx}`} className="flex flex-col gap-3">
+          <div className="h-8 bg-slate-200 rounded-lg w-full" />
+          <div className="h-24 bg-slate-100 rounded-xl w-full" />
+          <div className="h-36 bg-slate-200/80 rounded-xl w-full" />
+          <div className="h-20 bg-slate-100 rounded-xl w-full" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * PageSkeleton — Full page animated skeleton used during route loading / auth checking.
+ */
+export function PageSkeleton() {
+  return (
+    <div className="h-screen flex flex-col bg-[#f8fafc] overflow-hidden animate-pulse">
+      {/* Header Skeleton */}
+      <header className="bg-white border-b border-[#e2e8f0] flex items-center justify-between px-6 py-3 shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="bg-slate-200 w-10 h-10 rounded-2xl" />
+          <div className="h-5 w-28 bg-slate-200 rounded-md" />
+        </div>
+        <div className="h-9 w-24 bg-slate-100 rounded-xl" />
+      </header>
+
+      {/* Main Layout Skeleton */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar Skeleton */}
+        <aside className="bg-white flex flex-col items-center py-6 px-2.5 gap-3 border-r border-[#e2e8f0] shrink-0 h-full w-16">
+          <div className="w-10 h-10 bg-slate-200 rounded-2xl" />
+          <div className="w-10 h-10 bg-slate-200 rounded-2xl" />
+          <div className="w-10 h-10 bg-slate-200 rounded-2xl" />
+          <div className="w-10 h-10 bg-slate-200 rounded-2xl" />
+          <div className="w-10 h-10 bg-slate-200 rounded-2xl mt-auto" />
+        </aside>
+
+        {/* Content Skeleton */}
+        <main className="flex-1 p-6 flex flex-col gap-6 overflow-hidden">
+          <div className="flex flex-col gap-2">
+            <div className="h-7 w-48 bg-slate-200 rounded-lg" />
+            <div className="h-4 w-72 bg-slate-100 rounded-md" />
+          </div>
+
+          <div className="bg-white rounded-2xl p-5 shadow-[0_8px_25px_rgba(226,232,240,0.75)] flex items-center gap-4">
+            <div className="h-9 w-64 bg-slate-100 rounded-xl" />
+            <div className="h-9 w-32 bg-slate-100 rounded-xl ml-auto" />
+          </div>
+
+          <div className="bg-[#ffffff] flex-1 rounded-2xl shadow-[0_8px_25px_rgba(226,232,240,0.75)] p-4">
+            <TableSkeleton columns={5} rows={6} />
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
