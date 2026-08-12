@@ -33,6 +33,12 @@ class UserRepo:
         user = await self.user_collection.find_one({"email": email})
         return self._format_user(user) if user else None
 
+    async def get_user_by_identifier(self, identifier: str) -> Optional[dict]:
+        user = await self.user_collection.find_one(
+            {"$or": [{"email": identifier}, {"universityId": identifier}]}
+        )
+        return self._format_user(user) if user else None
+
     async def update_user(
         self, university_id: str, update_data: dict
     ) -> Optional[dict]:

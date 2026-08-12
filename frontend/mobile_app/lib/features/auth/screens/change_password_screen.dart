@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../../services/auth_service.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
-  const ChangePasswordScreen({super.key});
+  const ChangePasswordScreen({super.key, this.identifier});
+
+  final String? identifier;
 
   @override
   State<ChangePasswordScreen> createState() => _ChangePasswordScreenState();
@@ -14,7 +17,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
-  bool _obscurePassword = true;
+  bool _obscureCurrentPassword = true;
+  bool _obscureNewPassword = true;
+  bool _obscureConfirmPassword = true;
+  bool _isLoading = false;
+
+  String? _identifier;
 
   static const Color primaryBlue = Color(0xFF1E5AA8);
   static const Color backgroundColor = Color(0xFFF4F7FB);
@@ -26,10 +34,6 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     return InputDecoration(
       labelText: label,
       prefixIcon: Icon(icon, color: textLight),
-      suffixIcon: IconButton(
-        icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
-        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-      ),
       filled: true,
       fillColor: const Color(0xFFF9FAFB),
       border: OutlineInputBorder(
@@ -39,13 +43,54 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     );
   }
 
-  void _handleChangePassword() {
-    if (_formKey.currentState!.validate()) {
+  @override
+  void initState() {
+    super.initState();
+    _identifier = widget.identifier?.trim();
+  }
+
+  Future<void> _handleChangePassword() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final identifier = _identifier ?? await AuthService.getEmail();
+    if (identifier == null || identifier.isEmpty) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Password updated successfully")),
+        const SnackBar(content: Text('No user identifier available for password change')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    final result = await AuthService.changePassword(
+      identifier: identifier,
+      currentPassword: _currentPasswordController.text,
+      newPassword: _newPasswordController.text,
+    );
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (result['success'] == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['message'] ?? 'Password updated successfully')),
       );
 
-      // Later: Navigate to dashboard
+      final role = (await AuthService.getRole())?.toLowerCase();
+      final dashboardRoute = role == 'lecturer'
+          ? '/lecturer-dashboard'
+          : '/student-dashboard';
+
+      if (!mounted) return;
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        dashboardRoute,
+        (route) => false,
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['message'] ?? 'Failed to update password')),
+      );
     }
   }
 
@@ -80,41 +125,69 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
                     TextFormField(
                       controller: _currentPasswordController,
-                      obscureText: _obscurePassword,
+                      obscureText: _obscureCurrentPassword,
                       validator: (value) =>
-                      value!.isEmpty ? "Enter current password" : null,
-                      decoration:
-                      _inputDecoration("Current Password", Icons.lock),
+                          value == null || value.isEmpty ? "Enter current password" : null,
+                      decoration: _inputDecoration("Current Password", Icons.lock).copyWith(
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscureCurrentPassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                          ),
+                          onPressed: () => setState(
+                            () => _obscureCurrentPassword = !_obscureCurrentPassword,
+                          ),
+                        ),
+                      ),
                     ),
 
                     const SizedBox(height: 16),
 
                     TextFormField(
                       controller: _newPasswordController,
-                      obscureText: _obscurePassword,
+                      obscureText: _obscureNewPassword,
                       validator: (value) {
-                        if (value!.length < 6) {
+                        if (value == null || value.length < 6) {
                           return "Min 6 characters";
                         }
                         return null;
                       },
-                      decoration:
-                      _inputDecoration("New Password", Icons.lock_outline),
+                      decoration: _inputDecoration("New Password", Icons.lock_outline).copyWith(
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscureNewPassword ? Icons.visibility_off : Icons.visibility,
+                          ),
+                          onPressed: () => setState(
+                            () => _obscureNewPassword = !_obscureNewPassword,
+                          ),
+                        ),
+                      ),
                     ),
 
                     const SizedBox(height: 16),
 
                     TextFormField(
                       controller: _confirmPasswordController,
-                      obscureText: _obscurePassword,
+                      obscureText: _obscureConfirmPassword,
                       validator: (value) {
-                        if (value != _newPasswordController.text) {
+                        if (value == null || value != _newPasswordController.text) {
                           return "Passwords do not match";
                         }
                         return null;
                       },
-                      decoration:
-                      _inputDecoration("Confirm Password", Icons.lock_reset),
+                      decoration: _inputDecoration("Confirm Password", Icons.lock_reset).copyWith(
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscureConfirmPassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                          ),
+                          onPressed: () => setState(
+                            () => _obscureConfirmPassword = !_obscureConfirmPassword,
+                          ),
+                        ),
+                      ),
                     ),
 
                     const SizedBox(height: 24),
@@ -122,7 +195,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: _handleChangePassword,
+                        onPressed: _isLoading ? null : _handleChangePassword,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: primaryBlue,
                           foregroundColor: Colors.white,
@@ -134,7 +207,16 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                             borderRadius: BorderRadius.circular(14),
                           ),
                         ),
-                        child: const Text("Update Password"),
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text("Update Password"),
                       ),
                     ),
                   ],
