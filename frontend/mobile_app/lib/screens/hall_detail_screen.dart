@@ -179,9 +179,9 @@ class _HallDetailScreenState extends State<HallDetailScreen> {
             const SizedBox(height: 12),
             Text(
               hall.description!,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
-                color: Colors.white90,
+                color: Colors.white.withOpacity(0.9),
                 height: 1.4,
               ),
             ),

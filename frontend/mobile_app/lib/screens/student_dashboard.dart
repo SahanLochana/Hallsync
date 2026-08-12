@@ -306,8 +306,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
+                    children: [
+                      const Text(
                         'Check Hall Availability',
                         style: TextStyle(
                           color: Colors.white,
@@ -315,11 +315,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
                         'Browse all lecture halls, real-time status & facilities',
                         style: TextStyle(
-                          color: Colors.white80,
+                          color: Colors.white.withOpacity(0.8),
                           fontSize: 12,
                         ),
                       ),
