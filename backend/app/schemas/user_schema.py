@@ -41,7 +41,9 @@ class LoginResponse(BaseModel):
 
 
 class ChangePasswordRequest(BaseModel):
-    username: str
+    identifier: Optional[str] = None
+    username: Optional[str] = None
+    email: Optional[str] = None
     current_password: str
     new_password: str
 
