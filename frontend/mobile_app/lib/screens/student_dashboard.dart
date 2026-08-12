@@ -11,6 +11,7 @@ import '../services/auth_service.dart';
 import '../services/lecture_service.dart';
 import 'settings_screen.dart';
 import 'notifications_screen.dart';
+import 'halls_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -174,7 +175,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   const SizedBox(height: 24),
                   _buildHeader(),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 20),
+                  _buildHallAvailabilityCard(),
+                  const SizedBox(height: 24),
                   SectionHeader(
                     title: "Today's Lectures",
                     onActionTap: () {},
@@ -250,6 +253,87 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(color: Color(0xFF9E9E9E), fontSize: 15),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHallAvailabilityCard() {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1E3A8A), Color(0xFF2563EB)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1E3A8A).withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const HallsScreen()),
+            );
+          },
+          borderRadius: BorderRadius.circular(18),
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.18),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.meeting_room_outlined,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Check Hall Availability',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Browse all lecture halls, real-time status & facilities',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white,
+                  size: 16,
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
