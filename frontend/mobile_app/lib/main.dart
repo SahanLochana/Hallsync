@@ -5,6 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mobile_app/screens/campus_map_screen.dart';
 import 'package:mobile_app/screens/student_dashboard.dart';
 import 'package:mobile_app/screens/lecturer/lecturer_dashboard.dart';
+import 'package:mobile_app/screens/halls_screen.dart';
 import 'package:mobile_app/services/auth_service.dart';
 
 Future<void> main() async {
@@ -46,6 +47,7 @@ class HallSyncApp extends StatelessWidget {
         '/student-dashboard': (context) => const HomeScreen(),
         '/lecturer-dashboard': (context) => const LecturerDashboard(),
         '/campus-map': (context) => const CampusMapScreen(),
+        '/halls': (context) => const HallsScreen(),
         '/change-password': (context) => const ChangePasswordScreen(),
       },
     );
