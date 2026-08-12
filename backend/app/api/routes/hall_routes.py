@@ -7,6 +7,7 @@ from app.schemas.hall_schema import (
 )
 from app.services.hall_service import HallService
 from app.dependencies.db import get_hall_service
+from typing import Optional
 
 router = APIRouter()
 
@@ -73,7 +74,6 @@ async def get_hall_schedule(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve hall schedule: {str(e)}",
         )
-
 
 
 @router.post("/", response_model=Hall, status_code=status.HTTP_201_CREATED)
@@ -184,4 +184,3 @@ async def delete_hall(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete hall: {str(e)}",
         )
-
