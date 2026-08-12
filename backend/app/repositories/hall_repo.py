@@ -16,12 +16,17 @@ class HallRepo:
         """Strip MongoDB _id and normalise field names for the API schema."""
         doc = doc.copy()
         doc.pop("_id", None)
+        doc.setdefault("building", "Faculty of Computing")
+        doc.setdefault("floor", "Ground Floor")
+        doc.setdefault("type", "Lecture Hall")
+        doc.setdefault("amenities", ["Projector", "AC", "Sound System", "Wi-Fi"])
+        doc.setdefault("description", "Equipped with high-definition projector, sound system, and climate control.")
         return doc
 
     # ── Reads ──────────────────────────────────────────────────────────────────
 
-    async def get_halls(self) -> list[dict]:
-        cursor = self.hall_collection.find()
+    async def get_halls(self, query: Optional[dict] = None) -> list[dict]:
+        cursor = self.hall_collection.find(query or {})
         halls = await cursor.to_list()
         return [self._format_hall(h) for h in halls]
 
