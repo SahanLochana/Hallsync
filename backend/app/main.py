@@ -27,7 +27,11 @@ async def startup():
     await db.create_index()
 
 
-
 @app.get("/")
 def home():
     return {"message": "HallSync API"}
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
