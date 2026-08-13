@@ -5,9 +5,11 @@ from app.core.database import get_db
 
 app = FastAPI()
 
-origins = [
+origins = origins = [
     "http://localhost:3000",
-    "http://localhost:3001",
+    "http://localhost:5173",
+    "https://hallsync.tech",
+    "https://www.hallsync.tech",
 ]
 
 app.add_middleware(
