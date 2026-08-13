@@ -73,6 +73,44 @@ class AuthService {
     }
   }
 
+  /// Changes the user's password using the first-login or in-app change flow.
+  static Future<Map<String, dynamic>> changePassword({
+    required String identifier,
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/auth/change-password'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'identifier': identifier,
+          'current_password': currentPassword,
+          'new_password': newPassword,
+        }),
+      );
+
+      final decoded = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'message': decoded['message'] ?? 'Password updated successfully',
+        };
+      }
+
+      return {
+        'success': false,
+        'message': decoded['detail'] ?? 'Failed to update password',
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Network error occurred',
+      };
+    }
+  }
+
   /// Clears stored authentication data.
   static Future<void> logout() async {
     await _storage.deleteAll();

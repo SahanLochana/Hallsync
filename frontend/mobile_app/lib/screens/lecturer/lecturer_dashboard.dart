@@ -9,6 +9,8 @@ import '../../services/auth_service.dart';
 import '../../widgets/bottom_nav_bar.dart';
 import '../settings_screen.dart';
 import '../notifications_screen.dart';
+import '../halls_screen.dart';
+
 class LecturerDashboard extends StatefulWidget {
   const LecturerDashboard({super.key});
 
@@ -175,40 +177,56 @@ class _HomeScreenState extends State<LecturerDashboard> {
           ),
         ),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            _buildActionButton(
-              Icons.add_circle_outline,
-              'Create\nLecture',
-              onTap: _openCreateLecture,
-            ),
-            const SizedBox(width: 16),
-            _buildActionButton(
-              Icons.calendar_today_outlined,
-              'Manage\nSchedule',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const MyLecturesScreen(),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(width: 16),
-            _buildActionButton(
-              Icons.campaign_outlined, 
-              'Send\nAlert',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const send_report_screen.SendReportScreen(),
-                  ),
-                );
-              },
-            ),
-          ],
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _buildActionButton(
+                Icons.meeting_room_outlined,
+                'Hall\nAvailability',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const HallsScreen(),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(width: 16),
+              _buildActionButton(
+                Icons.add_circle_outline,
+                'Create\nLecture',
+                onTap: _openCreateLecture,
+              ),
+              const SizedBox(width: 16),
+              _buildActionButton(
+                Icons.calendar_today_outlined,
+                'Manage\nSchedule',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const MyLecturesScreen(),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(width: 16),
+              _buildActionButton(
+                Icons.campaign_outlined, 
+                'Send\nAlert',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const send_report_screen.SendReportScreen(),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ],
     );

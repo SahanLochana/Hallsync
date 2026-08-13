@@ -42,3 +42,7 @@ def get_department_service(db: Database = Depends(get_db)) -> DepartmentService:
     return DepartmentService(db)
 
 
+def get_admin_service(db: Database = Depends(get_db)):
+    from app.services.admin_service import AdminService
+    return AdminService(db)
+

@@ -28,9 +28,7 @@ import {
   ChevronLeft,
   Loader2,
 } from "lucide-react";
-import { parseSpreadsheetToUsers } from "@/controllers/userController";
-
-const BULK_URL = "http://localhost:8000/api/users/bulk";
+import apiService from "@/services/apiService";
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -141,19 +139,11 @@ export default function ImportCsvModal({ isOpen, onClose, onImport }) {
     }));
 
     try {
-      const response = await fetch(BULK_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ users: payload }),
-      });
+      const data = await apiService.users.bulkImport({ users: payload });
 
-      const data = response.ok
-        ? await response.json()
-        : await response.json().catch(() => null);
-
-      if (!response.ok || !data) {
+      if (!data) {
         // Whole request failed — mark every row as failed
-        const reason = data?.detail || "Server error";
+        const reason = "Server error";
         setImportRows((prev) =>
           prev.map((r) => {
             const wasQueued = rowsToUpload.some(

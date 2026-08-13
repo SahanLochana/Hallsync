@@ -54,29 +54,28 @@ async def change_password(
     user_service: UserService = Depends(get_user_service),
 ):
     """
-    Change password endpoint using Auth0.
-    Password changes should be handled through Auth0 Management API.
+    Change password endpoint for first-login password updates and in-app password changes.
     """
-    # Validate user and update password
-    user = await user_service.authenticate_user(
-        change_request.username, change_request.current_password
+    identifier = (
+        change_request.identifier or change_request.username or change_request.email
     )
 
-    if not user:
+    if not identifier:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Current password is incorrect",
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="An identifier, username, or email is required",
         )
 
-    # Update the password
-    success = await user_service.update_user_password(
-        change_request.username, change_request.new_password
+    success = await user_service.change_password(
+        identifier,
+        change_request.current_password,
+        change_request.new_password,
     )
 
     if not success:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to update password",
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Current password is incorrect or user was not found",
         )
 
     return {"status": "success", "message": "Password updated successfully"}

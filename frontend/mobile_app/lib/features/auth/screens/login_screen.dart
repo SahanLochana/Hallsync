@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../services/auth_service.dart';
+import 'change_password_screen.dart';
 import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -84,10 +85,12 @@ class _LoginScreenState extends State<LoginScreen> {
             "First time login detected. Please update your password.",
             isError: false,
           );
-          Navigator.push(
+          Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => const ForgotPasswordScreen(),
+              builder: (context) => ChangePasswordScreen(
+                identifier: _usernameController.text.trim(),
+              ),
             ),
           ).then((_) {
             _usernameController.clear();

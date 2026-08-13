@@ -33,3 +33,11 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Password field masking — replaces type="password" to bypass browser password manager detection */
+.input-masked {
+  -webkit-text-security: disc;
+  -moz-text-security: disc;
+  text-security: disc;
+}
+

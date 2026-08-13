@@ -37,6 +37,27 @@ class UserService:
             return None
         return user
 
+    async def change_password(
+        self, identifier: str, current_password: str, new_password: str
+    ):
+        user = await self.user_repo.get_user_by_identifier(identifier)
+        if not user:
+            return False
+
+        if not verify_password(current_password, user.get("password_hash", "")):
+            return False
+
+        hashed_password = get_password_hash(new_password)
+        updated = await self.user_repo.update_user(
+            user["universityId"],
+            {
+                "password_hash": hashed_password,
+                "is_first_login": False,
+                "isFirstLogin": False,
+            },
+        )
+        return bool(updated)
+
     async def update_user_password(self, email: str, new_password: str):
         user = await self.user_repo.get_user_by_email(email)
         if not user:

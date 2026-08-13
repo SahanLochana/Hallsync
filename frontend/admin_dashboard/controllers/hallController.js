@@ -4,7 +4,7 @@
  * The View (HallsPage.jsx) calls these functions.
  */
 
-const BASE_URL = "http://localhost:8000/api/halls";
+import apiService from "../services/apiService";
 
 // ── Mapping helpers ────────────────────────────────────────────────────────────
 
@@ -37,11 +37,7 @@ export async function fetchHalls(setHalls, setIsLoading, setError) {
   setIsLoading(true);
   setError(null);
   try {
-    const response = await fetch(`${BASE_URL}/`);
-    if (!response.ok) {
-      throw new Error(`Error: ${response.statusText}`);
-    }
-    const data = await response.json();
+    const data = await apiService.halls.getAll();
     setHalls((data.response || []).map(mapHall));
   } catch (err) {
     setError(err?.message || "Failed to load halls.");
@@ -139,20 +135,10 @@ export async function addHall(halls, form, setHalls) {
     longitude: form.longitude !== "" && form.longitude !== null ? Number(form.longitude) : null,
   };
 
-  const response = await fetch(`${BASE_URL}/`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-
-  if (!response.ok) {
-    const errData = await response.json().catch(() => ({}));
-    throw new Error(errData.detail || "Failed to create hall.");
-  }
-
-  const created = await response.json();
-  setHalls([mapHall(created), ...halls]);
-  return mapHall(created);
+  const created = await apiService.halls.create(payload);
+  const frontendHall = mapHall(created);
+  setHalls([frontendHall, ...halls]);
+  return frontendHall;
 }
 
 /**
@@ -178,18 +164,7 @@ export async function editHall(halls, hallId, updateForm, setHalls) {
       : null;
   }
 
-  const response = await fetch(`${BASE_URL}/${encodeURIComponent(hallId)}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-
-  if (!response.ok) {
-    const errData = await response.json().catch(() => ({}));
-    throw new Error(errData.detail || "Failed to update hall.");
-  }
-
-  const updated = await response.json();
+  const updated = await apiService.halls.update(hallId, payload);
   const frontendHall = mapHall(updated);
   setHalls(halls.map((h) => (h.hallId === hallId ? frontendHall : h)));
   return frontendHall;
@@ -202,14 +177,6 @@ export async function editHall(halls, hallId, updateForm, setHalls) {
  * @param {Function} setHalls — React state setter
  */
 export async function removeHall(halls, hallId, setHalls) {
-  const response = await fetch(`${BASE_URL}/${encodeURIComponent(hallId)}`, {
-    method: "DELETE",
-  });
-
-  if (!response.ok) {
-    const errData = await response.json().catch(() => ({}));
-    throw new Error(errData.detail || "Failed to delete hall.");
-  }
-
+  await apiService.halls.delete(hallId);
   setHalls(halls.filter((h) => h.hallId !== hallId));
 }
