@@ -6,8 +6,7 @@
  */
 
 import { generateId } from "../models/timetableViewModel";
-
-const BASE_URL = "http://localhost:8000/api/timetables";
+import apiService from "../services/apiService";
 
 // ── Add ───────────────────────────────────────────────────────────────────────
 
@@ -28,18 +27,7 @@ export async function handleAddLecture(newLec, lectures, timetableId, setLecture
   const updated = [...lectures, entry];
 
   try {
-    const response = await fetch(`${BASE_URL}/${timetableId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ lectures: updated }),
-    });
-
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.detail || "Failed to add lecture.");
-    }
-
-    const data = await response.json();
+    const data = await apiService.timetables.update(timetableId, { lectures: updated });
     setLectures(data.lectures || []);
     onDone();
   } catch (err) {
@@ -66,11 +54,7 @@ export async function initLectures(timetableId, setLectures, setMeta, setIsLoadi
   setIsLoading(true);
   setError(null);
   try {
-    const response = await fetch(`${BASE_URL}/${timetableId}`);
-    if (!response.ok) {
-      throw new Error(`Error: ${response.statusText}`);
-    }
-    const data = await response.json();
+    const data = await apiService.timetables.getById(timetableId);
     setLectures(data.lectures || []);
     setMeta({ name: data.name, department: data.department, year: data.year });
   } catch (err) {
@@ -120,18 +104,7 @@ export async function handleSaveEdit(edited, lectures, timetableId, setLectures,
   const updated = lectures.map((l) => (l.lec_id === edited.lec_id ? edited : l));
 
   try {
-    const response = await fetch(`${BASE_URL}/${timetableId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ lectures: updated }),
-    });
-
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.detail || "Failed to update lecture.");
-    }
-
-    const data = await response.json();
+    const data = await apiService.timetables.update(timetableId, { lectures: updated });
     setLectures(data.lectures || []);
     onDone();
   } catch (err) {
@@ -161,18 +134,7 @@ export async function handleConfirmDelete(id, lectures, timetableId, setLectures
   const updated = lectures.filter((l) => l.lec_id !== id);
 
   try {
-    const response = await fetch(`${BASE_URL}/${timetableId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ lectures: updated }),
-    });
-
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.detail || "Failed to delete lecture.");
-    }
-
-    const data = await response.json();
+    const data = await apiService.timetables.update(timetableId, { lectures: updated });
     setLectures(data.lectures || []);
     onDone();
   } catch (err) {
@@ -199,15 +161,7 @@ export async function handleDeleteTimetable(timetableId, router, setIsDeleting) 
   }
   if (setIsDeleting) setIsDeleting(true);
   try {
-    const response = await fetch(`${BASE_URL}/${timetableId}`, {
-      method: "DELETE",
-    });
-
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.detail || "Failed to delete timetable.");
-    }
-
+    await apiService.timetables.delete(timetableId);
     router.push("/timetable");
   } catch (err) {
     alert(err?.message || "Failed to delete timetable.");

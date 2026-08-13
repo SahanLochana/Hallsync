@@ -6,45 +6,59 @@
  * State shape is defined in authModel.js.
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Mail, Lock, Eye, EyeOff, LogIn, Landmark } from "lucide-react";
+import { User, Lock, Eye, EyeOff, LogIn, Landmark } from "lucide-react";
 
 import { initialLoginState } from "../../../models/authModel";
 import {
-  handleEmailChange,
+  handleAdminIdChange,
   handlePasswordChange,
   handleTogglePassword,
   handleLogin,
   handleForgotPassword,
+  verifyAdminSession,
 } from "../../../controllers/authController";
 
 export default function LoginPage() {
   const router = useRouter();
 
-  // ── Local state (shape from model) ──────────────────────────────────────
-  const [email, setEmail] = useState(initialLoginState.email);
+  // ── Local state ──────────────────────────────────────────────────────────
+  const [adminId, setAdminId] = useState(initialLoginState.adminId);
   const [password, setPassword] = useState(initialLoginState.password);
-  const [showPassword, setShowPassword] = useState(initialLoginState.showPassword);
+  const [showPassword, setShowPassword] = useState(
+    initialLoginState.showPassword,
+  );
   const [isLoading, setIsLoading] = useState(initialLoginState.isLoading);
   const [error, setError] = useState(initialLoginState.error);
+
+  // If already logged in, automatically redirect to /dashboard
+  useEffect(() => {
+    async function checkExistingAuth() {
+      const valid = await verifyAdminSession();
+      if (valid) {
+        router.push("/dashboard");
+      }
+    }
+    checkExistingAuth();
+  }, [router]);
 
   // ── Form submit ──────────────────────────────────────────────────────────
   function onSubmit(e) {
     e.preventDefault();
-    // Calls: handleLogin (authController) → validateLoginForm (authModel) → loginService (TODO)
     handleLogin({
-      email,
+      adminId,
       password,
       setError,
       setIsLoading,
-      onSuccess: () => router.push("/dashboard"), // navigate after successful login
+      setAdminId,
+      setPassword,
+      onSuccess: () => router.push("/dashboard"),
     });
   }
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">
-
       {/* ── HEADER ──────────────────────────────────────────────────────── */}
       <header className="bg-white border-b border-[#e2e8f0] flex items-center justify-between px-10 py-3">
         {/* Logo */}
@@ -52,14 +66,16 @@ export default function LoginPage() {
           <div className="bg-[#1e3b8a] w-10 h-10 rounded-2xl flex items-center justify-center shrink-0">
             <Landmark size={20} color="white" strokeWidth={2} />
           </div>
-          <span className="text-[#0f172a] font-bold text-[18px] tracking-tight">HallSync</span>
+          <span className="text-[#0f172a] font-bold text-[18px] tracking-tight">
+            HallSync
+          </span>
         </div>
 
         {/* Support button */}
         <button
           id="btn-support"
           className="bg-[#f1f5f9] text-[#334155] font-semibold text-sm px-4 h-10 rounded-2xl hover:bg-[#e2e8f0] transition-colors"
-          onClick={() => {/* TODO: handleSupportClick — navigate to support page */}}
+          onClick={() => {}}
         >
           Support
         </button>
@@ -68,7 +84,6 @@ export default function LoginPage() {
       {/* ── MAIN CONTENT ────────────────────────────────────────────────── */}
       <main className="flex-1 flex items-center justify-center px-6 py-16">
         <div className="bg-white border border-[#e2e8f0] rounded-3xl shadow-[0_20px_25px_-5px_rgba(226,232,240,0.5),0_8px_10px_-6px_rgba(226,232,240,0.5)] w-full max-w-[440px] overflow-hidden">
-
           {/* Card header */}
           <div className="flex flex-col items-center px-8 pt-8 pb-4">
             {/* Icon badge */}
@@ -91,8 +106,24 @@ export default function LoginPage() {
           <form
             id="login-form"
             onSubmit={onSubmit}
+            autoComplete="off"
             className="flex flex-col gap-5 px-8 pt-4 pb-12"
           >
+            {/* Invisible honeypot fields to trick browser password managers */}
+            <input
+              type="text"
+              name="username"
+              style={{ position: "absolute", opacity: 0, top: "-9999px", left: "-9999px" }}
+              tabIndex={-1}
+              autoComplete="off"
+            />
+            <input
+              type="password"
+              name="password"
+              style={{ position: "absolute", opacity: 0, top: "-9999px", left: "-9999px" }}
+              tabIndex={-1}
+              autoComplete="off"
+            />
 
             {/* Error banner */}
             {error && (
@@ -101,25 +132,26 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* Email field */}
+            {/* Admin ID field */}
             <div className="flex flex-col gap-1.5">
               <label
-                htmlFor="input-email"
+                htmlFor="input-admin-id"
                 className="text-[#334155] font-semibold text-sm"
               >
-                University Email
+                Admin ID
               </label>
               <div className="relative">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#94a3b8]">
-                  <Mail size={16} />
+                  <User size={16} />
                 </span>
                 <input
-                  id="input-email"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="admin@university.edu"
-                  value={email}
-                  onChange={(e) => handleEmailChange(e, setEmail, setError)}
+                  id="input-admin-id"
+                  name="hs_usr_field_x"
+                  type="text"
+                  autoComplete="off"
+                  placeholder="admin"
+                  value={adminId}
+                  onChange={(e) => handleAdminIdChange(e, setAdminId, setError)}
                   className="w-full bg-white border border-[#e2e8f0] rounded-2xl pl-10 pr-4 py-3.5 text-[#0f172a] text-base placeholder:text-[#94a3b8] focus:outline-none focus:ring-2 focus:ring-[#1e3b8a]/30 focus:border-[#1e3b8a] transition"
                 />
               </div>
@@ -141,12 +173,17 @@ export default function LoginPage() {
                 </span>
                 <input
                   id="input-password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="current-password"
+                  name="hs_pwd_field_y"
+                  type="text"
+                  autoComplete="off"
                   placeholder="••••••••"
                   value={password}
-                  onChange={(e) => handlePasswordChange(e, setPassword, setError)}
-                  className="w-full bg-white border border-[#e2e8f0] rounded-2xl pl-10 pr-11 py-3.5 text-[#0f172a] text-base placeholder:text-[#94a3b8] focus:outline-none focus:ring-2 focus:ring-[#1e3b8a]/30 focus:border-[#1e3b8a] transition"
+                  onChange={(e) =>
+                    handlePasswordChange(e, setPassword, setError)
+                  }
+                  className={`w-full bg-white border border-[#e2e8f0] rounded-2xl pl-10 pr-11 py-3.5 text-[#0f172a] text-base placeholder:text-[#94a3b8] focus:outline-none focus:ring-2 focus:ring-[#1e3b8a]/30 focus:border-[#1e3b8a] transition ${
+                    showPassword ? "" : "input-masked"
+                  }`}
                 />
                 {/* Toggle password visibility */}
                 <button
@@ -168,7 +205,6 @@ export default function LoginPage() {
                 type="button"
                 onClick={() =>
                   handleForgotPassword(() => router.push("/forgot-password"))
-                  // TODO: handleForgotPassword — navigate to forgot-password page
                 }
                 className="text-[#1e3b8a] font-semibold text-xs hover:underline"
               >
@@ -182,10 +218,9 @@ export default function LoginPage() {
                 id="btn-login"
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-[#1e3b8a] text-white font-bold text-base rounded-2xl py-3.5 flex items-center justify-center gap-2 shadow-[0_10px_15px_-3px_rgba(30,59,138,0.2),0_4px_6px_-4px_rgba(30,59,138,0.2)] hover:bg-[#162d6b] active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full bg-[#1e3b8a] text-white font-bold text-base rounded-2xl py-3.5 flex items-center justify-center gap-2 shadow-[0_10px_15px_-3px_rgba(30,59,138,0.2),0_4px_6px_-4px_rgba(30,59,138,0.2)] hover:bg-[#162d6b] active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
               >
                 {isLoading ? (
-                  /* Loading spinner */
                   <svg
                     className="animate-spin h-5 w-5 text-white"
                     xmlns="http://www.w3.org/2000/svg"
@@ -194,8 +229,11 @@ export default function LoginPage() {
                   >
                     <circle
                       className="opacity-25"
-                      cx="12" cy="12" r="10"
-                      stroke="currentColor" strokeWidth="4"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
                     />
                     <path
                       className="opacity-75"

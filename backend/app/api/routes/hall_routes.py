@@ -7,6 +7,7 @@ from app.schemas.hall_schema import (
 )
 from app.services.hall_service import HallService
 from app.dependencies.db import get_hall_service
+from typing import Optional
 
 router = APIRouter()
 
@@ -15,14 +16,63 @@ router = APIRouter()
 
 
 @router.get("/", response_model=HallsResponse)
-async def get_halls(hall_service: HallService = Depends(get_hall_service)):
+async def get_halls(
+    search: Optional[str] = None,
+    available_only: Optional[bool] = None,
+    min_capacity: Optional[int] = None,
+    amenity: Optional[str] = None,
+    hall_service: HallService = Depends(get_hall_service),
+):
     try:
-        halls = await hall_service.get_halls()
+        halls = await hall_service.get_halls_with_status(
+            search=search,
+            available_only=available_only,
+            min_capacity=min_capacity,
+            amenity=amenity,
+        )
         return {"response": halls}
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to retrieve halls: {str(e)}",
+        )
+
+
+@router.get("/with-status", response_model=HallsResponse)
+async def get_halls_with_status(
+    search: Optional[str] = None,
+    available_only: Optional[bool] = None,
+    min_capacity: Optional[int] = None,
+    amenity: Optional[str] = None,
+    hall_service: HallService = Depends(get_hall_service),
+):
+    try:
+        halls = await hall_service.get_halls_with_status(
+            search=search,
+            available_only=available_only,
+            min_capacity=min_capacity,
+            amenity=amenity,
+        )
+        return {"response": halls}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve halls status: {str(e)}",
+        )
+
+
+@router.get("/{hall_id}/schedule")
+async def get_hall_schedule(
+    hall_id: str,
+    hall_service: HallService = Depends(get_hall_service),
+):
+    try:
+        schedule = await hall_service.get_hall_schedule(hall_id)
+        return {"response": schedule}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve hall schedule: {str(e)}",
         )
 
 
@@ -134,4 +184,3 @@ async def delete_hall(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete hall: {str(e)}",
         )
-

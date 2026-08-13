@@ -1,10 +1,12 @@
-import HomePage from "@/views/pages/home/homePage";
+"use client";
 
-export const metadata = {
-  title: "HallSync — Admin Dashboard",
-  description: "Overview and quick-access management dashboard for HallSync.",
-};
+import HomePage from "@/views/pages/home/homePage";
+import AuthGuard from "@/views/components/AuthGuard";
 
 export default function DashboardRoute() {
-  return <HomePage />;
+  return (
+    <AuthGuard>
+      <HomePage />
+    </AuthGuard>
+  );
 }

@@ -1,15 +1,12 @@
-/**
- * Next.js Route — /department
- * Thin route file rendering the DepartmentPage view.
- */
+"use client";
 
 import DepartmentPage from "@/views/pages/department/DepartmentPage";
-
-export const metadata = {
-  title: "HallSync — Department Management",
-  description: "View faculty departments, degree programs, and curriculum lectures.",
-};
+import AuthGuard from "@/views/components/AuthGuard";
 
 export default function DepartmentRoute() {
-  return <DepartmentPage />;
+  return (
+    <AuthGuard>
+      <DepartmentPage />
+    </AuthGuard>
+  );
 }

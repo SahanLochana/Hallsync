@@ -1,10 +1,14 @@
-import HomePage from "@/views/pages/home/homePage";
+"use client";
 
-export const metadata = {
-  title: "HallSync — Admin Dashboard",
-  description: "Overview and quick-access management dashboard for HallSync.",
-};
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-export default function Home() {
-  return <HomePage />;
+export default function RootPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace("/login");
+  }, [router]);
+
+  return null;
 }

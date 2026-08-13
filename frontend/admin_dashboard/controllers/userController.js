@@ -5,6 +5,7 @@
  */
 
 import * as XLSX from "xlsx";
+import apiService from "../services/apiService";
 
 // ── Data Fetching ──────────────────────────────────────────────────────────────
 
@@ -15,35 +16,34 @@ import * as XLSX from "xlsx";
 export async function fetchModules() {
   try {
     // Primary source: MongoDB departments collection API
-    const deptRes = await fetch("http://localhost:8000/api/departments/");
-    if (deptRes.ok) {
-      const data = await deptRes.json();
-      const departments = data.response || [];
-      const lecturesList = [];
-      departments.forEach((dept) => {
-        (dept.lectures || []).forEach((lec) => {
-          const semStr = typeof lec.semester === "number" ? `Semester ${lec.semester}` : (lec.semester || "");
-          lecturesList.push({
-            module_id: lec.courseCode,
-            courseCode: lec.courseCode,
-            name: lec.courseTitle,
-            courseTitle: lec.courseTitle,
-            semester: semStr,
-            semesterNum: lec.semester,
-            departmentCode: dept.departmentCode,
-            displayText: `${lec.courseCode} - ${lec.courseTitle} (${semStr})`,
-          });
+    const data = await apiService.departments.getAll();
+    const departments = data.response || [];
+    const lecturesList = [];
+    departments.forEach((dept) => {
+      (dept.lectures || []).forEach((lec) => {
+        const semStr = typeof lec.semester === "number" ? `Semester ${lec.semester}` : (lec.semester || "");
+        lecturesList.push({
+          module_id: lec.courseCode,
+          courseCode: lec.courseCode,
+          name: lec.courseTitle,
+          courseTitle: lec.courseTitle,
+          semester: semStr,
+          semesterNum: lec.semester,
+          departmentCode: dept.departmentCode,
+          displayText: `${lec.courseCode} - ${lec.courseTitle} (${semStr})`,
         });
       });
-      if (lecturesList.length > 0) {
-        return lecturesList;
-      }
+    });
+    if (lecturesList.length > 0) {
+      return lecturesList;
     }
+  } catch (err) {
+    console.error("Failed to fetch departments for modules, trying fallback:", err);
+  }
 
+  try {
     // Fallback: modules API
-    const response = await fetch("http://localhost:8000/api/modules");
-    if (!response.ok) return [];
-    const data = await response.json();
+    const data = await apiService.modules.getAll();
     const semesters = data.response || [];
     const modulesList = [];
     semesters.forEach((sem) => {
@@ -61,7 +61,7 @@ export async function fetchModules() {
     });
     return modulesList;
   } catch (err) {
-    console.error("Failed to fetch modules:", err);
+    console.error("Failed to fetch modules fallback:", err);
     return [];
   }
 }
@@ -76,12 +76,7 @@ export async function fetchUsers(setUsers, setIsLoading, setError) {
   setIsLoading(true);
   setError(null);
   try {
-    const response = await fetch("http://localhost:8000/api/users/");
-    if (!response.ok) {
-      throw new Error(`Error: ${response.statusText}`);
-    }
-    const data = await response.json();
-    // universityId is both the unique key and the display ID
+    const data = await apiService.users.getAll();
     const mappedUsers = (data.response || []).map((u) => ({
       id: u.universityId,
       universityId: u.universityId,
@@ -181,18 +176,7 @@ export async function addUser(users, form, setUsers) {
   };
 
   try {
-    const response = await fetch("http://localhost:8000/api/users/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newUser),
-    });
-
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.detail || "Failed to add user to database.");
-    }
-
-    const created = await response.json();
+    const created = await apiService.users.create(newUser);
     const frontendUser = {
       id: created.universityId,
       universityId: created.universityId,
@@ -237,21 +221,7 @@ export async function editUser(users, updatedUser, setUsers) {
   };
 
   try {
-    const response = await fetch(
-      `http://localhost:8000/api/users/${encodeURIComponent(cleanUser.universityId)}`,
-      {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatePayload),
-      },
-    );
-
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.detail || "Failed to update user in database.");
-    }
-
-    const updated = await response.json();
+    const updated = await apiService.users.update(cleanUser.universityId, updatePayload);
     const frontendUser = {
       id: updated.universityId,
       universityId: updated.universityId,
@@ -275,7 +245,6 @@ export async function editUser(users, updatedUser, setUsers) {
   }
 }
 
-
 // ── Spreadsheet Import ────────────────────────────────────────────────────────
 
 /**
@@ -294,7 +263,6 @@ export async function parseSpreadsheetToUsers(file) {
         const firstSheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[firstSheetName];
 
-        // Convert sheet to 2D array of strings
         const sheetData = XLSX.utils.sheet_to_json(worksheet, {
           header: 1,
           defval: "",
@@ -307,7 +275,6 @@ export async function parseSpreadsheetToUsers(file) {
           });
         }
 
-        // Clean headers: lowercase and remove spaces
         const header = sheetData[0].map((h) =>
           String(h).trim().toLowerCase().replace(/\s+/g, ""),
         );
@@ -424,33 +391,19 @@ export async function importUsersFromCsv(parsedRows, users, setUsers) {
     };
 
     try {
-      const response = await fetch("http://localhost:8000/api/users/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newUser),
-      });
-
-      if (response.ok) {
-        const created = await response.json();
-        const frontendUser = {
-          id: created.universityId,
-          universityId: created.universityId,
-          name: created.name,
-          email: created.email,
-          role: created.role.charAt(0).toUpperCase() + created.role.slice(1),
-          department: created.department,
-          faculty: created.faculty,
-          academicYear: created.academicYear || "",
-        };
-        addedUsers.push(frontendUser);
-        importCount++;
-      } else {
-        const errData = await response.json().catch(() => ({}));
-        console.error(
-          `Failed to import user ${r.email}:`,
-          errData.detail || response.statusText,
-        );
-      }
+      const created = await apiService.users.create(newUser);
+      const frontendUser = {
+        id: created.universityId,
+        universityId: created.universityId,
+        name: created.name,
+        email: created.email,
+        role: created.role.charAt(0).toUpperCase() + created.role.slice(1),
+        department: created.department,
+        faculty: created.faculty,
+        academicYear: created.academicYear || "",
+      };
+      addedUsers.push(frontendUser);
+      importCount++;
     } catch (err) {
       console.error(`Network error importing user ${r.email}:`, err);
     }

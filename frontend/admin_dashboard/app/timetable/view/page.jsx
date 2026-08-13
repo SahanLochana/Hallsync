@@ -1,20 +1,16 @@
-/**
- * Next.js Route — /timetable/view
- * Thin route: imports and renders TimetableViewPage.
- *
- * MVC separation:
- *   Model      →  models/timetableViewModel.js
- *   Controller →  controllers/timetableViewController.js
- *   View       →  views/pages/timetable/TimetableViewPage.jsx
- */
+"use client";
 
 import { Suspense } from "react";
 import TimetableViewPage from "@/views/pages/timetable/TimetableViewPage";
+import AuthGuard from "@/views/components/AuthGuard";
+import { PageSkeleton } from "@/views/components/SkeletonLoader";
 
 export default function TimetableViewRoute() {
   return (
-    <Suspense fallback={<div className="flex h-screen items-center justify-center text-slate-500">Loading...</div>}>
-      <TimetableViewPage />
-    </Suspense>
+    <AuthGuard>
+      <Suspense fallback={<PageSkeleton />}>
+        <TimetableViewPage />
+      </Suspense>
+    </AuthGuard>
   );
 }
