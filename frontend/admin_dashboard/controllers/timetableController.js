@@ -4,7 +4,7 @@
  * The View (TimetablePage.jsx) calls these functions.
  */
 
-const BASE_URL = "http://localhost:8000/api/timetables";
+import apiService from "../services/apiService";
 
 /**
  * Fetches the list of timetables from the backend API.
@@ -16,11 +16,7 @@ export async function fetchTimetables(setTimetables, setIsLoading, setError) {
   setIsLoading(true);
   setError(null);
   try {
-    const response = await fetch(`${BASE_URL}/`);
-    if (!response.ok) {
-      throw new Error(`Error: ${response.statusText}`);
-    }
-    const data = await response.json();
+    const data = await apiService.timetables.getAll();
     setTimetables(data.response || []);
   } catch (err) {
     setError(err?.message || "Failed to load timetables.");

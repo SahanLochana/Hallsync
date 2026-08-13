@@ -9,6 +9,7 @@ from app.api.routes.websocket_routes import router as websocket_router
 from app.api.routes.auth import router as auth_router
 from app.api.routes.module_routes import router as module_router
 from app.api.routes.department_routes import router as department_router
+from app.api.routes.admin_auth import router as admin_auth_router
 
 api_router = APIRouter()
 
@@ -18,7 +19,9 @@ api_router.include_router(timetable_router, prefix="/timetables", tags=["Timetab
 api_router.include_router(lecture_router, prefix="/lectures", tags=["Lectures"])
 api_router.include_router(module_router, prefix="/modules", tags=["Modules"])
 api_router.include_router(department_router, prefix="/departments", tags=["Departments"])
+api_router.include_router(admin_auth_router, prefix="/admin", tags=["Admin Auth"])
 api_router.include_router(report_routes, prefix="/reports", tags=["Reports"])
+
 
 api_router.include_router(
     notification_router, prefix="/notifications", tags=["Notifications"]

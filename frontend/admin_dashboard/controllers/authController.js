@@ -1,31 +1,24 @@
 /**
  * Auth Controller — LOGIN
- * Handles all business logic for the login page.
- * The View (page.js) calls these functions; they update
- * state via the provided setState callbacks.
- *
- * When the backend is ready, replace the placeholder
- * comment inside `handleLogin` with the real API call.
+ * Handles all business logic for admin login, session management, and logout.
  */
 
 import { validateLoginForm } from "../models/authModel";
+import apiService from "../services/apiService";
+import { TOKEN_KEY, getAuthToken } from "../services/apiClient";
+
+export { TOKEN_KEY };
 
 /**
- * Called when the user changes the email input.
- * @param {React.ChangeEvent} e
- * @param {Function} setEmail  — React state setter
- * @param {Function} setError  — React state setter
+ * Called when the user changes the admin ID input.
  */
-export function handleEmailChange(e, setEmail, setError) {
-  setEmail(e.target.value);
-  setError(null); // clear error on new input
+export function handleAdminIdChange(e, setAdminId, setError) {
+  setAdminId(e.target.value);
+  setError(null);
 }
 
 /**
  * Called when the user changes the password input.
- * @param {React.ChangeEvent} e
- * @param {Function} setPassword — React state setter
- * @param {Function} setError   — React state setter
  */
 export function handlePasswordChange(e, setPassword, setError) {
   setPassword(e.target.value);
@@ -34,26 +27,24 @@ export function handlePasswordChange(e, setPassword, setError) {
 
 /**
  * Toggles password visibility.
- * @param {Function} setShowPassword — React state setter (boolean)
  */
 export function handleTogglePassword(setShowPassword) {
   setShowPassword((prev) => !prev);
 }
 
 /**
- * Main login handler — called when the user submits the form.
- * Validates inputs, then calls the backend login API.
- *
- * @param {Object} params
- * @param {string}   params.email
- * @param {string}   params.password
- * @param {Function} params.setError
- * @param {Function} params.setIsLoading
- * @param {Function} params.onSuccess    — called after successful login (e.g. router.push)
+ * Main login handler — validates credentials, calls backend API, stores JWT in sessionStorage.
  */
-export async function handleLogin({ email, password, setError, setIsLoading, onSuccess }) {
-  // 1. Client-side validation
-  const validationError = validateLoginForm(email, password);
+export async function handleLogin({
+  adminId,
+  password,
+  setError,
+  setIsLoading,
+  setAdminId,
+  setPassword,
+  onSuccess,
+}) {
+  const validationError = validateLoginForm(adminId, password);
   if (validationError) {
     setError(validationError);
     return;
@@ -63,16 +54,19 @@ export async function handleLogin({ email, password, setError, setIsLoading, onS
   setError(null);
 
   try {
-    // 2. TODO: Call backend login API
-    // Example: const response = await loginAdmin({ email, password });
-    // Replace this block with the actual API service call when backend is ready.
-    // --- loginService.login(email, password) ---
+    const data = await apiService.auth.login(adminId.trim(), password.trim());
 
-    // 3. On success, navigate to the dashboard
-    // onSuccess() will call router.push("/dashboard") from the View
-    onSuccess();
+    if (data && data.token) {
+      sessionStorage.setItem(TOKEN_KEY, data.token);
+
+      if (setAdminId) setAdminId("");
+      if (setPassword) setPassword("");
+
+      if (onSuccess) onSuccess();
+    } else {
+      throw new Error("No authorization token received.");
+    }
   } catch (err) {
-    // 4. Display server-side error to the user
     setError(err?.message || "Login failed. Please check your credentials.");
   } finally {
     setIsLoading(false);
@@ -80,11 +74,37 @@ export async function handleLogin({ email, password, setError, setIsLoading, onS
 }
 
 /**
- * Called when the user clicks "Forgot password?"
- * Delegates navigation to the View via the callback.
- * @param {Function} onForgotPassword — e.g. router.push("/forgot-password")
+ * Verifies current session token stored in sessionStorage.
+ * @returns {Promise<boolean>}
  */
+export async function verifyAdminSession() {
+  if (typeof window === "undefined") return false;
+  const token = getAuthToken();
+  if (!token) return false;
+
+  try {
+    const data = await apiService.auth.verifyToken(token);
+    return data && data.valid === true;
+  } catch (err) {
+    console.error("Token verification error:", err);
+    return false;
+  }
+}
+
+/**
+ * Handles explicit admin logout.
+ */
+export function handleLogout(router) {
+  if (typeof window !== "undefined") {
+    sessionStorage.removeItem(TOKEN_KEY);
+  }
+  if (router) {
+    router.push("/login");
+  } else {
+    window.location.href = "/login";
+  }
+}
+
 export function handleForgotPassword(onForgotPassword) {
-  // TODO: Navigate to forgot-password page
   onForgotPassword();
 }
