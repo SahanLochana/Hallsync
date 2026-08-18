@@ -4,6 +4,9 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 export const metadata = {
   title: "HallSync — Admin Dashboard",
   description: "Faculty Lecture Hall Management and Smart Scheduling System",
+  icons: {
+    icon: "/icon.jpg",
+  },
 };
 
 export default function RootLayout({ children }) {
