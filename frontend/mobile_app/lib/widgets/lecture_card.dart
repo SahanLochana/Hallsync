@@ -116,13 +116,13 @@ class LectureCard extends StatelessWidget {
                                 fontSize: 11,
                                 color: Colors.white,
                                 fontWeight: FontWeight.w500,
-                                decoration: TextDecoration.underline, // Clickable බව පෙන්වන්න ඉරක් අඳිනවා
+                                decoration: TextDecoration.underline, 
                                 decorationColor: Colors.white,
                               ),
                             ),
                             const SizedBox(width: 4),
                             const Icon(
-                              Icons.location_on, // open_in_new_rounded එක වෙනුවට location icon එකක් දැම්මා
+                              Icons.location_on, 
                               color: Colors.white70,
                               size: 12,
                             ),
@@ -130,7 +130,7 @@ class LectureCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    // --- වෙනස් කරපු කොටස මෙතනින් ඉවරයි ---
+                    
 
                   ],
                 ),
