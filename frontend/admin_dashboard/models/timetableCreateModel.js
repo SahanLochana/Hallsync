@@ -17,16 +17,6 @@ export const INITIAL_META = {
   year:       "",
 };
 
-/** Department options for the dropdown */
-export const DEPARTMENT_OPTIONS = [
-  "Information Systems",
-  "Computer Science",
-  "Software Engineering",
-  "Electrical Engineering",
-  "Civil Engineering",
-  "Business Administration",
-];
-
 /** Year options for the dropdown */
 export const YEAR_OPTIONS = [
   "2022/2023",

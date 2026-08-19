@@ -87,4 +87,3 @@ class NotificationService:
             return result.modified_count > 0
         except Exception:
             return False
-

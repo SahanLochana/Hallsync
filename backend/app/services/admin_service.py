@@ -7,7 +7,9 @@ class AdminService:
     def __init__(self, db: Database):
         self.collection = db.get_collection("admin")
 
-    async def authenticate_admin(self, admin_id: str, password: str) -> Optional[Dict[str, Any]]:
+    async def authenticate_admin(
+        self, admin_id: str, password: str
+    ) -> Optional[Dict[str, Any]]:
         # Admin credentials document is stored in 'admin' collection with _id="admin_cred" or matching admin_id
         cred_doc = await self.collection.find_one({"admin_id": admin_id})
         if not cred_doc:

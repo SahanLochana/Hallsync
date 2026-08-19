@@ -3,6 +3,7 @@ from app.core.database import Database
 from bson import ObjectId
 from typing import Optional
 
+
 class TimetableRepo:
     def __init__(self, db: Database):
         self.db = db
@@ -13,7 +14,7 @@ class TimetableRepo:
         doc = doc.copy()
         doc["id"] = str(doc["_id"])
         del doc["_id"]
-        
+
         # Backward compatibility: Map legacy "id" inside lectures to "lec_id"
         if "lectures" in doc and isinstance(doc["lectures"], list):
             formatted_lectures = []
@@ -32,7 +33,14 @@ class TimetableRepo:
     async def get_timetables(self) -> list[dict]:
         cursor = self.timetables_collection.find(
             {},
-            {"_id": 1, "timetable_id": 1, "name": 1, "department": 1, "year": 1, "lastModified": 1}
+            {
+                "_id": 1,
+                "timetable_id": 1,
+                "name": 1,
+                "department": 1,
+                "year": 1,
+                "lastModified": 1,
+            },
         )
         timetables = await cursor.to_list()
         return [self._format_timetable(t) for t in timetables]
@@ -50,7 +58,9 @@ class TimetableRepo:
         await self.timetables_collection.insert_one(db_timetable)
         return self._format_timetable(db_timetable)
 
-    async def update_timetable(self, timetable_id: str, update_data: dict) -> Optional[dict]:
+    async def update_timetable(
+        self, timetable_id: str, update_data: dict
+    ) -> Optional[dict]:
         try:
             obj_id = ObjectId(timetable_id)
         except Exception:

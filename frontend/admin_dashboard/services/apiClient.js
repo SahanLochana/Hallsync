@@ -3,7 +3,8 @@
  * Manages base URL, automatic authorization token injection, error handling, and JSON parsing.
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
 export const TOKEN_KEY = "hallsync_admin_token";
 
 /**
@@ -34,12 +35,18 @@ export function handleUnauthorized() {
  * @returns {Promise<any>}
  */
 export async function apiClient(endpoint, options = {}) {
-  const url = endpoint.startsWith("http") ? endpoint : `${API_BASE_URL}${endpoint}`;
+  const url = endpoint.startsWith("http")
+    ? endpoint
+    : `${API_BASE_URL}${endpoint}`;
 
   const headers = { ...options.headers };
 
   // Set Content-Type to application/json if body exists and is not FormData
-  if (options.body && !(options.body instanceof FormData) && !headers["Content-Type"]) {
+  if (
+    options.body &&
+    !(options.body instanceof FormData) &&
+    !headers["Content-Type"]
+  ) {
     headers["Content-Type"] = "application/json";
   }
 
@@ -60,7 +67,9 @@ export async function apiClient(endpoint, options = {}) {
     if (response.status === 401) {
       handleUnauthorized();
       const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.detail || "Unauthorized access. Please log in again.");
+      throw new Error(
+        errData.detail || "Unauthorized access. Please log in again.",
+      );
     }
 
     // Attempt to parse JSON response
@@ -77,8 +86,8 @@ export async function apiClient(endpoint, options = {}) {
         typeof data === "object" && data.detail
           ? data.detail
           : typeof data === "string" && data
-          ? data
-          : `Request failed with status ${response.status}`;
+            ? data
+            : `Request failed with status ${response.status}`;
       const err = new Error(errorMessage);
       err.status = response.status;
       err.data = data;
@@ -92,7 +101,8 @@ export async function apiClient(endpoint, options = {}) {
 }
 
 /** Convenient HTTP method helpers */
-apiClient.get = (endpoint, options = {}) => apiClient(endpoint, { ...options, method: "GET" });
+apiClient.get = (endpoint, options = {}) =>
+  apiClient(endpoint, { ...options, method: "GET" });
 apiClient.post = (endpoint, body, options = {}) =>
   apiClient(endpoint, {
     ...options,
@@ -105,6 +115,7 @@ apiClient.put = (endpoint, body, options = {}) =>
     method: "PUT",
     body: body instanceof FormData ? body : JSON.stringify(body),
   });
-apiClient.delete = (endpoint, options = {}) => apiClient(endpoint, { ...options, method: "DELETE" });
+apiClient.delete = (endpoint, options = {}) =>
+  apiClient(endpoint, { ...options, method: "DELETE" });
 
 export default apiClient;

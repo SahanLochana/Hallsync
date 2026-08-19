@@ -1,4 +1,5 @@
 from app.core.security import get_password_hash
+from app.core.password_generator import generate_random_password
 from pymongo import ReturnDocument
 from pymongo.errors import BulkWriteError, DuplicateKeyError
 from app.core.database import Database
@@ -57,13 +58,18 @@ class UserRepo:
         result = await self.user_collection.delete_one({"universityId": university_id})
         return result.deleted_count > 0
 
-    async def create_user(self, user_data: dict) -> dict:
+    async def create_user(
+        self, user_data: dict, plain_password: Optional[str] = None
+    ) -> tuple[dict, str]:
         db_user = user_data.copy()
         if "role" in db_user and isinstance(db_user["role"], str):
             db_user["role"] = db_user["role"].capitalize()
 
-        if "password_hash" not in db_user:
-            db_user["password_hash"] = get_password_hash("DefaultPassword123!")
+        if not plain_password and "password_hash" not in db_user:
+            plain_password = generate_random_password(6)
+
+        if "password_hash" not in db_user and plain_password:
+            db_user["password_hash"] = get_password_hash(plain_password)
 
         db_user["is_first_login"] = True
         db_user["reset_otp"] = None
@@ -76,23 +82,29 @@ class UserRepo:
                 f"User with universityId '{db_user.get('universityId')}' already exists."
             )
 
-        return self._format_user(db_user)
+        return self._format_user(db_user), (plain_password or "")
 
     async def bulk_create_users(self, users: list[dict]) -> dict:
         """
         Bulk create users using insert_many.
-        Returns { success: [...formatted docs], failed: [{index, universityId, reason}] }
+        Returns { success: [...formatted docs], failed: [{index, universityId, reason}], passwords: {universityId: plain_password} }
         """
         if not users:
-            return {"success": [], "failed": []}
+            return {"success": [], "failed": [], "passwords": {}}
 
         db_users = []
+        plain_passwords = {}
         for user_data in users:
             db_user = user_data.copy()
             if "role" in db_user and isinstance(db_user["role"], str):
                 db_user["role"] = db_user["role"].capitalize()
+
+            pwd = generate_random_password(6)
             if "password_hash" not in db_user:
-                db_user["password_hash"] = get_password_hash("DefaultPassword123!")
+                db_user["password_hash"] = get_password_hash(pwd)
+                uni_id = db_user.get("universityId", "")
+                if uni_id:
+                    plain_passwords[uni_id] = pwd
 
             db_user["is_first_login"] = True
             db_user["reset_otp"] = None
@@ -135,4 +147,4 @@ class UserRepo:
                     }
                 )
 
-        return {"success": success, "failed": failed}
+        return {"success": success, "failed": failed, "passwords": plain_passwords}

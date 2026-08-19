@@ -28,7 +28,6 @@ class UserUpdate(BaseModel):
     modules: Optional[list[str]] = None
 
 
-
 class LoginRequest(BaseModel):
     username: str
     password: str

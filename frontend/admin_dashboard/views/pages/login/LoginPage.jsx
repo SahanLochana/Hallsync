@@ -8,7 +8,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { User, Lock, Eye, EyeOff, LogIn, Landmark } from "lucide-react";
+import Image from "next/image";
+import { User, Lock, Eye, EyeOff, LogIn } from "lucide-react";
+import logoImg from "@/assets/logo.jpg";
 
 import { initialLoginState } from "../../../models/authModel";
 import {
@@ -63,22 +65,20 @@ export default function LoginPage() {
       <header className="bg-white border-b border-[#e2e8f0] flex items-center justify-between px-10 py-3">
         {/* Logo */}
         <div className="flex items-center gap-3">
-          <div className="bg-[#1e3b8a] w-10 h-10 rounded-2xl flex items-center justify-center shrink-0">
-            <Landmark size={20} color="white" strokeWidth={2} />
+          <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center shrink-0 shadow-sm border border-[#e2e8f0]/80">
+            <Image
+              src={logoImg}
+              alt="HallSync Logo"
+              width={40}
+              height={40}
+              className="w-full h-full object-cover"
+              priority
+            />
           </div>
           <span className="text-[#0f172a] font-bold text-[18px] tracking-tight">
             HallSync
           </span>
         </div>
-
-        {/* Support button */}
-        <button
-          id="btn-support"
-          className="bg-[#f1f5f9] text-[#334155] font-semibold text-sm px-4 h-10 rounded-2xl hover:bg-[#e2e8f0] transition-colors"
-          onClick={() => {}}
-        >
-          Support
-        </button>
       </header>
 
       {/* ── MAIN CONTENT ────────────────────────────────────────────────── */}
@@ -87,8 +87,15 @@ export default function LoginPage() {
           {/* Card header */}
           <div className="flex flex-col items-center px-8 pt-8 pb-4">
             {/* Icon badge */}
-            <div className="bg-[rgba(30,59,138,0.1)] w-16 h-16 rounded-2xl flex items-center justify-center mb-6">
-              <Landmark size={30} color="#1e3b8a" strokeWidth={1.75} />
+            <div className="w-16 h-16 rounded-xl overflow-hidden flex items-center justify-center mb-6 shadow-md border border-[#e2e8f0]/80">
+              <Image
+                src={logoImg}
+                alt="HallSync Logo"
+                width={64}
+                height={64}
+                className="w-full h-full object-cover"
+                priority
+              />
             </div>
 
             {/* Title */}
@@ -113,14 +120,24 @@ export default function LoginPage() {
             <input
               type="text"
               name="username"
-              style={{ position: "absolute", opacity: 0, top: "-9999px", left: "-9999px" }}
+              style={{
+                position: "absolute",
+                opacity: 0,
+                top: "-9999px",
+                left: "-9999px",
+              }}
               tabIndex={-1}
               autoComplete="off"
             />
             <input
               type="password"
               name="password"
-              style={{ position: "absolute", opacity: 0, top: "-9999px", left: "-9999px" }}
+              style={{
+                position: "absolute",
+                opacity: 0,
+                top: "-9999px",
+                left: "-9999px",
+              }}
               tabIndex={-1}
               autoComplete="off"
             />
@@ -196,20 +213,6 @@ export default function LoginPage() {
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
-            </div>
-
-            {/* Forgot password link */}
-            <div className="flex justify-end -mt-2">
-              <button
-                id="btn-forgot-password"
-                type="button"
-                onClick={() =>
-                  handleForgotPassword(() => router.push("/forgot-password"))
-                }
-                className="text-[#1e3b8a] font-semibold text-xs hover:underline"
-              >
-                Forgot password?
-              </button>
             </div>
 
             {/* Submit button */}

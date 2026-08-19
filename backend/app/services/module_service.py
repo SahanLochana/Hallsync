@@ -17,9 +17,7 @@ class ModuleService:
     async def create_semester(self, data: dict) -> dict:
         return await self.module_repo.create_semester(data)
 
-    async def update_semester(
-        self, semester: str, update_data: dict
-    ) -> Optional[dict]:
+    async def update_semester(self, semester: str, update_data: dict) -> Optional[dict]:
         return await self.module_repo.update_semester(semester, update_data)
 
     async def delete_semester(self, semester: str) -> bool:
@@ -33,6 +31,4 @@ class ModuleService:
     async def remove_module_from_semester(
         self, semester: str, module_id: str
     ) -> Optional[dict]:
-        return await self.module_repo.remove_module_from_semester(
-            semester, module_id
-        )
+        return await self.module_repo.remove_module_from_semester(semester, module_id)

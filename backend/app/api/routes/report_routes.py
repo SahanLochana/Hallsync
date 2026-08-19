@@ -24,4 +24,3 @@ async def create_report(
         return ReportResponse(**report_dict)
 
     raise HTTPException(status_code=500, detail="Failed to create report")
-

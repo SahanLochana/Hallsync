@@ -41,9 +41,7 @@ class ModuleRepo:
             )
         return self._format_doc(db_doc)
 
-    async def update_semester(
-        self, semester: str, update_data: dict
-    ) -> Optional[dict]:
+    async def update_semester(self, semester: str, update_data: dict) -> Optional[dict]:
         doc = await self.module_collection.find_one_and_update(
             {"semester": semester},
             {"$set": update_data},

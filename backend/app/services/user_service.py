@@ -24,10 +24,45 @@ class UserService:
         return await self.user_repo.delete_user(university_id)
 
     async def create_user(self, user_data: dict):
-        return await self.user_repo.create_user(user_data)
+        user, plain_password = await self.user_repo.create_user(user_data)
+        print(plain_password)
+        if plain_password and user.get("email"):
+            email_service = EmailService()
+            email_service.send_welcome_email(
+                to_email=user["email"],
+                name=user.get("name", "User"),
+                username=user["email"],
+                password=plain_password,
+            )
+        return user
 
     async def bulk_create_users(self, users: list[dict]) -> dict:
-        return await self.user_repo.bulk_create_users(users)
+        result = await self.user_repo.bulk_create_users(users)
+        success_users = result.get("success", [])
+        passwords = result.get("passwords", {})
+
+        email_data = []
+        for u in success_users:
+            uni_id = u.get("universityId", "")
+            plain_pwd = passwords.get(uni_id)
+            if plain_pwd and u.get("email"):
+                email_data.append(
+                    {
+                        "to_email": u["email"],
+                        "name": u.get("name", "User"),
+                        "username": u["email"],
+                        "password": plain_pwd,
+                    }
+                )
+
+        if email_data:
+            try:
+                email_service = EmailService()
+                email_service.send_bulk_welcome_emails(email_data)
+            except Exception as e:
+                print(f"Failed to send bulk welcome emails: {e}")
+
+        return {"success": success_users, "failed": result.get("failed", [])}
 
     async def authenticate_user(self, email: str, password: str):
         user = await self.user_repo.get_user_by_email(email)
@@ -105,16 +140,18 @@ class UserService:
             return False
 
         user = await self.user_repo.get_user_by_email(email)
-        hashed_password = get_password_hash(new_password)
+        if user is not None:
+            hashed_password = get_password_hash(new_password)
 
-        await self.user_repo.update_user(
-            user["universityId"],
-            {
-                "password_hash": hashed_password,
-                "reset_otp": None,
-                "reset_otp_expires": None,
-                "is_first_login": False,
-                "isFirstLogin": False,
-            },
-        )
-        return True
+            await self.user_repo.update_user(
+                user["universityId"],
+                {
+                    "password_hash": hashed_password,
+                    "reset_otp": None,
+                    "reset_otp_expires": None,
+                    "is_first_login": False,
+                    "isFirstLogin": False,
+                },
+            )
+            return True
+        return False

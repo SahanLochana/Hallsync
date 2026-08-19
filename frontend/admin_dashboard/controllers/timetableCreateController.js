@@ -8,6 +8,35 @@
 import { generateId } from "../models/timetableCreateModel";
 import apiService from "../services/apiService";
 
+// ── Department fetching ───────────────────────────────────────────────────────
+
+/**
+ * Fetches department options from the backend API.
+ *
+ * @param {Function} setDepartmentOptions - React state setter for department name options
+ * @param {Function} [setIsLoading]       - Optional React state setter for loading indicator
+ * @param {Function} [setError]          - Optional React state setter for error message
+ */
+export async function fetchDepartmentOptions(setDepartmentOptions, setIsLoading, setError) {
+  if (setIsLoading) setIsLoading(true);
+  if (setError) setError(null);
+  try {
+    const data = await apiService.departments.getAll();
+    const rawList = data?.response || [];
+    const names = rawList
+      .map((d) => d.departmentName)
+      .filter(Boolean);
+    setDepartmentOptions(names);
+    return names;
+  } catch (err) {
+    console.error("Failed to fetch departments for timetable creation:", err);
+    if (setError) setError(err?.message || "Failed to load departments.");
+    return [];
+  } finally {
+    if (setIsLoading) setIsLoading(false);
+  }
+}
+
 // ── Draft lecture management ──────────────────────────────────────────────────
 
 /**

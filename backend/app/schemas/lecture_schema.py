@@ -3,7 +3,6 @@ from typing import Optional
 from datetime import datetime
 
 
-
 class Lecture(BaseModel):
     title: str
     lecturer_id: str
@@ -24,6 +23,7 @@ class AvailabilityCheck(BaseModel):
     start_time: datetime
     end_time: datetime
     exclude_lecture_id: Optional[str] = None
+
 
 class Timetable(BaseModel):
     timetable_id: str
