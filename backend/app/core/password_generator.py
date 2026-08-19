@@ -5,8 +5,7 @@ import string
 UPPERCASE = string.ascii_uppercase
 LOWERCASE = string.ascii_lowercase
 DIGITS = string.digits
-SYMBOLS = "!@#$%&*?"
-ALL_CHARS = UPPERCASE + LOWERCASE + DIGITS + SYMBOLS
+ALL_CHARS = UPPERCASE + LOWERCASE + DIGITS
 
 
 def generate_random_password(length: int = 6) -> str:
@@ -23,7 +22,6 @@ def generate_random_password(length: int = 6) -> str:
         secrets.choice(UPPERCASE),
         secrets.choice(LOWERCASE),
         secrets.choice(DIGITS),
-        secrets.choice(SYMBOLS),
     ]
 
     # Fill remaining characters randomly from all sets

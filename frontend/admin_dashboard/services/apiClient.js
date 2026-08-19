@@ -3,7 +3,8 @@
  * Manages base URL, automatic authorization token injection, error handling, and JSON parsing.
  */
 
-const API_BASE_URL = "http://localhost:8000/api";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
 export const TOKEN_KEY = "hallsync_admin_token";
 
 /**

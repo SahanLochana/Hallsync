@@ -17,4 +17,3 @@ class User(MongoBaseModel):
     password_hash: str
     role: UserRole
     modules: Optional[list[str]] = []
-

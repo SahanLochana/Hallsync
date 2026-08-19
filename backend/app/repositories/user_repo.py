@@ -58,7 +58,9 @@ class UserRepo:
         result = await self.user_collection.delete_one({"universityId": university_id})
         return result.deleted_count > 0
 
-    async def create_user(self, user_data: dict, plain_password: Optional[str] = None) -> tuple[dict, str]:
+    async def create_user(
+        self, user_data: dict, plain_password: Optional[str] = None
+    ) -> tuple[dict, str]:
         db_user = user_data.copy()
         if "role" in db_user and isinstance(db_user["role"], str):
             db_user["role"] = db_user["role"].capitalize()
@@ -146,4 +148,3 @@ class UserRepo:
                 )
 
         return {"success": success, "failed": failed, "passwords": plain_passwords}
-

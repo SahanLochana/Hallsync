@@ -18,7 +18,9 @@ api_router.include_router(hall_router, prefix="/halls", tags=["Halls"])
 api_router.include_router(timetable_router, prefix="/timetables", tags=["Timetables"])
 api_router.include_router(lecture_router, prefix="/lectures", tags=["Lectures"])
 api_router.include_router(module_router, prefix="/modules", tags=["Modules"])
-api_router.include_router(department_router, prefix="/departments", tags=["Departments"])
+api_router.include_router(
+    department_router, prefix="/departments", tags=["Departments"]
+)
 api_router.include_router(admin_auth_router, prefix="/admin", tags=["Admin Auth"])
 api_router.include_router(report_routes, prefix="/reports", tags=["Reports"])
 
@@ -28,4 +30,3 @@ api_router.include_router(
 )
 api_router.include_router(websocket_router, prefix="/ws", tags=["WebSockets"])
 api_router.include_router(auth_router, prefix="/auth", tags=["Auth"])
-

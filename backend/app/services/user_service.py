@@ -41,20 +41,26 @@ class UserService:
         success_users = result.get("success", [])
         passwords = result.get("passwords", {})
 
-        email_service = EmailService()
+        email_data = []
         for u in success_users:
             uni_id = u.get("universityId", "")
             plain_pwd = passwords.get(uni_id)
             if plain_pwd and u.get("email"):
-                try:
-                    email_service.send_welcome_email(
-                        to_email=u["email"],
-                        name=u.get("name", "User"),
-                        username=u["email"],
-                        password=plain_pwd,
-                    )
-                except Exception as e:
-                    print(f"Failed to send welcome email to {u.get('email')}: {e}")
+                email_data.append(
+                    {
+                        "to_email": u["email"],
+                        "name": u.get("name", "User"),
+                        "username": u["email"],
+                        "password": plain_pwd,
+                    }
+                )
+
+        if email_data:
+            try:
+                email_service = EmailService()
+                email_service.send_bulk_welcome_emails(email_data)
+            except Exception as e:
+                print(f"Failed to send bulk welcome emails: {e}")
 
         return {"success": success_users, "failed": result.get("failed", [])}
 

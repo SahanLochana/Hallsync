@@ -81,12 +81,16 @@ class HallService:
                     if s_time <= now <= e_time:
                         current_lec = lec.get("title", "Lecture in Progress")
                     elif s_time > now:
-                        if next_lec is None or s_time < next_lec.get("_start_time", datetime.max):
+                        if next_lec is None or s_time < next_lec.get(
+                            "_start_time", datetime.max
+                        ):
                             next_lec = lec
                             next_lec["_start_time"] = s_time
                             next_lec_time = f"{s_time.strftime('%H:%M')} - {e_time.strftime('%H:%M')}"
 
-            is_occupied = (current_lec is not None) or (not hall.get("availability", True))
+            is_occupied = (current_lec is not None) or (
+                not hall.get("availability", True)
+            )
 
             if available_only and is_occupied:
                 continue
@@ -133,4 +137,3 @@ class HallService:
 
     async def delete_hall(self, hall_id: str) -> bool:
         return await self.hall_repo.delete_hall(hall_id)
-
