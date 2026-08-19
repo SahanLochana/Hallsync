@@ -15,7 +15,7 @@
  */
 
 import { useState, useEffect, useMemo, memo } from "react";
-import { Plus, Upload, Search, X, Eye, Users, UserX } from "lucide-react";
+import { Plus, Upload, Search, X, Eye, Trash2, Users, UserX } from "lucide-react";
 
 import TopHeader from "@/views/components/TopHeader";
 import Sidebar from "@/views/components/Sidebar";
@@ -24,6 +24,7 @@ import { TableSkeleton } from "@/views/components/SkeletonLoader";
 import AddUserModal from "@/views/components/AddUserModal";
 import UserDetailModal from "@/views/components/UserDetailModal";
 import ImportCsvModal from "@/views/components/ImportCsvModal";
+import ConfirmModal from "@/views/components/ConfirmModal";
 import FilterDropdown from "@/views/components/FilterDropdown";
 import PaginationBar from "@/views/components/PaginationBar";
 
@@ -32,6 +33,7 @@ import {
   filterUsers,
   addUser,
   editUser,
+  deleteUser,
 } from "@/controllers/userController";
 
 // ── Role badge colours ─────────────────────────────────────────────────────────
@@ -52,7 +54,7 @@ function RoleBadge({ role }) {
 }
 
 // ── User table row ────────────────────────────────────────────────────────────
-const UserRow = memo(function UserRow({ user, onView }) {
+const UserRow = memo(function UserRow({ user, onView, onDelete }) {
   return (
     <tr className="border-b border-[#94a3b8]/20 hover:bg-[#f8fafc] transition-colors group">
       <td className="py-4 pl-5 pr-3 font-mono text-sm text-[#334155] font-medium whitespace-nowrap">
@@ -70,17 +72,29 @@ const UserRow = memo(function UserRow({ user, onView }) {
         <RoleBadge role={user.role} />
       </td>
       <td className="py-4 pl-3 pr-5 text-right">
-        <button
-          id={`btn-view-user-${user.id}`}
-          onClick={() => onView(user)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#e2e8f0]
-                     text-[#64748b] text-xs font-semibold
-                     hover:border-[#1e3b8a] hover:text-[#1e3b8a] hover:bg-[#1e3b8a]/5
-                     transition-all cursor-pointer"
-        >
-          <Eye size={12} strokeWidth={2.5} />
-          View
-        </button>
+        <div className="inline-flex items-center justify-end gap-1.5">
+          <button
+            id={`btn-view-user-${user.id}`}
+            onClick={() => onView(user)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#e2e8f0]
+                       text-[#64748b] text-xs font-semibold
+                       hover:border-[#1e3b8a] hover:text-[#1e3b8a] hover:bg-[#1e3b8a]/5
+                       transition-all cursor-pointer"
+          >
+            <Eye size={12} strokeWidth={2.5} />
+            View
+          </button>
+          <button
+            id={`btn-delete-user-${user.id}`}
+            onClick={() => onDelete(user)}
+            title="Delete user"
+            className="inline-flex items-center justify-center p-1.5 rounded-lg border border-[#e2e8f0]
+                       text-[#94a3b8] hover:text-red-600 hover:border-red-200 hover:bg-red-50
+                       transition-all cursor-pointer"
+          >
+            <Trash2 size={13} strokeWidth={2} />
+          </button>
+        </div>
       </td>
     </tr>
   );
@@ -135,9 +149,10 @@ export default function UsersPage() {
   const pageSize = 20;
 
   // Modals
-  const [showAdd, setShowAdd] = useState(false);
-  const [showImport, setShowImport] = useState(false);
-  const [viewTarget, setViewTarget] = useState(null); // user object to view/edit
+  const [showAdd, setShowAdd]         = useState(false);
+  const [showImport, setShowImport]   = useState(false);
+  const [viewTarget, setViewTarget]   = useState(null); // user object to view/edit
+  const [userToDelete, setUserToDelete] = useState(null); // user object to delete
 
   // ── Load on mount ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -187,6 +202,18 @@ export default function UsersPage() {
   async function handleEditUser(updatedUser) {
     await editUser(users, updatedUser, setUsers);
     setViewTarget(null);
+  }
+
+  async function handleDeleteUser(universityId) {
+    try {
+      await deleteUser(users, universityId, setUsers);
+      setUserToDelete(null);
+      if (viewTarget && viewTarget.universityId === universityId) {
+        setViewTarget(null);
+      }
+    } catch (err) {
+      // Error handled in controller
+    }
   }
 
   async function handleImport(successUsers) {
@@ -424,7 +451,12 @@ export default function UsersPage() {
                     </tr>
                   ) : (
                     paginatedUsers.map((user) => (
-                      <UserRow key={user.id} user={user} onView={setViewTarget} />
+                      <UserRow
+                        key={user.id}
+                        user={user}
+                        onView={setViewTarget}
+                        onDelete={setUserToDelete}
+                      />
                     ))
                   )}
                 </tbody>
@@ -457,12 +489,28 @@ export default function UsersPage() {
         user={viewTarget}
         onClose={() => setViewTarget(null)}
         onSaveEdit={handleEditUser}
+        onDelete={handleDeleteUser}
       />
 
       <ImportCsvModal
         isOpen={showImport}
         onClose={() => setShowImport(false)}
         onImport={handleImport}
+      />
+
+      {/* Delete User Confirmation */}
+      <ConfirmModal
+        isOpen={!!userToDelete}
+        title="Delete User?"
+        message={
+          userToDelete
+            ? `Are you sure you want to permanently delete user "${userToDelete.name}" (${userToDelete.universityId})? This action cannot be undone.`
+            : ""
+        }
+        confirmLabel="Delete User"
+        confirmStyle="danger"
+        onCancel={() => setUserToDelete(null)}
+        onConfirm={() => userToDelete && handleDeleteUser(userToDelete.universityId)}
       />
     </div>
   );

@@ -245,6 +245,24 @@ export async function editUser(users, updatedUser, setUsers) {
   }
 }
 
+/**
+ * Deletes a user by universityId.
+ * @param {Array}    users        — current user list from state
+ * @param {string}   universityId — the university ID of the user to delete
+ * @param {Function} setUsers     — React state setter
+ */
+export async function deleteUser(users, universityId, setUsers) {
+  try {
+    await apiService.users.delete(universityId);
+    setUsers((prev) => prev.filter((u) => u.universityId !== universityId));
+    return { ok: true };
+  } catch (err) {
+    console.error("Failed to delete user:", err);
+    alert(err.message || "Failed to delete user.");
+    throw err;
+  }
+}
+
 // ── Spreadsheet Import ────────────────────────────────────────────────────────
 
 /**

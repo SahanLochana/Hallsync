@@ -2,6 +2,7 @@ from app.repositories.timetable_repo import TimetableRepo
 from app.core.database import Database
 from datetime import datetime
 
+
 class TimetableService:
     def __init__(self, db: Database):
         self.db = db
@@ -23,8 +24,9 @@ class TimetableService:
         dep = timetable_data.get("department") or ""
         yr = timetable_data.get("year") or ""
         import re
-        dep_slug = re.sub(r'[^a-zA-Z0-9]+', '_', dep.lower()).strip('_')
-        year_slug = re.sub(r'[^a-zA-Z0-9]+', '_', yr.lower()).strip('_')
+
+        dep_slug = re.sub(r"[^a-zA-Z0-9]+", "_", dep.lower()).strip("_")
+        year_slug = re.sub(r"[^a-zA-Z0-9]+", "_", yr.lower()).strip("_")
         timetable_data["timetable_id"] = f"{dep_slug}_{year_slug}"
 
         return await self.timetable_repo.create_timetable(timetable_data)
@@ -45,8 +47,9 @@ class TimetableService:
                 if yr is None:
                     yr = current.get("year") or ""
                 import re
-                dep_slug = re.sub(r'[^a-zA-Z0-9]+', '_', dep.lower()).strip('_')
-                year_slug = re.sub(r'[^a-zA-Z0-9]+', '_', yr.lower()).strip('_')
+
+                dep_slug = re.sub(r"[^a-zA-Z0-9]+", "_", dep.lower()).strip("_")
+                year_slug = re.sub(r"[^a-zA-Z0-9]+", "_", yr.lower()).strip("_")
                 update_data["timetable_id"] = f"{dep_slug}_{year_slug}"
 
         return await self.timetable_repo.update_timetable(timetable_id, update_data)

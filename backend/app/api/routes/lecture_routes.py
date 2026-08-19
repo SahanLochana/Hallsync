@@ -167,4 +167,3 @@ async def delete_lecture(
         raise HTTPException(status_code=404, detail="Lecture not found")
 
     return {"message": "Lecture deleted successfully"}
-

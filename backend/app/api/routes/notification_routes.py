@@ -33,4 +33,3 @@ async def mark_notification_as_read(
             status_code=404, detail="Notification not found or already read"
         )
     return {"message": "Notification marked as read"}
-

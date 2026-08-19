@@ -20,7 +20,10 @@ class HallRepo:
         doc.setdefault("floor", "Ground Floor")
         doc.setdefault("type", "Lecture Hall")
         doc.setdefault("amenities", ["Projector", "AC", "Sound System", "Wi-Fi"])
-        doc.setdefault("description", "Equipped with high-definition projector, sound system, and climate control.")
+        doc.setdefault(
+            "description",
+            "Equipped with high-definition projector, sound system, and climate control.",
+        )
         return doc
 
     # ── Reads ──────────────────────────────────────────────────────────────────

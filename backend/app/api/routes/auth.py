@@ -36,13 +36,18 @@ async def login(
         )
 
     # Generate a token containing their identity and role
-    token_data = {"sub": user["name"], "role": user["role"],"department": user["department"],
-        "batch": user["academicYear"],"email": user["email"],}
+    token_data = {
+        "sub": user["name"],
+        "role": user["role"],
+        "department": user["department"],
+        "batch": user["academicYear"],
+        "email": user["email"],
+    }
     access_token = create_access_token(data=token_data)
 
     # Return the payload back to frontend
     return {
-        "status": "success",       
+        "status": "success",
         "token": access_token,
         "isFirstLogin": user.get("isFirstLogin", user.get("is_first_login", True)),
     }
@@ -124,4 +129,3 @@ async def reset_password(
             detail="Failed to reset password. OTP might be expired.",
         )
     return {"success": True, "message": "Password reset successful"}
-

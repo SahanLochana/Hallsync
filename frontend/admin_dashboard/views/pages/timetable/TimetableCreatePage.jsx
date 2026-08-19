@@ -16,7 +16,7 @@
  *   ConfirmModal     (views/components/ConfirmModal.jsx)
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Save, ChevronDown, AlertCircle } from "lucide-react";
 
@@ -26,10 +26,11 @@ import ConfirmModal from "@/views/components/ConfirmModal";
 
 import {
   DAYS, HOURS, HALF_HOURS, formatHour,
-  INITIAL_META, DEPARTMENT_OPTIONS, YEAR_OPTIONS,
+  INITIAL_META, YEAR_OPTIONS,
 } from "@/models/timetableCreateModel";
 
 import {
+  fetchDepartmentOptions,
   handleAddDraftLecture,
   handleRemoveDraftLecture,
   handleSaveTimetable,
@@ -73,6 +74,10 @@ export default function TimetableCreatePage() {
   const [lectures, setLectures] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Department options from backend
+  const [departmentOptions, setDepartmentOptions] = useState([]);
+  const [isDeptLoading, setIsDeptLoading]         = useState(true);
+
   // Add lecture modal
   const [addCell, setAddCell]   = useState(null);   // { day, startHour }
 
@@ -84,6 +89,11 @@ export default function TimetableCreatePage() {
 
   // Save error
   const [saveError, setSaveError] = useState(null);
+
+  // ── Fetch departments on mount ─────────────────────────────────────────────
+  useEffect(() => {
+    fetchDepartmentOptions(setDepartmentOptions, setIsDeptLoading);
+  }, []);
 
   // ── Helpers ────────────────────────────────────────────────────────────────
   function updateMeta(field, value) {
@@ -216,10 +226,10 @@ export default function TimetableCreatePage() {
               <MetaSelect
                 id="meta-department"
                 value={meta.department}
-                options={DEPARTMENT_OPTIONS}
-                placeholder="Department…"
+                options={departmentOptions}
+                placeholder={isDeptLoading ? "Loading departments..." : "Department…"}
                 onChange={handleDepartmentChange}
-                disabled={isSaving}
+                disabled={isSaving || isDeptLoading}
               />
 
               <MetaSelect
