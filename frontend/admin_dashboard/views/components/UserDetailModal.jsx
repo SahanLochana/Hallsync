@@ -14,6 +14,7 @@ import {
   X,
   Pencil,
   Save,
+  Trash2,
   User,
   Mail,
   BookOpen,
@@ -39,13 +40,15 @@ const BATCH_OPTIONS = [
   "4th Year",
 ];
 
-export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
-  const [isEditing, setIsEditing]             = useState(false);
-  const [form, setForm]                       = useState({});
-  const [errors, setErrors]                   = useState({});
-  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
-  const [isSaving, setIsSaving]               = useState(false);
-  const [modalError, setModalError]           = useState(null);
+export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit, onDelete }) {
+  const [isEditing, setIsEditing]               = useState(false);
+  const [form, setForm]                         = useState({});
+  const [errors, setErrors]                     = useState({});
+  const [showSaveConfirm, setShowSaveConfirm]   = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isSaving, setIsSaving]                 = useState(false);
+  const [isDeleting, setIsDeleting]             = useState(false);
+  const [modalError, setModalError]             = useState(null);
   const [availableModules, setAvailableModules] = useState([]);
   const [isLoadingModules, setIsLoadingModules] = useState(false);
 
@@ -55,7 +58,10 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
       setForm({ ...user, faculty: user.faculty || "Computing", modules: user.modules || [] });
       setIsEditing(false);
       setErrors({});
+      setShowSaveConfirm(false);
+      setShowDeleteConfirm(false);
       setIsSaving(false);
+      setIsDeleting(false);
       setModalError(null);
 
       setIsLoadingModules(true);
@@ -109,6 +115,22 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
       setModalError(err.message || "Failed to update user.");
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function handleConfirmDelete() {
+    setShowDeleteConfirm(false);
+    setIsDeleting(true);
+    setModalError(null);
+    try {
+      if (onDelete) {
+        await onDelete(user.universityId);
+      }
+      onClose();
+    } catch (err) {
+      setModalError(err.message || "Failed to delete user.");
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -436,6 +458,18 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
               </>
             ) : (
               <>
+                {onDelete && (
+                  <button
+                    id="btn-user-delete-trigger"
+                    type="button"
+                    onClick={() => setShowDeleteConfirm(true)}
+                    disabled={isDeleting}
+                    className="mr-auto px-4 py-2.5 rounded-xl border border-red-200 text-red-600 font-semibold text-sm hover:bg-red-50 hover:border-red-300 transition-colors bg-white flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    <Trash2 size={14} />
+                    Delete User
+                  </button>
+                )}
                 <button
                   id="btn-detail-close"
                   onClick={onClose}
@@ -466,6 +500,17 @@ export default function UserDetailModal({ isOpen, user, onClose, onSaveEdit }) {
         confirmStyle="primary"
         onCancel={() => setShowSaveConfirm(false)}
         onConfirm={handleConfirmSave}
+      />
+
+      {/* Delete confirmation */}
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        title="Delete User?"
+        message={`Are you sure you want to permanently delete user "${user.name}" (${user.universityId})? This action cannot be undone.`}
+        confirmLabel="Delete User"
+        confirmStyle="danger"
+        onCancel={() => setShowDeleteConfirm(false)}
+        onConfirm={handleConfirmDelete}
       />
     </>
   );
